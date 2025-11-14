@@ -27,5 +27,5 @@ jobs:
       - name: Upload app artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PCL.Mac-${{ github.sha.substr(0,7) }}
+          name: PCL.Mac-${{ github.sha }}
           path: ./PCL.Mac
