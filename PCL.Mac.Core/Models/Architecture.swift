@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum Architecture {
+public enum Architecture: String {
     case arm64, x64, fatFile, unknown
     
     public static func getFileArchitecture(_ url: URL) -> Architecture {

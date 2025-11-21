@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		EC114A482ED05F020027201F /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = EC114A472ED05F020027201F /* SwiftyJSON */; };
+		EC114A4A2ED05F070027201F /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = EC114A492ED05F070027201F /* SwiftyJSON */; };
+		EC114A4C2ED05F0B0027201F /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = EC114A4B2ED05F0B0027201F /* SwiftyJSON */; };
 		EC996B442EBEE80F0094E524 /* Core.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC996B3C2EBEE80F0094E524 /* Core.framework */; };
 		EC996B462EBEE80F0094E524 /* Core.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = EC996B3C2EBEE80F0094E524 /* Core.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
@@ -89,6 +92,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC114A4C2ED05F0B0027201F /* SwiftyJSON in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -96,6 +100,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC114A4A2ED05F070027201F /* SwiftyJSON in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,6 +108,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC114A482ED05F020027201F /* SwiftyJSON in Frameworks */,
 				EC996B442EBEE80F0094E524 /* Core.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -110,6 +116,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		EC114A462ED05F020027201F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		ECC26BBA2EBEDD67002B7E3E = {
 			isa = PBXGroup;
 			children = (
@@ -117,6 +130,7 @@
 				ECC26BC52EBEDD67002B7E3E /* PCL.Mac */,
 				EC996B3D2EBEE80F0094E524 /* PCL.Mac.Core */,
 				EC71A32E2EC034AA006E496F /* PCL.Mac.Tests */,
+				EC114A462ED05F020027201F /* Frameworks */,
 				ECC26BC42EBEDD67002B7E3E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -162,6 +176,7 @@
 			);
 			name = PCL.Mac.Tests;
 			packageProductDependencies = (
+				EC114A4B2ED05F0B0027201F /* SwiftyJSON */,
 			);
 			productName = PCL.Mac.Tests;
 			productReference = EC71A32D2EC034AA006E496F /* PCL.Mac.Tests.xctest */;
@@ -185,6 +200,7 @@
 			);
 			name = PCL.Mac.Core;
 			packageProductDependencies = (
+				EC114A492ED05F070027201F /* SwiftyJSON */,
 			);
 			productName = PCL.Mac.Core;
 			productReference = EC996B3C2EBEE80F0094E524 /* Core.framework */;
@@ -210,6 +226,7 @@
 			);
 			name = PCL.Mac;
 			packageProductDependencies = (
+				EC114A472ED05F020027201F /* SwiftyJSON */,
 			);
 			productName = PCL.Mac;
 			productReference = ECC26BC32EBEDD67002B7E3E /* PCL.Mac.app */;
@@ -249,6 +266,9 @@
 			);
 			mainGroup = ECC26BBA2EBEDD67002B7E3E;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EC114A452ED05EF50027201F /* XCRemoteSwiftPackageReference "SwiftyJSON" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = ECC26BC42EBEDD67002B7E3E /* Products */;
 			projectDirPath = "";
@@ -363,7 +383,7 @@
 		EC996B482EBEE80F0094E524 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -401,7 +421,7 @@
 		EC996B492EBEE80F0094E524 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -653,6 +673,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		EC114A452ED05EF50027201F /* XCRemoteSwiftPackageReference "SwiftyJSON" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SwiftyJSON/SwiftyJSON";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		EC114A472ED05F020027201F /* SwiftyJSON */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EC114A452ED05EF50027201F /* XCRemoteSwiftPackageReference "SwiftyJSON" */;
+			productName = SwiftyJSON;
+		};
+		EC114A492ED05F070027201F /* SwiftyJSON */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EC114A452ED05EF50027201F /* XCRemoteSwiftPackageReference "SwiftyJSON" */;
+			productName = SwiftyJSON;
+		};
+		EC114A4B2ED05F0B0027201F /* SwiftyJSON */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EC114A452ED05EF50027201F /* XCRemoteSwiftPackageReference "SwiftyJSON" */;
+			productName = SwiftyJSON;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = ECC26BBB2EBEDD67002B7E3E /* Project object */;
 }
