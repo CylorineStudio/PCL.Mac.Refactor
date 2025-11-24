@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class JavaSearcher {
+public enum JavaSearcher {
     /// 内部可能存在 Java 目录（如 `zulu-21.jdk`）的目录
     private static let javaDirectories: [URL] = [
         URL(filePath: "/Library/Java/JavaVirtualMachines"),

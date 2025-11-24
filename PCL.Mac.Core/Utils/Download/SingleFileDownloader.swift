@@ -8,7 +8,7 @@
 import Foundation
 
 /// 单文件下载器。
-public class SingleFileDownloader {
+public enum SingleFileDownloader {
     public static func download(_ item: DownloadItem, replaceMethod: ReplaceMethod) async throws {
         try await download(url: item.url, destination: item.destination, sha1: item.sha1, replaceMethod: replaceMethod)
     }
@@ -32,7 +32,6 @@ public class SingleFileDownloader {
         
         var request: URLRequest = .init(url: url)
         request.httpMethod = "GET"
-        request.setValue("PCL-Mac/Refactor", forHTTPHeaderField: "User-Agent")
         
         let (byteStream, response) = try await URLSession.shared.bytes(for: request)
         guard let response = response as? HTTPURLResponse else {
@@ -69,8 +68,5 @@ public class SingleFileDownloader {
         }
         // 保证 destination 位置不存在文件
         try FileManager.default.moveItem(at: tempFile, to: destination)
-    }
-    
-    private init() {
     }
 }

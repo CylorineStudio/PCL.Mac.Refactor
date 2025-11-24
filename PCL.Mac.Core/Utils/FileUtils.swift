@@ -8,7 +8,7 @@
 import Foundation
 import CryptoKit
 
-public class FileUtils {
+public enum FileUtils {
     public static func getSHA1(_ url: URL) throws -> String {
         let data: Data = try Data(contentsOf: url)
         let digest: Insecure.SHA1.Digest = Insecure.SHA1.hash(data: data)
@@ -16,8 +16,5 @@ public class FileUtils {
             String(format: "%02x", byte)
         }.joined()
         return hexString
-    }
-    
-    private init() {
     }
 }
