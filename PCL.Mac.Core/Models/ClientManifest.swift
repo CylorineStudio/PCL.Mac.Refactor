@@ -144,17 +144,19 @@ public class ClientManifest {
         public let allow: Bool
         public let osName: String?
         public let osArch: Architecture?
-        
+        public let hasFeaturesLimit: Bool
         
         public init(json: JSON) {
             self.allow = json["action"].stringValue == "allow"
             self.osName = json["os"]["name"].string
             self.osArch = json["os"]["arch"].string.flatMap(Architecture.init(rawValue:))
+            self.hasFeaturesLimit = json["features"].exists()
         }
         
         public func test() -> Bool {
             if let osName, osName != "osx" { return !allow }
             if let osArch, osArch != .arm64 { return !allow } // TODO
+            if hasFeaturesLimit { return !allow } // TODO
             return allow
         }
     }

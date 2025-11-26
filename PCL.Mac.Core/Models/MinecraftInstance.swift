@@ -21,6 +21,7 @@ public class MinecraftInstance {
     }
     
     public static func load(runningDirectory: URL) throws -> MinecraftInstance {
+        log("正在加载实例 \(runningDirectory.lastPathComponent)")
         // 加载客户端清单
         let manifestURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
         let manifestJSON: JSON = try JSON(data: Data(contentsOf: manifestURL))
@@ -31,8 +32,10 @@ public class MinecraftInstance {
         if FileManager.default.fileExists(atPath: jarURL.path),
            try ArchiveUtils.hasEntry(url: jarURL, path: "version.json") {
             let json: JSON = try JSON(data: ArchiveUtils.getEntry(url: jarURL, path: "version.json"))
+            log("成功解析 version.json")
             version = .init(json["id"].stringValue)
         } else {
+            warn("version.json 不存在，使用客户端清单中的 id")
             version = .init(manifest.id)
         }
         return .init(

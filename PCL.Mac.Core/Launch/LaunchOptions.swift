@@ -8,11 +8,8 @@
 import Foundation
 
 public class LaunchOptions {
-    public var isDemo: Bool
-    public var windowSize: (Int, Int)?
+    public var javaURL: URL!
+    public var memory: Int = 4096
     
-    public init(isDemo: Bool, windowSize: (Int, Int)? = nil) {
-        self.isDemo = isDemo
-        self.windowSize = windowSize
-    }
+    public init() {}
 }
