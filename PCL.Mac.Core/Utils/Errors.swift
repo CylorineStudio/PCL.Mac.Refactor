@@ -14,6 +14,14 @@ public enum DownloadError: Error, Equatable {
     case badStatusCode(code: Int)
 }
 
+public enum LaunchError: Error {
+    case missingJava
+    case missingRunningDirectory
+    case missingManifest
+    case missingAccount
+    case invalidMemory
+}
+
 public struct SimpleError: LocalizedError {
     private let reason: String
     

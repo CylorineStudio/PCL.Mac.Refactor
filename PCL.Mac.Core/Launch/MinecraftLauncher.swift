@@ -12,12 +12,12 @@ public class MinecraftLauncher {
     private let runningDirectory: URL
     private let librariesURL: URL
     private let options: LaunchOptions
-    private let values: [String: String]
+    private var values: [String: String]
     
-    public init(instance: MinecraftInstance, options: LaunchOptions) {
-        self.manifest = instance.manifest
-        self.runningDirectory = instance.runningDirectory
-        self.librariesURL = instance.runningDirectory.deletingLastPathComponent().deletingLastPathComponent().appending(path: "libraries") // TODO
+    public init(options: LaunchOptions) {
+        self.manifest = options.manifest
+        self.runningDirectory = options.runningDirectory
+        self.librariesURL = options.runningDirectory.deletingLastPathComponent().deletingLastPathComponent().appending(path: "libraries") // TODO
         self.options = options
         self.values = [
             "auth_player_name": "Test",
@@ -36,12 +36,12 @@ public class MinecraftLauncher {
     /// 启动 Minecraft。
     /// - Returns: 进程退出代码。
     public func launch(_ completion: ((Process) -> Void)? = nil) throws -> Int32 {
+        values["classpath"] = buildClasspath()
         let process: Process = .init()
         process.executableURL = options.javaURL!
         process.currentDirectoryURL = runningDirectory
         var arguments: [String] = []
         arguments.append(contentsOf: manifest.jvmArguments.flatMap { $0.rules.allSatisfy { $0.test() } ? $0.value : [] })
-        arguments.append(contentsOf: ["-cp", buildClasspath()])
         arguments.append(manifest.mainClass)
         arguments.append(contentsOf: manifest.gameArguments.flatMap { $0.rules.allSatisfy { $0.test() } ? $0.value : [] })
         arguments = arguments.map(replaceWithValue(_:))

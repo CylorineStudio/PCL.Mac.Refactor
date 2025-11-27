@@ -8,14 +8,16 @@
 import Testing
 import Foundation
 import Core
+import SwiftyJSON
 
 struct MinecraftLaunchTests {
     @Test func testLaunch() throws {
         let runningDirectory: URL = URL(filePath: "/Users/yizhimcqiu/minecraft/versions/1.21.10")
         if !FileManager.default.fileExists(atPath: runningDirectory.path) { return }
-        let instance: MinecraftInstance = try .load(runningDirectory: runningDirectory)
-        let options: LaunchOptions = .init()
+        var options: LaunchOptions = .init()
         options.javaURL = URL(filePath: "/usr/bin/java")
-        _ = try MinecraftLauncher(instance: instance, options: options).launch()
+        options.runningDirectory = runningDirectory
+        options.manifest = .init(json: try JSON(data: Data(contentsOf: runningDirectory.appending(path: "1.21.10.json"))))
+        _ = try MinecraftLauncher(options: options).launch()
     }
 }
