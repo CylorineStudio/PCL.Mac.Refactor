@@ -8,7 +8,10 @@
 import SwiftUI
 
 struct LaunchView: View {
+    @State private var text: String = ""
+    
     var body: some View {
         MyText("LaunchView")
+        TextField("聚焦测试", text: $text)
     }
 }

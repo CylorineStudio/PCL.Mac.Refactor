@@ -10,6 +10,8 @@ import AppKit
 import Core
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    private var window: AppWindow!
+    
     private func registerFont() {
         let fontURL = AppURLs.resourcesURL.appending(path: "PCL.ttf")
         var error: Unmanaged<CFError>?
@@ -29,6 +31,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         log("App 启动完成")
+        self.window = AppWindow()
+        self.window.makeKeyAndOrderFront(nil)
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
