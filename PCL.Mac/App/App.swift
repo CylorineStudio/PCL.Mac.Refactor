@@ -12,6 +12,6 @@ struct PCL_MacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate: AppDelegate
     
     var body: some Scene {
-        MenuBarExtra("placeholder") { }
+        MenuBarExtra(isInserted: .constant(false)) { } label: { Text("placeholder") }
     }
 }

@@ -15,8 +15,10 @@ struct TitleBarView: View {
             Image("Title")
                 .resizable()
                 .scaledToFit()
+                .foregroundStyle(.white)
                 .frame(height: 19)
                 .padding()
+                .padding(.leading, 50)
             HStack {
                 Spacer()
                 PageButton("启动", "LaunchPageIcon", .launch)
