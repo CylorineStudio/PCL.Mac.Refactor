@@ -11,7 +11,7 @@ public struct AppURLs {
     public static let contentsURL: URL = Bundle.main.bundleURL.appending(path: "Contents")
     public static let resourcesURL: URL = contentsURL.appending(path: "Resources")
     
-    public static let applicationSupportURL: URL = .applicationSupportDirectory.appending(path: "PCL.Mac.Refactor")
+    public static let applicationSupportURL: URL = FileManager.default.homeDirectoryForCurrentUser.appending(path: "Library/Application Support/PCL.Mac.Refactor")
     public static let logsDirectoryURL: URL = applicationSupportURL.appending(path: "Logs")
     public static let configURL: URL = applicationSupportURL.appending(path: "Config")
     public static let cacheURL: URL = applicationSupportURL.appending(path: "Caches")

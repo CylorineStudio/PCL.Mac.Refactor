@@ -68,7 +68,7 @@ public class MinecraftLauncher {
     private func replaceWithValue(_ string: String) -> String {
         var s: String = string
         for key in values.keys {
-            s.replace("${\(key)}", with: values[key]!)
+            s = s.replacingOccurrences(of: "${\(key)}", with: values[key]!)
         }
         return s
     }

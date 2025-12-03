@@ -10,7 +10,7 @@ import Foundation
 public enum JavaSearcher {
     /// 内部可能存在 Java 目录（如 `zulu-21.jdk`）的目录
     private static let javaDirectories: [URL] = [
-        URL(filePath: "/Library/Java/JavaVirtualMachines"),
+        URL(fileURLWithPath: "/Library/Java/JavaVirtualMachines"),
         FileManager.default.homeDirectoryForCurrentUser.appending(path: "Library/Java/JavaVirtualMachines")
     ]
     
@@ -24,23 +24,11 @@ public enum JavaSearcher {
             guard let releaseData: Data = FileManager.default.contents(atPath: homeDirectory.appending(path: "release").path),
                   let releaseContent = String(data: releaseData, encoding: .utf8) else { continue }
             // 解析 release 文件
-            let pattern: Regex = /^(JAVA_VERSION|IMPLEMENTOR)="([^"]*)"/
-            
-            var javaVersion: String?
-            var implementor: String?
-            
-            for line in releaseContent.split(separator: "\n") {
-                if let match = try? pattern.firstMatch(in: String(line)) {
-                    let key: String = String(match.1)
-                    let value: String = String(match.2)
-                    if key == "JAVA_VERSION" {
-                        javaVersion = value
-                    } else if key == "IMPLEMENTOR" {
-                        implementor = value
-                    }
-                }
+            let release: [String: String] = parseProperties(releaseContent)
+            guard let javaVersion = release["JAVA_VERSION"],
+                  let implementor = release["IMPLEMENTOR"] else {
+                continue
             }
-            guard let javaVersion, let implementor else { continue }
             // 判断 Java 类型并获取可执行文件路径
             var type: JavaRuntime.JavaType = .jdk
             var executableURL: URL!
@@ -66,6 +54,20 @@ public enum JavaSearcher {
         return runtimes
     }
     
+    private static func parseProperties(_ fileContent: String) -> [String: String] {
+        var result: [String: String] = [:]
+        for rawLine in fileContent.split(separator: "\n") {
+            let line: String = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !line.isEmpty, !line.hasPrefix("#") else { continue }
+            let parts: [String] = line.components(separatedBy: "=")
+            guard parts.count >= 2 else { continue }
+            let key: String = parts[0].trimmingCharacters(in: .whitespaces)
+            let value: String = parts[1...].joined(separator: "=").trimmingCharacters(in: .whitespaces)
+            result[key] = value
+        }
+        return result
+    }
+    
     private static func parseVersionNumber(_ version: String) -> Int {
         let components: [Substring] = version.split(separator: ".")
         if let first: Substring = components.first, first == "1", components.count > 1 {
@@ -83,7 +85,7 @@ public enum JavaSearcher {
             bundleDirectories.append(contentsOf: try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil))
         }
         // Homebrew
-        let homebrewDirectories: [URL] = try FileManager.default.contentsOfDirectory(at: URL(filePath: "/opt/homebrew/opt"), includingPropertiesForKeys: nil)
+        let homebrewDirectories: [URL] = try FileManager.default.contentsOfDirectory(at: URL(fileURLWithPath: "/opt/homebrew/opt"), includingPropertiesForKeys: nil)
             .filter { $0.lastPathComponent.starts(with: "openjdk@") }
         for directory in homebrewDirectories {
             bundleDirectories.append(directory.appending(path: "libexec").appending(path: "openjdk.jdk"))

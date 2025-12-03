@@ -12,6 +12,16 @@ struct PCL_MacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate: AppDelegate
     
     var body: some Scene {
-        MenuBarExtra(isInserted: .constant(false)) { } label: { Text("placeholder") }
+        Settings { EmptyView() }
+            .commands {
+                CommandGroup(replacing: .appSettings) {
+                    Button {
+                        AppRouter.shared.setRoot(.settings)
+                    } label: {
+                        Label("设置", systemImage: "gear")
+                    }
+                    .keyboardShortcut(",", modifiers: [.command])
+                }
+            }
     }
 }
