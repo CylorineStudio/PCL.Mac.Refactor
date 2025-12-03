@@ -12,7 +12,7 @@ import SwiftyJSON
 
 struct MinecraftLaunchTests {
     @Test func testLaunch() throws {
-        let runningDirectory: URL = URL(filePath: "/Users/yizhimcqiu/minecraft/versions/1.21.10")
+        let runningDirectory: URL = FileManager.default.homeDirectoryForCurrentUser.appending(path: "minecraft")
         if !FileManager.default.fileExists(atPath: runningDirectory.path) { return }
         var options: LaunchOptions = .init()
         options.javaURL = URL(filePath: "/usr/bin/java")

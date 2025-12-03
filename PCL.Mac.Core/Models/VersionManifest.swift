@@ -15,14 +15,15 @@ public struct VersionManifest {
     
     public init(json: JSON) {
         self.latestRelease = json["latest"]["release"].stringValue
-        self.latestSnapshot = json["latest"]["snapshot"].stringValue == latestRelease ? nil : json["latest"]["snapshot"].stringValue
+        let latestSnapshot: String = json["latest"]["snapshot"].stringValue
+        self.latestSnapshot = latestSnapshot == latestRelease ? nil : latestSnapshot
         self.versions = json["versions"].arrayValue.compactMap(Version.init(json:))
     }
     
     public struct Version {
         private static let dateFormatter: ISO8601DateFormatter = {
             let formatter: ISO8601DateFormatter = .init()
-            formatter.timeZone = TimeZone(identifier: "Asia/Shanghai")
+            formatter.timeZone = .current
             return formatter
         }()
         

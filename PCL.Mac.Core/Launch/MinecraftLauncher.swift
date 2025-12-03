@@ -19,6 +19,7 @@ public class MinecraftLauncher {
         self.runningDirectory = options.runningDirectory
         self.librariesURL = options.runningDirectory.deletingLastPathComponent().deletingLastPathComponent().appending(path: "libraries") // TODO
         self.options = options
+        // test only
         self.values = [
             "auth_player_name": "Test",
             "version_name": manifest.id,
