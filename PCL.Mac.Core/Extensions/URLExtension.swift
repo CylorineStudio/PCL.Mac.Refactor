@@ -22,10 +22,10 @@ public extension URL {
     /// let newURL = baseURL.appending(path: "v1/user") // https://example.com/api/v1/user
     /// ```
     func appending(path: String) -> URL {
-        var urlString: String = self.absoluteString
-        let hasTrailingSlash: Bool = urlString.hasSuffix("/")
-        let sanitizedPath: String = path.hasPrefix("/") ? String(path.dropFirst()) : path
-        urlString += hasTrailingSlash ? sanitizedPath : "/" + sanitizedPath
-        return URL(string: urlString)!
+        var url: URL = self
+        for component in path.split(separator: "/") {
+            url = url.appendingPathComponent(String(component))
+        }
+        return url
     }
 }
