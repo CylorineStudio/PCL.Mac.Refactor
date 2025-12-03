@@ -22,7 +22,7 @@ class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
         didFinishDownloadingTo location: URL
     ) {
         guard let response = downloadTask.response.flatMap({ $0 as? HTTPURLResponse }) else {
-            resume(.failure(DownloadError.badResponse))
+            resume(.failure(URLError.badResponse))
             return
         }
         guard (200..<300).contains(response.statusCode) else {

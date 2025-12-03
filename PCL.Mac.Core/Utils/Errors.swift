@@ -10,7 +10,6 @@ import Foundation
 public enum DownloadError: Error, Equatable {
     case fileExists
     case checksumMismatch
-    case badResponse
     case badStatusCode(code: Int)
 }
 
@@ -20,6 +19,12 @@ public enum LaunchError: Error {
     case missingManifest
     case missingAccount
     case invalidMemory
+}
+
+public enum URLError: Error {
+    case invalidURL
+    case invalidType
+    case badResponse
 }
 
 public struct SimpleError: LocalizedError {
