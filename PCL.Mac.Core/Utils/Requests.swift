@@ -52,7 +52,7 @@ public enum Requests {
     
     public static func request(
         url: URLConvertible,
-        method: String = "GET",
+        method: String,
         headers: [String: String]?,
         body: [String: Any]?,
         using encodeMethod: EncodeMethod
@@ -84,6 +84,23 @@ public enum Requests {
             throw URLError.badResponse
         }
         return Response(data: data, response: response)
+    }
+    
+    public static func get(
+        _ url: URLConvertible,
+        headers: [String: String]? = nil,
+        params: [String: String]? = nil
+    ) async throws -> Response {
+        return try await request(url: url, method: "GET", headers: headers, body: params, using: .urlEncoded)
+    }
+    
+    public static func post(
+        _ url: URLConvertible,
+        headers: [String: String]? = nil,
+        body: [String: String]?,
+        using encodeMethod: EncodeMethod
+    ) async throws -> Response {
+        return try await request(url: url, method: "POST", headers: headers, body: body, using: encodeMethod)
     }
     
     private static func encode(_ body: [String: Any], using method: EncodeMethod) throws -> (Data, String) {

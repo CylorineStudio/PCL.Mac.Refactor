@@ -17,4 +17,13 @@ public struct AppURLs {
     public static let cacheURL: URL = applicationSupportURL.appending(path: "Caches")
     public static let temperatureURL: URL = applicationSupportURL.appending(path: "Temp")
     public static let authlibInjectorURL: URL = applicationSupportURL.appending(path: "authlib-injector.jar")
+    
+    static func createDirectories() {
+        let fileManager: FileManager = .default
+        try? fileManager.createDirectory(at: applicationSupportURL, withIntermediateDirectories: true)
+        try? fileManager.createDirectory(at: logsDirectoryURL, withIntermediateDirectories: true)
+        try? fileManager.createDirectory(at: configURL, withIntermediateDirectories: true)
+        try? fileManager.createDirectory(at: cacheURL, withIntermediateDirectories: true)
+        try? fileManager.createDirectory(at: temperatureURL, withIntermediateDirectories: true)
+    }
 }
