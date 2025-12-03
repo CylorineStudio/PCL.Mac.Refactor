@@ -9,6 +9,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Get short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       - name: Build app
         run: |
@@ -22,10 +25,18 @@ jobs:
         run: |
           mkdir "PCL.Mac-artifact"
           mv build.xcarchive/Products/Applications/PCL.Mac.app "./PCL.Mac-artifact/PCL.Mac.app"
-          mv build.xcarchive/dSYMs/PCL.Mac.app.dSYM ./PCL.Mac-artifact/PCL.Mac.app.dSYM
+          mkdir "PCL.Mac-dSYMs"
+          mv build.xcarchive/dSYMs/PCL.Mac.app.dSYM ./PCL.Mac-dSYMs/PCL.Mac.app.dSYM
+          mv build.xcarchive/dSYMs/Core.framework.dSYM ./PCL.Mac-dSYMs/Core.framework.dSYM
 
       - name: Upload app artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PCL.Mac-${{ github.sha }}
+          name: PCL.Mac-${{ env.SHORT_SHA }}
           path: ./PCL.Mac-artifact
+      
+      - name: Upload dSYMs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PCL.Mac-${{ env.SHORT_SHA }}-dSYMs
+          path: ./PCL.Mac-dSYMs
