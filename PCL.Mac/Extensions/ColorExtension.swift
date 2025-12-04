@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension Color {
-    static let pclBlue: Color = .init(0x0f6fcd)
+    static let pclBlue: Color = .init(0x0F6FCD)
     
     init(_ hex: UInt, alpha: Double = 1.0) {
         self.init(

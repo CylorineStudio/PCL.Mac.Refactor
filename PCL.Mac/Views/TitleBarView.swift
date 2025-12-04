@@ -34,7 +34,7 @@ struct TitleBarView: View {
 
 private struct PageButton: View {
     @ObservedObject private var router: AppRouter = .shared
-    @State private var isHovered: Bool = false
+    @State private var hovered: Bool = false
     private var isRoot: Bool { router.getRoot() == route }
     private let label: String
     private let image: String
@@ -56,13 +56,13 @@ private struct PageButton: View {
                     .scaledToFit()
                     .frame(width: 16)
                     .foregroundStyle(foregroundColor)
-                MyText(label, 14, foregroundColor)
+                MyText(label, color: foregroundColor)
             }
         }
         .frame(width: 78, height: 27)
         .contentShape(Rectangle())
-        .onHover { isHovered in
-            self.isHovered = isHovered
+        .onHover { hovered in
+            self.hovered = hovered
         }
         .gesture(
             DragGesture(minimumDistance: 0)
@@ -73,7 +73,7 @@ private struct PageButton: View {
                 }
         )
         .animation(.easeInOut(duration: 0.2), value: isRoot)
-        .animation(.easeInOut(duration: 0.2), value: isHovered)
+        .animation(.easeInOut(duration: 0.2), value: hovered)
     }
     
     private var foregroundColor: Color {
@@ -81,6 +81,6 @@ private struct PageButton: View {
     }
     
     private var backgroundColor: Color {
-        isRoot ? .white : (isHovered ? .init(0xFFFFFF, alpha: 0.25) : .clear)
+        isRoot ? .white : (hovered ? .init(0xFFFFFF, alpha: 0.25) : .clear)
     }
 }

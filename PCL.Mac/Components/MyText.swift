@@ -12,7 +12,7 @@ struct MyText: View {
     private let size: CGFloat
     private let color: Color
     
-    init(_ text: String, _ size: CGFloat = 14, _ color: Color = .black) {
+    init(_ text: String, size: CGFloat = 14, color: Color = .init(0x343D4A)) {
         self.text = text
         self.size = size
         self.color = color
