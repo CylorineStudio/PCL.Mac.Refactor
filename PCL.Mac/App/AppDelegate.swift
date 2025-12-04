@@ -43,16 +43,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if let error = error?.takeUnretainedValue() { throw error }
         }
         executeTask("从缓存中加载版本列表") {
+            let cacheURL: URL = AppURLs.cacheURL.appending(path: "version_manifest.json")
+            if !FileManager.default.fileExists(atPath: cacheURL.path) {
+                self.executeAsyncTask("拉取版本列表") {
+                    let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
+                    let manifest: VersionManifest = .init(json: try response.json())
+                    CoreState.versionManifest = manifest
+                    try response.data.write(to: cacheURL)
+                    // TODO
+                }
+            }
             let cachedData: Data = try .init(contentsOf: AppURLs.cacheURL.appending(path: "version_manifest.json"))
             let manifest: VersionManifest = .init(json: try .init(data: cachedData))
             CoreState.versionManifest = manifest
-            // TODO
-        }
-        executeAsyncTask("拉取版本列表") {
-            let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
-            let manifest: VersionManifest = .init(json: try response.json())
-            CoreState.versionManifest = manifest
-            try response.data.write(to: AppURLs.cacheURL.appending(path: "version_manifest.json"))
             // TODO
         }
     }

@@ -11,25 +11,19 @@ struct LaunchView: View {
     @State private var text: String = ""
     
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 20) {
-                MyCard("可折叠的卡片") {
-                    VStack {
-                        MyText("文本")
-                        Rectangle()
-                            .fill(.red)
-                            .frame(height: 400)
-                    }
-                }
-                MyCard("不可折叠的卡片", foldable: false) {
-                    MyText("该卡片默认展开")
-                }
-                MyCard("", titled: false) {
-                    MyText("不可折叠也没有标题的卡片")
-                }
+        MyCard("可折叠的卡片") {
+            VStack {
+                MyText("文本")
+                Rectangle()
+                    .fill(.red)
+                    .frame(height: 400)
             }
-            .padding(24)
-            Spacer()
+        }
+        MyCard("不可折叠的卡片", foldable: false) {
+            MyText("该卡片默认展开")
+        }
+        MyCard("", titled: false) {
+            MyText("不可折叠也没有标题的卡片")
         }
     }
 }

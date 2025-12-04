@@ -18,13 +18,18 @@ class AppRouter: ObservableObject {
     
     @ViewBuilder
     var content: some View {
-        switch getLast() {
-        case .launch:
-            LaunchView()
-        case .download:
-            DownloadView()
-        default:
-            Spacer()
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 20) {
+                switch getLast() {
+                case .launch:
+                    LaunchView()
+                case .download:
+                    DownloadView()
+                default:
+                    Spacer()
+                }
+            }
+            .padding(24)
         }
     }
     
