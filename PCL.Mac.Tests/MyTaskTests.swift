@@ -11,13 +11,19 @@ import Core
 
 struct MyTaskTests {
     @Test func test() async throws {
-        let task: MyTask = .init(
-            .init(0, "下载客户端清单") { _ in },
-            .init(1, "下载散列资源") { _ in },
-            .init(2, "解压本地库") { _ in },
-            .init(1, "下载依赖库") { _ in },
-            .init(1, "下载客户端 JAR") { _ in }
+        let task: MyTask<TestModel> = .init(
+            .init(0, "下载客户端清单") { _,_ in },
+            .init(1, "下载散列资源") { _,_ in },
+            .init(2, "解压本地库") { _,_ in },
+            .init(1, "下载依赖库") { _,_ in },
+            .init(1, "下载客户端 JAR") { _,_ in }
         )
         try await task.execute()
+    }
+}
+
+private class TestModel: TaskModel {
+    required init() {
+        
     }
 }
