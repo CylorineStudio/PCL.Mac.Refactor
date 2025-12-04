@@ -14,7 +14,7 @@ public class MyTask: ObservableObject {
     
     public init(_ subTasks: SubTask...) {
         self.subTasks = subTasks
-        cancellables = subTasks.map { (subTask: SubTask) in
+        cancellables = subTasks.map { subTask in
             subTask.objectWillChange.sink { [weak self] _ in
                 self?.objectWillChange.send()
             }
@@ -39,7 +39,7 @@ public class MyTask: ObservableObject {
     }
     
     private func execute(taskList: [SubTask]) async throws {
-        try await withThrowingTaskGroup(of: Void.self) { (group: inout ThrowingTaskGroup<Void, Error>) in
+        try await withThrowingTaskGroup(of: Void.self) { group in
             for task in taskList {
                 group.addTask {
                     try await task.execute()
@@ -51,6 +51,7 @@ public class MyTask: ObservableObject {
     
     public class SubTask: ObservableObject {
         @MainActor @Published public var progress: Double = 0
+        @MainActor @Published public var state: SubTaskState = .waiting
         public let ordinal: Int
         public let name: String
         private let start: (SubTask) async throws -> Void
@@ -72,13 +73,38 @@ public class MyTask: ObservableObject {
         
         public func execute() async throws {
             log("正在执行子任务 \(name)")
+            await setState(.executing)
             do {
                 try await start(self)
             } catch {
                 err("子任务 \(name) 执行失败：\(error.localizedDescription)")
+                await setState(.failed)
                 throw error
             }
             log("子任务 \(name) 执行完成")
+            await setState(.finished)
+            await setProgressAsync(1)
         }
+        
+        @MainActor
+        public func setProgress(_ progress: Double) {
+            self.progress = progress
+        }
+        
+        public func setProgressAsync(_ progress: Double) async {
+            await MainActor.run {
+                self.progress = progress
+            }
+        }
+        
+        private func setState(_ state: SubTaskState) async {
+            await MainActor.run {
+                self.state = state
+            }
+        }
+    }
+    
+    public enum SubTaskState {
+        case waiting, executing, finished, failed
     }
 }
