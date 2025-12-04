@@ -12,7 +12,7 @@ public struct AssetIndex {
     public let objects: [Object]
     
     public init(json: JSON) {
-        self.objects = json["objects"].map(Object.init(path:json:))
+        self.objects = json["objects"].dictionaryValue.map { Object(path: $0.key, json: $0.value) }
     }
     
     public struct Object {

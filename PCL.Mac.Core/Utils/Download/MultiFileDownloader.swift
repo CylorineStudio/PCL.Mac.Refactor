@@ -12,7 +12,7 @@ public class MultiFileDownloader {
     private let concurrentLimit: Int
     private let replaceMethod: ReplaceMethod
     private let progressHandler: (@MainActor (Double) -> Void)?
-    private var progress: Double = 0
+    private var progress: [UUID: Double] = [:]
     
     public init(items: [DownloadItem], concurrentLimit: Int, replaceMethod: ReplaceMethod, progressHandler: (@MainActor (Double) -> Void)? = nil) {
         self.items = items
@@ -29,7 +29,7 @@ public class MultiFileDownloader {
                 while true {
                     try await Task.sleep(nanoseconds: 100_000_000) // 0.1s
                     await MainActor.run {
-                        progressHandler(self.progress)
+                        progressHandler(Array(self.progress.values).reduce(0, +))
                     }
                 }
             }
@@ -60,8 +60,10 @@ public class MultiFileDownloader {
     }
     
     private func download(_ item: DownloadItem) async throws {
+        let uuid: UUID = .init()
+        progress[uuid] = 0
         try await SingleFileDownloader.download(item, replaceMethod: replaceMethod) { progress in
-            self.progress += progress / Double(self.items.count)
+            self.progress[uuid]! += progress / Double(self.items.count)
         }
     }
 }
