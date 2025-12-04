@@ -27,6 +27,10 @@ public enum URLError: Error {
     case badResponse
 }
 
+public enum TaskError: Error, Equatable {
+    case invalidOrdinal(value: Int)
+}
+
 public struct SimpleError: LocalizedError {
     private let reason: String
     
