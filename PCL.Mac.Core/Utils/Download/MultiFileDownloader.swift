@@ -23,8 +23,20 @@ public class MultiFileDownloader {
     
     public func start() async throws {
         let total: Int = items.count
+        var tickerTask: Task<Void, Error>? = nil
+        if let progressHandler {
+            tickerTask = Task {
+                while true {
+                    try await Task.sleep(nanoseconds: 100_000_000) // 0.1s
+                    await MainActor.run {
+                        progressHandler(self.progress)
+                    }
+                }
+            }
+        }
+        defer { tickerTask?.cancel() }
         
-        var nextIndex = 0
+        var nextIndex: Int = 0
         try await withThrowingTaskGroup(of: Void.self) { group in
             let initial = min(concurrentLimit, total)
             while nextIndex < initial {
@@ -50,7 +62,6 @@ public class MultiFileDownloader {
     private func download(_ item: DownloadItem) async throws {
         try await SingleFileDownloader.download(item, replaceMethod: replaceMethod) { progress in
             self.progress += progress / Double(self.items.count)
-            self.progressHandler?(self.progress)
         }
     }
 }
