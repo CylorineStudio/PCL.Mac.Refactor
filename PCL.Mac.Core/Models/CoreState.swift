@@ -8,5 +8,5 @@
 import Foundation
 
 public enum CoreState {
-    public static var versionList: [String]?
+    public static var versionManifest: VersionManifest?
 }

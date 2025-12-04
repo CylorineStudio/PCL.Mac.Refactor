@@ -13,7 +13,7 @@ public class MinecraftVersion: Comparable, Equatable, CustomStringConvertible {
     
     public init(_ id: String) {
         self.id = id
-        self.index = (CoreState.versionList ?? []).firstIndex(of: id) ?? 0
+        self.index = CoreState.versionManifest?.getIndex(id) ?? .max
     }
     
     public static func == (lhs: MinecraftVersion, rhs: MinecraftVersion) -> Bool {
@@ -21,7 +21,7 @@ public class MinecraftVersion: Comparable, Equatable, CustomStringConvertible {
     }
     
     public static func < (lhs: MinecraftVersion, rhs: MinecraftVersion) -> Bool {
-        return lhs.index < rhs.index
+        return lhs.index > rhs.index
     }
     
     public lazy var description: String = { id }()

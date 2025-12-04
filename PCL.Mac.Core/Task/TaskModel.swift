@@ -7,6 +7,4 @@
 
 import Foundation
 
-public protocol TaskModel {
-    init()
-}
+public protocol TaskModel {}

@@ -12,18 +12,32 @@ import Core
 struct MyTaskTests {
     @Test func test() async throws {
         let task: MyTask<TestModel> = .init(
-            .init(0, "下载客户端清单") { _,_ in },
-            .init(1, "下载散列资源") { _,_ in },
-            .init(2, "解压本地库") { _,_ in },
-            .init(1, "下载依赖库") { _,_ in },
-            .init(1, "下载客户端 JAR") { _,_ in }
+            model: .init(),
+            .init(0, "下载客户端清单") { _, model in
+                model.value = 1
+                debug("model.value = 1")
+            },
+            .init(1, "下载散列资源") { _, model in
+                model.value += 1
+                debug("model.value += 1")
+            },
+            .init(2, "解压本地库") { _, model in
+                debug("model.value is: \(model.value)")
+            },
+            .init(1, "下载依赖库") { _, model in
+                model.value += 1
+                debug("model.value += 1")
+            },
+            .init(1, "下载客户端 JAR") { _, model in
+                model.value += 1
+                debug("model.value += 1")
+            }
         )
         try await task.execute()
     }
 }
 
 private class TestModel: TaskModel {
-    required init() {
-        
-    }
+    public var value: Int = 0
+    required init() {}
 }

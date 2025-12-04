@@ -28,6 +28,8 @@ public enum SingleFileDownloader {
                     throw DownloadError.fileExists
                 }
             }
+        } else {
+            try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         }
         
         var request: URLRequest = .init(url: url)

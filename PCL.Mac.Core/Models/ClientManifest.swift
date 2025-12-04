@@ -50,7 +50,7 @@ public class ClientManifest {
         public let path: String
         public let sha1: String?
         public let size: Int?
-        public let url: URL?
+        public let url: URL!
         
         public init(path: String, sha1: String?, size: Int?, url: URL?) {
             self.path = path

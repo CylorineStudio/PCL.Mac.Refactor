@@ -50,4 +50,8 @@ public struct VersionManifest {
         guard let index = versions.firstIndex(where: { $0.id == id }) else { return -1 }
         return versions.count - index
     }
+    
+    public func getVersion(_ id: String) -> Version? {
+        return versions.first(where: { $0.id == id })
+    }
 }

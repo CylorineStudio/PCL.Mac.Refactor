@@ -9,11 +9,12 @@ import Foundation
 import Combine
 
 public class MyTask<Model: TaskModel>: ObservableObject {
-    public let subTasks: [SubTask<Model>]
-    public let model: Model = .init()
+    public let subTasks: [SubTask]
+    public let model: Model
     private var cancellables: [AnyCancellable] = []
     
-    public init(_ subTasks: SubTask<Model>...) {
+    public init(model: Model, _ subTasks: SubTask...) {
+        self.model = model
         self.subTasks = subTasks
         cancellables = subTasks.map { subTask in
             subTask.objectWillChange.sink { [weak self] _ in
@@ -31,7 +32,7 @@ public class MyTask<Model: TaskModel>: ObservableObject {
             throw TaskError.invalidOrdinal(value: task.ordinal)
         }
         let maxOrdinal: Int = subTasks.map(\.ordinal).max()!
-        let subTaskLists: [[SubTask<Model>]] = subTasks.reduce(into: Array(repeating: [], count: maxOrdinal + 1)) { result, subTask in
+        let subTaskLists: [[SubTask]] = subTasks.reduce(into: Array(repeating: [], count: maxOrdinal + 1)) { result, subTask in
             result[subTask.ordinal].append(subTask)
         }
         for subTaskList in subTaskLists {
@@ -39,7 +40,7 @@ public class MyTask<Model: TaskModel>: ObservableObject {
         }
     }
     
-    private func execute(taskList: [SubTask<Model>]) async throws {
+    private func execute(taskList: [SubTask]) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
             for task in taskList {
                 group.addTask {
@@ -50,12 +51,12 @@ public class MyTask<Model: TaskModel>: ObservableObject {
         }
     }
     
-    public class SubTask<SubModel: TaskModel>: ObservableObject {
+    public class SubTask: ObservableObject {
         @MainActor @Published public var progress: Double = 0
         @MainActor @Published public var state: SubTaskState = .waiting
         public let ordinal: Int
         public let name: String
-        private let start: (SubTask<SubModel>, SubModel) async throws -> Void
+        private let start: (SubTask, Model) async throws -> Void
         
         /// 创建一个子任务。
         /// - Parameters:
@@ -65,14 +66,14 @@ public class MyTask<Model: TaskModel>: ObservableObject {
         public init(
             _ ordinal: Int,
             _ name: String,
-            _ start: @escaping (SubTask<SubModel>, SubModel) async throws -> Void
+            _ start: @escaping (SubTask, Model) async throws -> Void
         ) {
             self.ordinal = ordinal
             self.name = name
             self.start = start
         }
         
-        public func execute(_ model: SubModel) async throws {
+        public func execute(_ model: Model) async throws {
             log("正在执行子任务 \(name)")
             await setState(.executing)
             do {

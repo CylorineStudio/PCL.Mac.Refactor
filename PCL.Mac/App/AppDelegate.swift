@@ -45,13 +45,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         executeTask("从缓存中加载版本列表") {
             let cachedData: Data = try .init(contentsOf: AppURLs.cacheURL.appending(path: "version_manifest.json"))
             let manifest: VersionManifest = .init(json: try .init(data: cachedData))
-            CoreState.versionList = manifest.versions.map(\.id).reversed()
+            CoreState.versionManifest = manifest
             // TODO
         }
         executeAsyncTask("拉取版本列表") {
             let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
             let manifest: VersionManifest = .init(json: try response.json())
-            CoreState.versionList = manifest.versions.map(\.id).reversed()
+            CoreState.versionManifest = manifest
             try response.data.write(to: AppURLs.cacheURL.appending(path: "version_manifest.json"))
             // TODO
         }

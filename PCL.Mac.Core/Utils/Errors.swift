@@ -29,6 +29,7 @@ public enum URLError: Error {
 
 public enum TaskError: Error, Equatable {
     case invalidOrdinal(value: Int)
+    case unknownError
 }
 
 public struct SimpleError: LocalizedError {
