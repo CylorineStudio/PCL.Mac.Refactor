@@ -15,6 +15,7 @@ struct MyCard<Content: View>: View {
     @State private var contentHeight: CGFloat = 0
     /// `content()` 的高度限制。
     @State private var internalContentHeight: CGFloat = 0
+    @State private var lastClick: Date = .distantPast
     private let title: String
     private let foldable: Bool
     private let titled: Bool
@@ -22,7 +23,7 @@ struct MyCard<Content: View>: View {
     
     init(_ title: String, foldable: Bool = true, titled: Bool = true, @ViewBuilder _ content: @escaping () -> Content) {
         self.title = title
-        self.foldable = foldable
+        self.foldable = foldable && titled
         self.titled = titled
         self.content = content
     }
@@ -50,6 +51,8 @@ struct MyCard<Content: View>: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 guard foldable else { return }
+                guard Date().timeIntervalSince(lastClick) > 0.2 else { return }
+                lastClick = Date()
                 if folded {
                     // 展开卡片
                     folded = false

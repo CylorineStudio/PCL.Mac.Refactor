@@ -24,7 +24,7 @@ struct LaunchView: View {
                 MyCard("不可折叠的卡片", foldable: false) {
                     MyText("该卡片默认展开")
                 }
-                MyCard("", foldable: false, titled: false) {
+                MyCard("", titled: false) {
                     MyText("不可折叠也没有标题的卡片")
                 }
             }
