@@ -11,11 +11,14 @@ public class MultiFileDownloader {
     private let items: [DownloadItem]
     private let concurrentLimit: Int
     private let replaceMethod: ReplaceMethod
+    private let progressHandler: (@MainActor (Double) -> Void)?
+    private var progress: Double = 0
     
-    public init(items: [DownloadItem], concurrentLimit: Int, replaceMethod: ReplaceMethod) {
+    public init(items: [DownloadItem], concurrentLimit: Int, replaceMethod: ReplaceMethod, progressHandler: (@MainActor (Double) -> Void)? = nil) {
         self.items = items
         self.concurrentLimit = concurrentLimit
         self.replaceMethod = replaceMethod
+        self.progressHandler = progressHandler
     }
     
     public func start() async throws {
@@ -45,6 +48,9 @@ public class MultiFileDownloader {
     }
     
     private func download(_ item: DownloadItem) async throws {
-        try await SingleFileDownloader.download(item, replaceMethod: replaceMethod)
+        try await SingleFileDownloader.download(item, replaceMethod: replaceMethod) { progress in
+            self.progress += progress / Double(self.items.count)
+            self.progressHandler?(self.progress)
+        }
     }
 }

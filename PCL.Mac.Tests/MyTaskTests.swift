@@ -11,8 +11,16 @@ import Core
 
 struct MyTaskTests {
     @Test func test() async throws {
+        try await MyTask<TestModel>(name: "empty", model: .init()).start()
+        let _ = await #expect(throws: TaskError.invalidOrdinal(value: -1)) {
+            try await MyTask<TestModel>(name: "Invalid ordinal", model: .init(), .init(-1, "", { _, _ in })).start()
+        }
+        let _ = await #expect(throws: TaskError.unknownError) {
+            try await MyTask<TestModel>(name: "Error", model: .init(), .init(0, "", { _, _ in throw TaskError.unknownError })).start()
+        }
+        
         let task: MyTask<TestModel> = .init(
-            model: .init(),
+            name: "Model test", model: .init(),
             .init(0, "下载客户端清单") { _, model in
                 model.value = 1
                 debug("model.value = 1")
@@ -33,7 +41,7 @@ struct MyTaskTests {
                 debug("model.value += 1")
             }
         )
-        try await task.execute()
+        try await task.start()
     }
 }
 

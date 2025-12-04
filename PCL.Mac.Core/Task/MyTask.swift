@@ -9,11 +9,13 @@ import Foundation
 import Combine
 
 public class MyTask<Model: TaskModel>: ObservableObject {
+    public let name: String
     public let subTasks: [SubTask]
     public let model: Model
     private var cancellables: [AnyCancellable] = []
     
-    public init(model: Model, _ subTasks: SubTask...) {
+    public init(name: String, model: Model, _ subTasks: SubTask...) {
+        self.name = name
         self.model = model
         self.subTasks = subTasks
         cancellables = subTasks.map { subTask in
@@ -23,7 +25,7 @@ public class MyTask<Model: TaskModel>: ObservableObject {
         }
     }
     
-    public func execute() async throws {
+    public func start() async throws {
         guard !subTasks.isEmpty else {
             warn("subTasks 为空")
             return
@@ -35,16 +37,18 @@ public class MyTask<Model: TaskModel>: ObservableObject {
         let subTaskLists: [[SubTask]] = subTasks.reduce(into: Array(repeating: [], count: maxOrdinal + 1)) { result, subTask in
             result[subTask.ordinal].append(subTask)
         }
+        log("正在执行任务 \(name)")
         for subTaskList in subTaskLists {
             try await execute(taskList: subTaskList)
         }
+        log("任务 \(name) 执行完成")
     }
     
     private func execute(taskList: [SubTask]) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
             for task in taskList {
                 group.addTask {
-                    try await task.execute(self.model)
+                    try await task.start(self.model)
                 }
             }
             for try await _ in group { }
@@ -56,7 +60,7 @@ public class MyTask<Model: TaskModel>: ObservableObject {
         @MainActor @Published public var state: SubTaskState = .waiting
         public let ordinal: Int
         public let name: String
-        private let start: (SubTask, Model) async throws -> Void
+        private let execute: (SubTask, Model) async throws -> Void
         
         /// 创建一个子任务。
         /// - Parameters:
@@ -66,18 +70,18 @@ public class MyTask<Model: TaskModel>: ObservableObject {
         public init(
             _ ordinal: Int,
             _ name: String,
-            _ start: @escaping (SubTask, Model) async throws -> Void
+            _ execute: @escaping (SubTask, Model) async throws -> Void
         ) {
             self.ordinal = ordinal
             self.name = name
-            self.start = start
+            self.execute = execute
         }
         
-        public func execute(_ model: Model) async throws {
+        public func start(_ model: Model) async throws {
             log("正在执行子任务 \(name)")
             await setState(.executing)
             do {
-                try await start(self, model)
+                try await execute(self, model)
             } catch {
                 err("子任务 \(name) 执行失败：\(error.localizedDescription)")
                 await setState(.failed)
@@ -95,7 +99,7 @@ public class MyTask<Model: TaskModel>: ObservableObject {
         
         public func setProgressAsync(_ progress: Double) async {
             await MainActor.run {
-                self.progress = progress
+                self.setProgress(progress)
             }
         }
         

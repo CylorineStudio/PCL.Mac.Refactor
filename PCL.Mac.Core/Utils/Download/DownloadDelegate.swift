@@ -9,10 +9,12 @@ import Foundation
 
 class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
     private let destination: URL
+    private let progressHandler: (@MainActor (Double) -> Void)?
     private var continuation: CheckedContinuation<Void, Error>?
     
-    init(destination: URL, continuation: CheckedContinuation<Void, Error>) {
+    init(destination: URL, continuation: CheckedContinuation<Void, Error>, progressHandler: (@MainActor (Double) -> Void)?) {
         self.destination = destination
+        self.progressHandler = progressHandler
         self.continuation = continuation
     }
     
@@ -57,6 +59,9 @@ class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
     ) {
         DispatchQueue.main.async {
             DownloadSpeedManager.shared.addBytes(bytesWritten)
+            if totalBytesExpectedToWrite >= 0 {
+                self.progressHandler?(Double(totalBytesWritten) / Double(totalBytesExpectedToWrite))
+            }
         }
     }
     

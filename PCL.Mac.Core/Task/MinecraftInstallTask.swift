@@ -22,7 +22,7 @@ public enum MinecraftInstallTask {
             minecraftDirectory: minecraftDirectory
         )
         return .init(
-            model: model,
+            name: "\(name) 安装", model: model,
             .init(0, "下载客户端 JSON 文件", downloadClientManifest(task:model:)),
             .init(1, "下载资源索引文件", downloadAssetIndex(task:model:)),
             .init(2, "下载客户端本体", downloadClient(task:model:)),
@@ -46,7 +46,8 @@ public enum MinecraftInstallTask {
             url: version.url,
             destination: destination,
             sha1: nil,
-            replaceMethod: .skip
+            replaceMethod: .skip,
+            progressHandler: task.setProgress(_:)
         )
         model.manifest = ClientManifest(json: try JSON(data: Data(contentsOf: destination)))
     }
@@ -58,7 +59,8 @@ public enum MinecraftInstallTask {
             url: model.manifest.assetIndex.url,
             destination: destination,
             sha1: model.manifest.assetIndex.sha1,
-            replaceMethod: .skip
+            replaceMethod: .skip,
+            progressHandler: task.setProgress(_:)
         )
         model.assetIndex = .init(json: try JSON(data: Data(contentsOf: destination)))
     }
@@ -68,7 +70,8 @@ public enum MinecraftInstallTask {
             url: model.manifest.downloads.client.url,
             destination: model.runningDirectory.appending(path: "\(model.name).jar"),
             sha1: model.manifest.downloads.client.sha1,
-            replaceMethod: .skip
+            replaceMethod: .skip,
+            progressHandler: task.setProgress(_:)
         )
     }
     
@@ -80,7 +83,7 @@ public enum MinecraftInstallTask {
         let items: [DownloadItem] = (model.manifest.getLibraries() + model.manifest.getNatives())
             .compactMap(\.artifact)
             .map { DownloadItem(url: $0.url, destination: model.minecraftDirectory.appending(path: "libraries/\($0.path)"), sha1: $0.sha1) }
-        try await MultiFileDownloader(items: items, concurrentLimit: 64, replaceMethod: .skip).start()
+        try await MultiFileDownloader(items: items, concurrentLimit: 64, replaceMethod: .skip, progressHandler: task.setProgress(_:)).start()
     }
     
     public class Model: TaskModel {
