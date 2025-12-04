@@ -27,7 +27,7 @@ struct MyButton: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 4)
-                .fill(color.opacity(hovered ? 0.2 : 0.1))
+                .fill(color.opacity(hovered ? 0.2 : 0.05))
             RoundedRectangle(cornerRadius: 4)
                 .stroke(style: .init(lineWidth: 1.2))
                 .fill(color)
@@ -35,7 +35,7 @@ struct MyButton: View {
             VStack(spacing: 4) {
                 MyText(label, color: color)
                 if let subLabel {
-                    MyText(subLabel, color: .init(0x8C8C8C))
+                    MyText(subLabel, size: 12, color: .init(0x8C8C8C))
                 }
             }
         }
