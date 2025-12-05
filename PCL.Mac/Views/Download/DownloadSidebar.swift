@@ -11,6 +11,13 @@ struct DownloadSidebar: Sidebar {
     let width: CGFloat = 120
     
     var content: some View {
-        MyText("DownloadSidebar")
+        VStack {
+            MyNavigationList(
+                (.downloadPage1, "LaunchPageIcon", "Page1"),
+                (.downloadPage2, "DownloadPageIcon", "Page2"),
+                (.downloadPage3, "MultiplayerPageIcon", "Page3")
+            )
+            Spacer()
+        }
     }
 }

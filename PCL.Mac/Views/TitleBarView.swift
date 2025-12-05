@@ -12,12 +12,16 @@ struct TitleBarView: View {
         ZStack(alignment: .leading) {
             Rectangle()
                 .fill(.blue)
-            Image("Title")
-                .resizable()
-                .scaledToFit()
-                .foregroundStyle(.white)
-                .frame(height: 19)
-                .padding(.leading, 65)
+            HStack {
+                Image("Title")
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundStyle(.white)
+                    .frame(height: 19)
+                    .padding(.leading, 65)
+                Badge("Mac")
+                Badge("Dev", labelColor: Color(0x343D4A), backgroundColor: Color(0x9BF00B))
+            }
             HStack {
                 Spacer()
                 PageButton("启动", "LaunchPageIcon", .launch)
@@ -29,6 +33,27 @@ struct TitleBarView: View {
             }
         }
         .frame(height: 48)
+    }
+    
+    struct Badge: View {
+        private let label: String
+        private let labelColor: Color
+        private let backgroundColor: Color
+        
+        init(_ label: String, labelColor: Color = .pclBlue, backgroundColor: Color = .white) {
+            self.label = label
+            self.labelColor = labelColor
+            self.backgroundColor = backgroundColor
+        }
+        
+        var body: some View {
+            MyText(label, color: labelColor)
+                .padding(2)
+                .background {
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(backgroundColor)
+                }
+        }
     }
 }
 
