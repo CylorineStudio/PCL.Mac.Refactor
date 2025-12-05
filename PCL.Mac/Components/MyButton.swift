@@ -27,7 +27,7 @@ struct MyButton: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 4)
-                .fill(color.opacity(hovered ? 0.2 : 0.05))
+                .fill(color.opacity(hovered ? 0.2 : 0.005))
             RoundedRectangle(cornerRadius: 4)
                 .stroke(style: .init(lineWidth: 1.2))
                 .fill(color)
