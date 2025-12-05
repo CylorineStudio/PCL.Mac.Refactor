@@ -84,7 +84,6 @@ struct MyCard<Content: View>: View {
             .opacity(showContent ? 1 : 0)
             .clipped()
         }
-        .animation(.easeInOut(duration: 0.2), value: hovered)
         .onHover { hovered in
             self.hovered = hovered
         }
@@ -93,6 +92,7 @@ struct MyCard<Content: View>: View {
                 .fill(Color(0xF2F5F9))
                 .shadow(color: hovered ? Color(0x1370F3, alpha: 0.6) : Color(0x000000, alpha: 0.1), radius: 6)
         }
+        .animation(.easeInOut(duration: 0.2), value: hovered)
         .onAppear {
             if !foldable || !titled {
                 folded = false
