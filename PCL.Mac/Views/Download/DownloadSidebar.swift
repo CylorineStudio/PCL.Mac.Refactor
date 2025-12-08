@@ -13,7 +13,7 @@ struct DownloadSidebar: Sidebar {
     var content: some View {
         VStack {
             MyNavigationList(
-                (.downloadPage1, "LaunchPageIcon", "Page1"),
+                (.minecraftDownload, "LaunchPageIcon", "游戏下载"),
                 (.downloadPage2, "DownloadPageIcon", "Page2"),
                 (.downloadPage3, "MultiplayerPageIcon", "Page3")
             )

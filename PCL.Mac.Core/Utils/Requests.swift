@@ -30,11 +30,13 @@ public enum Requests {
         public let statusCode: Int
         public let headers: [String: String]
         public let data: Data
+        public let isCached: Bool
         
-        fileprivate init(data: Data, response: HTTPURLResponse) {
+        fileprivate init(data: Data, response: HTTPURLResponse, isCached: Bool = false) {
             self.statusCode = response.statusCode
             self.headers = Self.parseHeaders(response.allHeaderFields)
             self.data = data
+            self.isCached = isCached
         }
         
         public func json() throws -> JSON {
@@ -110,5 +112,13 @@ public enum Requests {
         case .urlEncoded:
             return (try body.map { "\($0)=\($1)" }.joined(separator: "&").data(using: .utf8).unwrap(), "application/x-www-form-urlencoded")
         }
+    }
+    
+    public static func head(
+        _ url: URLConvertible,
+        headers: [String: String]? = nil,
+        params: [String: String]? = nil
+    ) async throws -> Response {
+        return try await request(url: url, method: "HEAD", headers: headers, body: params, using: .urlEncoded)
     }
 }

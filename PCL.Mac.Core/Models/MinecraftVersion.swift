@@ -25,4 +25,17 @@ public class MinecraftVersion: Comparable, Equatable, CustomStringConvertible {
     }
     
     public lazy var description: String = { id }()
+    
+    public enum VersionType {
+        case release, snapshot, old, aprilFool
+        
+        init?(stringValue: String) {
+            switch stringValue {
+            case "release": self = .release
+            case "snapshot": self = .snapshot
+            case "old_beta", "old_alpha": self = .old
+            default: return nil
+            }
+        }
+    }
 }

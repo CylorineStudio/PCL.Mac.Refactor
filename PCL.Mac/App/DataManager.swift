@@ -10,6 +10,8 @@ import SwiftUI
 class DataManager: ObservableObject {
     static let shared: DataManager = .init()
     
+    var versionsLastModified: String?
+    
     private init() {
     }
 }

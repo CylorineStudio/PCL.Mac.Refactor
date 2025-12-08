@@ -9,6 +9,8 @@ import SwiftUI
 
 struct DownloadPage2: View {
     var body: some View {
-        MyText("DownloadPage2")
+        CardContainer {
+            MyText("DownloadPage2")
+        }
     }
 }

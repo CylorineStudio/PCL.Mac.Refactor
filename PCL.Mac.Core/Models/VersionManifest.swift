@@ -28,7 +28,7 @@ public struct VersionManifest {
         }()
         
         public let id: String
-        public let type: String // TODO
+        public let type: MinecraftVersion.VersionType
         public let url: URL
         public let time: Date
         public let releaseTime: Date
@@ -36,10 +36,11 @@ public struct VersionManifest {
         fileprivate init?(json: JSON) {
             guard let url = URL(string: json["url"].stringValue),
                   let time = Self.dateFormatter.date(from: json["time"].stringValue),
-                  let releaseTime = Self.dateFormatter.date(from: json["releaseTime"].stringValue)
+                  let releaseTime = Self.dateFormatter.date(from: json["releaseTime"].stringValue),
+                  let versionType = MinecraftVersion.VersionType(stringValue: json["type"].stringValue)
             else { return nil }
             self.id = json["id"].stringValue
-            self.type = json["type"].stringValue
+            self.type = versionType
             self.url = url
             self.time = time
             self.releaseTime = releaseTime
