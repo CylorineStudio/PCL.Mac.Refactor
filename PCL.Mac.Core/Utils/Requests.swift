@@ -20,6 +20,7 @@ extension String: URLConvertible {
     public var url: URL? { URL(string: self) }
 }
 
+/// HTTP 请求工具类。
 public enum Requests {
     public enum EncodeMethod {
         case json
@@ -30,13 +31,11 @@ public enum Requests {
         public let statusCode: Int
         public let headers: [String: String]
         public let data: Data
-        public let isCached: Bool
         
         fileprivate init(data: Data, response: HTTPURLResponse, isCached: Bool = false) {
             self.statusCode = response.statusCode
             self.headers = Self.parseHeaders(response.allHeaderFields)
             self.data = data
-            self.isCached = isCached
         }
         
         public func json() throws -> JSON {
@@ -52,6 +51,14 @@ public enum Requests {
         }
     }
     
+    /// 向目标 URL 发送请求。
+    /// - Parameters:
+    ///   - url: 目标 URL，可以是 `String` 与 `URL`。
+    ///   - method: 请求方法，如 `GET`、`POST`。
+    ///   - headers: 请求头。
+    ///   - body: 请求体，在请求方法为 `GET` 时被视为 URL params。
+    ///   - encodeMethod: 请求体的编码方式。
+    /// - Returns: 返回的响应。
     public static func request(
         url: URLConvertible,
         method: String,
@@ -88,6 +95,12 @@ public enum Requests {
         return Response(data: data, response: response)
     }
     
+    /// 向目标 URL 发送 `GET` 请求。
+    /// - Parameters:
+    ///   - url: 目标 URL，可以是 `String` 与 `URL`。
+    ///   - headers: 请求头。
+    ///   - params: 请求的 URL params。
+    /// - Returns: 返回的响应。
     public static func get(
         _ url: URLConvertible,
         headers: [String: String]? = nil,
@@ -96,6 +109,13 @@ public enum Requests {
         return try await request(url: url, method: "GET", headers: headers, body: params, using: .urlEncoded)
     }
     
+    /// 向目标 URL 发送 `POST` 请求。
+    /// - Parameters:
+    ///   - url: 目标 URL，可以是 `String` 与 `URL`。
+    ///   - headers: 请求头。
+    ///   - body: 请求体。
+    ///   - encodeMethod: 请求体的编码方式。
+    /// - Returns: 返回的响应。
     public static func post(
         _ url: URLConvertible,
         headers: [String: String]? = nil,
@@ -112,13 +132,5 @@ public enum Requests {
         case .urlEncoded:
             return (try body.map { "\($0)=\($1)" }.joined(separator: "&").data(using: .utf8).unwrap(), "application/x-www-form-urlencoded")
         }
-    }
-    
-    public static func head(
-        _ url: URLConvertible,
-        headers: [String: String]? = nil,
-        params: [String: String]? = nil
-    ) async throws -> Response {
-        return try await request(url: url, method: "HEAD", headers: headers, body: params, using: .urlEncoded)
     }
 }

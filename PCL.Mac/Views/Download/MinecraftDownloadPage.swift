@@ -30,28 +30,17 @@ struct MinecraftDownloadPage: View {
         }
         .task {
             do {
-                var lastModified: String? = dataManager.versionsLastModified
-                let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
-                guard response.statusCode == 200 else {
-                    throw SimpleError("服务器返回了错误的状态码：\(response.statusCode)")
-                }
-                if lastModified != response.headers["Last-Modified"] {
-                    log("刷新版本清单成功")
-                    lastModified = response.headers["Last-Modified"]
-                }
-                
-                let manifest: VersionManifest = .init(json: try JSON(data: response.data))
+                let manifest: VersionManifest = try await refresh()
                 await MainActor.run {
-                    self.dataManager.versionsLastModified = lastModified
-                    self.latestRelease = manifest.getVersion(CoreState.versionManifest.latestRelease)
+                    latestRelease = manifest.getVersion(manifest.latestRelease)
                     if let latestSnapshot = manifest.latestSnapshot {
                         self.latestSnapshot = manifest.getVersion(latestSnapshot)
                     }
-                    self.categoryMap[.release] = manifest.versions.filter { $0.type == .release }
-                    self.categoryMap[.snapshot] = manifest.versions.filter { $0.type == .snapshot }
-                    self.categoryMap[.old] = manifest.versions.filter { $0.type == .old }
-                    self.categoryMap[.aprilFool] = manifest.versions.filter { $0.type == .aprilFool }
-                    self.loaded = true
+                    categoryMap[.release] = manifest.versions.filter { $0.type == .release }
+                    categoryMap[.snapshot] = manifest.versions.filter { $0.type == .snapshot }
+                    categoryMap[.aprilFool] = manifest.versions.filter { $0.type == .aprilFool }
+                    categoryMap[.old] = manifest.versions.filter { $0.type == .old }
+                    loaded = true
                 }
             } catch {
                 err("刷新版本清单失败：\(error.localizedDescription)")
@@ -85,6 +74,19 @@ struct MinecraftDownloadPage: View {
                 }
             }
         }
+    }
+    
+    private func refresh() async throws -> VersionManifest {
+        let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
+        if response.headers["Last-Modified"] == dataManager.versionsLastModified {
+            return CoreState.versionManifest
+        }
+        await MainActor.run {
+            dataManager.versionsLastModified = response.headers["Last-Modified"]
+        }
+        CoreState.versionManifest = .init(json: try response.json())
+        try response.data.write(to: AppURLs.cacheURL.appending(path: "version_manifest.json"))
+        return CoreState.versionManifest
     }
 }
 
