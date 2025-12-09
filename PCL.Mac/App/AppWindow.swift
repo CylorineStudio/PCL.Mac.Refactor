@@ -23,7 +23,11 @@ class AppWindow: NSWindow {
         self.titleVisibility = .hidden
         self.titlebarAppearsTransparent = true
         
-        self.contentView = NSHostingView(rootView: ContentView().ignoresSafeArea(.container, edges: .top))
+        self.contentView = NSHostingView(
+            rootView: ContentView()
+                .ignoresSafeArea(.container, edges: .top)
+                .environmentObject(DataManager())
+        )
         
         self.setFrameAutosaveName("AppWindow")
         self.center()

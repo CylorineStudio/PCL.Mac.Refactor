@@ -10,7 +10,7 @@ import Core
 import SwiftyJSON
 
 struct MinecraftDownloadPage: View {
-    @ObservedObject private var dataManager: DataManager = .shared
+    @EnvironmentObject private var dataManager: DataManager
     @State private var loaded: Bool = false
     @State private var latestRelease: VersionManifest.Version?
     @State private var latestSnapshot: VersionManifest.Version?
@@ -27,6 +27,12 @@ struct MinecraftDownloadPage: View {
             } else {
                 MyText("正在加载版本列表")
             }
+        }
+        .onDisappear {
+            loaded = false
+            latestRelease = nil
+            latestSnapshot = nil
+            categoryMap = [:]
         }
         .task {
             do {

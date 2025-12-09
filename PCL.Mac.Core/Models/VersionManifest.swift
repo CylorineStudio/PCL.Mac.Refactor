@@ -8,7 +8,7 @@
 import Foundation
 import SwiftyJSON
 
-public class VersionManifest {
+public struct VersionManifest {
     public let latestRelease: String
     public let latestSnapshot: String?
     public let versions: [Version]
@@ -20,7 +20,7 @@ public class VersionManifest {
         self.versions = json["versions"].arrayValue.compactMap(Version.init(json:))
     }
     
-    public class Version {
+    public struct Version {
         private static let dateFormatter: ISO8601DateFormatter = {
             let formatter: ISO8601DateFormatter = .init()
             formatter.timeZone = .current
