@@ -8,7 +8,8 @@
 import Foundation
 import Combine
 
-public class MyTask<Model: TaskModel>: ObservableObject {
+public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
+    public let id: UUID = .init()
     public let name: String
     public let subTasks: [SubTask]
     public let model: Model
@@ -56,8 +57,8 @@ public class MyTask<Model: TaskModel>: ObservableObject {
     }
     
     public class SubTask: ObservableObject {
-        @MainActor @Published public var progress: Double = 0
-        @MainActor @Published public var state: SubTaskState = .waiting
+        @Published public private(set) var progress: Double = 0
+        @Published public private(set) var state: SubTaskState = .waiting
         public let ordinal: Int
         public let name: String
         private let execute: (SubTask, Model) async throws -> Void
@@ -109,8 +110,8 @@ public class MyTask<Model: TaskModel>: ObservableObject {
             }
         }
     }
-    
-    public enum SubTaskState {
-        case waiting, executing, finished, failed
-    }
+}
+
+public enum SubTaskState {
+    case waiting, executing, finished, failed
 }

@@ -19,7 +19,7 @@ struct ContentView: View {
                 Rectangle()
                     .fill(.white)
                     .frame(width: sidebarWidth)
-                    .overlay(AnyView(router.sidebar.content))
+                    .overlay(AnyView(router.sidebar))
                     .onChange(of: router.sidebar.width) { newValue in
                         withAnimation(.spring(response: 0.1, dampingFraction: 0.8)) {
                             sidebarWidth = newValue

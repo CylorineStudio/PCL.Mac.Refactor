@@ -8,7 +8,7 @@
 import SwiftUI
 
 enum AppRoute: Identifiable {
-    case launch, download, multiplayer, settings, other
+    case launch, download, multiplayer, settings, other, tasks
     // 下载页面的子页面
     case minecraftDownload, downloadPage2, downloadPage3
     
@@ -30,13 +30,15 @@ class AppRouter: ObservableObject {
     var content: some View {
         switch getLast() {
         case .launch:
-            LaunchView()
+            LaunchPage()
         case .minecraftDownload:
             MinecraftDownloadPage()
         case .downloadPage2:
             DownloadPage2()
         case .downloadPage3:
             DownloadPage3()
+        case .tasks:
+            TasksPage()
         default:
             Spacer()
         }
@@ -48,6 +50,8 @@ class AppRouter: ObservableObject {
             LaunchSidebar()
         case .download:
             DownloadSidebar()
+        case .tasks:
+            TasksSidebar()
         default:
             EmptySidebar()
         }

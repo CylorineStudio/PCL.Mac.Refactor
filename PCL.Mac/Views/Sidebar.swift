@@ -7,20 +7,16 @@
 
 import SwiftUI
 
-protocol Sidebar {
+protocol Sidebar: View {
     init()
-    associatedtype Body : View
     
     var width: CGFloat { get }
-    
-    @ViewBuilder
-    var content: Self.Body { get }
 }
 
 struct EmptySidebar: Sidebar {
     let width: CGFloat = 0
     
-    var content: some View {
+    var body: some View {
         EmptyView()
     }
 }

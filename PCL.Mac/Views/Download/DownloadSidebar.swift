@@ -10,7 +10,7 @@ import SwiftUI
 struct DownloadSidebar: Sidebar {
     let width: CGFloat = 120
     
-    var content: some View {
+    var body: some View {
         VStack {
             MyNavigationList(
                 (.minecraftDownload, "LaunchPageIcon", "游戏下载"),

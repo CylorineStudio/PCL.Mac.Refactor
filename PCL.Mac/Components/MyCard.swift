@@ -76,13 +76,20 @@ struct MyCard<Content: View>: View {
                 content()
             }
             .padding(EdgeInsets(top: 0, leading: 18, bottom: 18, trailing: 18))
-            .frame(alignment: .top)
             .background {
-                GeometryReader { proxy in Color.clear.onAppear { contentHeight = proxy.size.height } }
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { contentHeight = proxy.size.height }
+                        .onChange(of: proxy.size) { newSize in
+                            contentHeight = newSize.height
+                            if !folded {
+                                internalContentHeight = newSize.height
+                            }
+                        }
+                }
             }
             .frame(height: internalContentHeight, alignment: .top)
             .opacity(showContent ? 1 : 0)
-            .clipped()
         }
         .onHover { hovered in
             self.hovered = hovered

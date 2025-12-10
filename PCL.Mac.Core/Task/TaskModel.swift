@@ -8,3 +8,7 @@
 import Foundation
 
 public protocol TaskModel {}
+
+public class EmptyModel: TaskModel {
+    public init() {}
+}

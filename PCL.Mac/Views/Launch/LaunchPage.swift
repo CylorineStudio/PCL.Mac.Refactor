@@ -1,5 +1,5 @@
 //
-//  LaunchView.swift
+//  LaunchPage.swift
 //  PCL.Mac
 //
 //  Created by 温迪 on 2025/11/9.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct LaunchView: View {
+struct LaunchPage: View {
     @State private var text: String = ""
     private let texts: [(String, String)] = [
         ("AAAAAA", "aaaaaa"), ("BBBBBB", "bbbbbb"), ("CCCCCC", "cccccc")
@@ -47,6 +47,12 @@ struct LaunchView: View {
             }
             MyCard("", titled: false) {
                 MyText("不可折叠也没有标题的卡片")
+            }
+            MyCard("", titled: false) {
+                MyButton(".tasks") {
+                    AppRouter.shared.setRoot(.tasks)
+                }
+                .frame(width: 80, height: 40)
             }
         }
     }

@@ -10,7 +10,7 @@ import SwiftUI
 struct LaunchSidebar: Sidebar {
     let width: CGFloat = 240
     
-    var content: some View {
+    var body: some View {
         MyText("LaunchSidebar")
     }
 }

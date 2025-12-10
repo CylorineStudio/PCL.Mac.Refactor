@@ -6,7 +6,9 @@
 //
 
 import SwiftUI
+import Core
 
 class DataManager: ObservableObject {
+    @Published var runningTasks: [AnyMyTask] = []
     var versionsLastModified: String?
 }
