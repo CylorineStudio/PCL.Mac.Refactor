@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Core
 
 class DataManager: ObservableObject {
     var versionsLastModified: String?
