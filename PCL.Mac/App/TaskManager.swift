@@ -15,7 +15,9 @@ public class TaskManager: ObservableObject {
     
     public func execute<Model>(task: MyTask<Model>) {
         let anyTask: AnyMyTask = .init(task) { task in
-            self.tasks.removeAll(where: { $0.id == task.id })
+            DispatchQueue.main.async {
+                self.tasks.removeAll(where: { $0.id == task.id })
+            }
         }
         tasks.append(anyTask)
         Task {

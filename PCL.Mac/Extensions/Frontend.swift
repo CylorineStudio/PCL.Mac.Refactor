@@ -1,11 +1,14 @@
 //
-//  VersionTypeExtension.swift
+//  Frontend.swift
 //  PCL.Mac
 //
-//  Created by 温迪 on 2025/12/7.
+//  Created by 温迪 on 2025/12/11.
 //
 
+import Foundation
 import Core
+
+// 为 PCL.Mac.Core 中的一些枚举类扩展本地化名或图标，以在 SwiftUI 中显示。
 
 extension MinecraftVersion.VersionType {
     var icon: String {
@@ -23,6 +26,17 @@ extension MinecraftVersion.VersionType {
         case .snapshot: "快照版"
         case .old: "远古版"
         case .aprilFool: "愚人节版"
+        }
+    }
+}
+
+extension SubTaskState {
+    var image: String {
+        switch self {
+        case .waiting: "TaskWaiting"
+        case .executing: ""
+        case .finished: "TaskFinished"
+        case .failed: ""
         }
     }
 }

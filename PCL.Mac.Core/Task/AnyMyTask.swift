@@ -10,10 +10,11 @@ import Combine
 
 public class AnyMyTask: ObservableObject, Identifiable {
     public typealias ModelType = any TaskModel
+    public typealias SubTask = (name: String, progress: Double, state: SubTaskState)
     
     public let id: UUID
     public let name: String
-    private let _subTasks: () -> [(name: String, progress: Double, state: SubTaskState)]
+    private let _subTasks: () -> [SubTask]
     private var cancellable: AnyCancellable?
     
     public init<Model>(_ task: MyTask<Model>, completion: @escaping (AnyMyTask) -> Void) where Model: TaskModel {
@@ -28,5 +29,5 @@ public class AnyMyTask: ObservableObject, Identifiable {
         task.setCompletion { _ in completion(self) }
     }
     
-    public var subTasks: [(name: String, progress: Double, state: SubTaskState)] { _subTasks() }
+    public var subTasks: [SubTask] { _subTasks() }
 }
