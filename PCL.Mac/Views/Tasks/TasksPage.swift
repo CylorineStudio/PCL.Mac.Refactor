@@ -9,7 +9,7 @@ import SwiftUI
 import Core
 
 struct TasksPage: View {
-    @EnvironmentObject private var dataManager: DataManager
+    @ObservedObject private var taskManager: TaskManager = .shared
     
     var body: some View {
         CardContainer {
@@ -22,19 +22,14 @@ struct TasksPage: View {
                             .init(0, "子任务2（与 子任务1 同时执行，等待 2s）") { _,_ in try await Task.sleep(seconds: 2) },
                             .init(1, "子任务3（等待 1s）") { _,_ in try await Task.sleep(seconds: 1) }
                         )
-                        Task {
-                            try await task.start()
-                        }
-                        dataManager.runningTasks.append(.init(
-                            task
-                        ))
+                        taskManager.execute(task: task)
                     }
                     .frame(width: 100)
                     Spacer()
                 }
                 .frame(height: 40)
             }
-            ForEach(dataManager.runningTasks) { task in
+            ForEach(taskManager.tasks) { task in
                 TaskCard(task)
             }
         }
