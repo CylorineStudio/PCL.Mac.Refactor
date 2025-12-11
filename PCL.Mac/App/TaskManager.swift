@@ -14,14 +14,16 @@ public class TaskManager: ObservableObject {
     @Published public private(set) var tasks: [AnyMyTask] = []
     
     public func execute<Model>(task: MyTask<Model>) {
-        let anyTask: AnyMyTask = .init(task) { task in
-            DispatchQueue.main.async {
-                self.tasks.removeAll(where: { $0.id == task.id })
-            }
-        }
-        tasks.append(anyTask)
+        tasks.append(AnyMyTask(task))
         Task {
-            try await task.start()
+            do {
+                try await task.start()
+            } catch {
+                // TODO: 弹出 Hint
+            }
+            await MainActor.run {
+                tasks.removeAll(where: { $0.id == task.id })
+            }
             // TODO: 弹出 Hint
         }
     }

@@ -14,7 +14,6 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
     public let subTasks: [SubTask]
     private let model: Model
     private var cancellables: [AnyCancellable] = []
-    private var completion: ((MyTask<Model>) -> Void)? = nil
     
     public init(name: String, model: Model, _ subTasks: SubTask...) {
         self.name = name
@@ -25,10 +24,6 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
                 self?.objectWillChange.send()
             }
         }
-    }
-    
-    public func setCompletion(_ completion: @escaping (MyTask<Model>) -> Void) {
-        self.completion = completion
     }
     
     public func start() async throws {
@@ -48,7 +43,6 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
             try await execute(taskList: subTaskList)
         }
         log("任务 \(name) 执行完成")
-        completion?(self)
     }
     
     private func execute(taskList: [SubTask]) async throws {

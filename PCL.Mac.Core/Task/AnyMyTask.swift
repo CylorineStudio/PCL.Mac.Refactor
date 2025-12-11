@@ -17,7 +17,7 @@ public class AnyMyTask: ObservableObject, Identifiable {
     private let _subTasks: () -> [SubTask]
     private var cancellable: AnyCancellable?
     
-    public init<Model>(_ task: MyTask<Model>, completion: @escaping (AnyMyTask) -> Void) where Model: TaskModel {
+    public init<Model>(_ task: MyTask<Model>) where Model: TaskModel {
         self.id = task.id
         self.name = task.name
         self._subTasks = {
@@ -26,7 +26,6 @@ public class AnyMyTask: ObservableObject, Identifiable {
         self.cancellable = task.objectWillChange.sink { [weak self] _ in
             self?.objectWillChange.send()
         }
-        task.setCompletion { _ in completion(self) }
     }
     
     public var subTasks: [SubTask] { _subTasks() }
