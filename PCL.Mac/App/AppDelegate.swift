@@ -63,6 +63,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         log("App 启动完成")
         self.window = AppWindow()
         self.window.makeKeyAndOrderFront(nil)
+        log("成功创建窗口")
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
