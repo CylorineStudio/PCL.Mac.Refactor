@@ -37,7 +37,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         LogManager.shared.enableLogging(logsURL: AppURLs.logsDirectoryURL)
         log("App 正在启动")
         executeTask("加载字体") {
-            let fontURL = AppURLs.resourcesURL.appending(path: "PCL.ttf")
+            let fontURL: URL = AppURLs.resourcesURL.appending(path: "PCL.ttf")
             var error: Unmanaged<CFError>?
             CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, &error)
             if let error = error?.takeUnretainedValue() { throw error }
