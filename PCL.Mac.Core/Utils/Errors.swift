@@ -11,6 +11,7 @@ public enum DownloadError: Error, Equatable {
     case fileExists
     case checksumMismatch
     case badStatusCode(code: Int)
+    case unknownError
 }
 
 public enum LaunchError: Error {

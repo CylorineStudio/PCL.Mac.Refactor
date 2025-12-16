@@ -9,9 +9,7 @@ import Foundation
 
 /// 单文件下载器。
 public enum SingleFileDownloader {
-    public static let session: URLSession = .init(configuration: .default,
-                                                  delegate: DownloadDelegate(),
-                                                  delegateQueue: .main)
+    public static let session: URLSession = .init(configuration: .default, delegate: DownloadDelegate.shared, delegateQueue: DownloadDelegate.queue)
     
     public static func download(_ item: DownloadItem, replaceMethod: ReplaceMethod, progressHandler: (@MainActor (Double) -> Void)? = nil) async throws {
         try await download(url: item.url, destination: item.destination, sha1: item.sha1, replaceMethod: replaceMethod, progressHandler: progressHandler)
@@ -42,21 +40,20 @@ public enum SingleFileDownloader {
         
         var request: URLRequest = .init(url: url)
         request.httpMethod = "GET"
-        let (url, response) = try await session.download(for: request, delegate: nil)
-        guard let response = response as? HTTPURLResponse else {
-            throw URLError.badResponse
-        }
-        guard (200..<300).contains(response.statusCode) else {
-            throw DownloadError.badStatusCode(code: response.statusCode)
+        
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let task: URLSessionDownloadTask = session.downloadTask(with: request)
+            DownloadDelegate.shared.register(task: task, destination: destination, continuation: continuation, progressHandler: progressHandler)
+            task.resume()
         }
         
         // 验证 SHA-1
         if let sha1 {
-            guard try FileUtils.getSHA1(url) == sha1 else {
-                try FileManager.default.removeItem(at: url)
+            guard try FileUtils.getSHA1(destination) == sha1 else {
+                try FileManager.default.removeItem(at: destination)
                 throw DownloadError.checksumMismatch
             }
         }
-        try FileManager.default.moveItem(at: url, to: destination)
     }
 }
+
