@@ -60,6 +60,9 @@ struct DownloadTests {
         let json: JSON = .init(parseJSON: rawString)
         let manifest: ClientManifest = .init(json: json)
         let tempDirectory: URL = FileManager.default.temporaryDirectory.appending(path: "multiFileDownloadTest")
+        if FileManager.default.fileExists(atPath: tempDirectory.path) {
+            try FileManager.default.removeItem(at: tempDirectory)
+        }
         try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: false)
         let items: [DownloadItem] = manifest.libraries.compactMap(\.artifact).compactMap { artifact in
             guard let url = artifact.url else { return nil }

@@ -64,7 +64,9 @@ public class MultiFileDownloader {
     
     private func download(_ item: DownloadItem) async throws {
         let uuid: UUID = .init()
-        progress[uuid] = 0
+        await MainActor.run {
+            progress[uuid] = 0
+        }
         try await SingleFileDownloader.download(item, replaceMethod: replaceMethod) { progress in
             self.progress[uuid]! += progress / Double(self.items.count)
         }
