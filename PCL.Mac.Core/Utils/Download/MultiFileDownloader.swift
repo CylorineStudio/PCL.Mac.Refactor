@@ -68,7 +68,7 @@ public class MultiFileDownloader {
             progress[uuid] = 0
         }
         try await SingleFileDownloader.download(item, replaceMethod: replaceMethod) { progress in
-            self.progress[uuid]! += progress / Double(self.items.count)
+            self.progress[uuid] = progress / Double(self.items.count)
         }
     }
 }
