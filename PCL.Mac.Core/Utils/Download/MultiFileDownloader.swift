@@ -14,7 +14,10 @@ public class MultiFileDownloader {
     private let progressHandler: (@MainActor (Double) -> Void)?
     private var progress: [UUID: Double] = [:]
     
-    public init(items: [DownloadItem], concurrentLimit: Int, replaceMethod: ReplaceMethod, progressHandler: (@MainActor (Double) -> Void)? = nil) {
+    public init(items: [DownloadItem],
+                concurrentLimit: Int,
+                replaceMethod: ReplaceMethod,
+                progressHandler: (@MainActor (Double) -> Void)? = nil) {
         self.items = items
         self.concurrentLimit = concurrentLimit
         self.replaceMethod = replaceMethod

@@ -18,11 +18,9 @@ public enum MinecraftInstallTask {
     ///   - version: Minecraft 版本。
     ///   - minecraftDirectory: 实例所在的 Minecraft 目录。
     /// - Returns: 实例安装任务。
-    public static func create(
-        name: String,
-        version: MinecraftVersion,
-        minecraftDirectory: URL
-    ) -> MyTask<Model> {
+    public static func create(name: String,
+                              version: MinecraftVersion,
+                              minecraftDirectory: URL) -> MyTask<Model> {
         let model: Model = .init(
             name: name,
             version: version,

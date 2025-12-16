@@ -59,13 +59,11 @@ public enum Requests {
     ///   - body: 请求体，在请求方法为 `GET` 时被视为 URL params。
     ///   - encodeMethod: 请求体的编码方式。
     /// - Returns: 返回的响应。
-    public static func request(
-        url: URLConvertible,
-        method: String,
-        headers: [String: String]?,
-        body: [String: Any]?,
-        using encodeMethod: EncodeMethod
-    ) async throws -> Response {
+    public static func request(url: URLConvertible,
+                               method: String,
+                               headers: [String: String]?,
+                               body: [String: Any]?,
+                               using encodeMethod: EncodeMethod) async throws -> Response {
         guard let url = url.url else { throw URLError.invalidURL }
         guard let scheme = url.scheme?.lowercased(),
               scheme == "http" || scheme == "https"
@@ -101,11 +99,9 @@ public enum Requests {
     ///   - headers: 请求头。
     ///   - params: 请求的 URL params。
     /// - Returns: 返回的响应。
-    public static func get(
-        _ url: URLConvertible,
-        headers: [String: String]? = nil,
-        params: [String: String]? = nil
-    ) async throws -> Response {
+    public static func get(_ url: URLConvertible,
+                           headers: [String: String]? = nil,
+                           params: [String: String]? = nil) async throws -> Response {
         return try await request(url: url, method: "GET", headers: headers, body: params, using: .urlEncoded)
     }
     
@@ -116,12 +112,10 @@ public enum Requests {
     ///   - body: 请求体。
     ///   - encodeMethod: 请求体的编码方式。
     /// - Returns: 返回的响应。
-    public static func post(
-        _ url: URLConvertible,
-        headers: [String: String]? = nil,
-        body: [String: String]?,
-        using encodeMethod: EncodeMethod
-    ) async throws -> Response {
+    public static func post(_ url: URLConvertible,
+                            headers: [String: String]? = nil,
+                            body: [String: String]?,
+                            using encodeMethod: EncodeMethod) async throws -> Response {
         return try await request(url: url, method: "POST", headers: headers, body: body, using: encodeMethod)
     }
     

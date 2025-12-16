@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-/// `MyTask` 泛型擦除类，用于在界面上显示。。
+/// `MyTask` 泛型擦除类，用于在界面上显示。
 public class AnyMyTask: ObservableObject, Identifiable {
     public typealias ModelType = any TaskModel
     public typealias SubTask = (name: String, progress: Double, state: SubTaskState)

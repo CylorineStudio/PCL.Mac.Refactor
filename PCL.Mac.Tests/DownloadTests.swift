@@ -15,7 +15,7 @@ struct DownloadTests {
         let item: DownloadItem = .init(
             url: URL(string: "https://bmclapi2.bangbang93.com/version/1.21.10/json")!,
             destination: FileManager.default.temporaryDirectory.appending(path: "singleFileDownloadTest"),
-            sha1: "d501809714c64141c1bf1e42f978d0b9e6caa70b"
+            sha1: "b8ac7ed26100bd79830df1de207fbeefe7fab62f"
         )
         
         try await SingleFileDownloader.download(item, replaceMethod: .replace)
