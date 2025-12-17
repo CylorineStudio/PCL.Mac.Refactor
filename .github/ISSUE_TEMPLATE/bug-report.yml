@@ -1,0 +1,40 @@
+name: "Bug 反馈"
+description: "反馈启动器中的非预期行为。"
+labels: "Bug"
+
+title: "[Bug] "
+
+body:
+- type: checkboxes
+  id: checklist
+  attributes:
+    label: "检查单"
+    description: "请逐项确认以下内容："
+    options:
+      - label: "我已将启动器更新至最新版，并且该问题依然存在。"
+        required: true
+      - label: "我检查过 Issue 列表，并发现这个问题没有被报告过。"
+        required: true
+- type: textarea
+  id: description
+  attributes:
+    label: "问题描述"
+    placeholder: "描述你遇到的问题。"
+  validations:
+    required: true
+- type: textarea
+  id: steps
+  attributes:
+    label: "复现方式"
+    placeholder: |
+      1. xxx
+      2. xxx
+  validations:
+    required: true
+- type: textarea
+  id: system
+  attributes:
+    label: "系统信息"
+    placeholder: |
+      macOS xx.x
+      Apple Silicon / Intel

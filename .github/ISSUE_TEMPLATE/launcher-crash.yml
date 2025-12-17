@@ -1,0 +1,32 @@
+name: "启动器崩溃"
+description: "反馈启动器意外退出问题。"
+labels: "Crash"
+
+title: "[Crash] "
+
+body:
+- type: checkboxes
+  id: checklist
+  attributes:
+    label: 检查单
+    description: "请逐项确认以下内容："
+    options:
+      - label: "我已将启动器更新至最新版，并且该问题依然存在。"
+        required: true
+- type: textarea
+  id: description
+  attributes:
+    label: "复现方式"
+  validations:
+    required: true
+- type: textarea
+  id: report
+  attributes:
+    label: "崩溃报告"
+  validations:
+    required: true
+- type: markdown
+  attributes:
+    value: |
+      请点击 `“PCL.Mac”意外退出。` 弹窗中的“报告…”按钮，并将下面以 `Translated Report (Full Report Below)` 开头的文本完整地复制到上面的输入框中。
+      ~~为什么 macOS 就没有一个纯文本编辑工具啊啊啊~~
