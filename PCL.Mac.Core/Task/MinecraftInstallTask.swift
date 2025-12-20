@@ -67,7 +67,7 @@ public enum MinecraftInstallTask {
             replaceMethod: .skip,
             progressHandler: task.setProgress(_:)
         )
-        model.assetIndex = .init(json: try JSON(data: Data(contentsOf: destination)))
+        model.assetIndex = try JSONDecoder.shared.decode(AssetIndex.self, from: Data(contentsOf: destination))
     }
     
     private static func downloadClient(task: SubTask, model: Model) async throws {

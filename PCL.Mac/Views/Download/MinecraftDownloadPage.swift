@@ -90,7 +90,7 @@ struct MinecraftDownloadPage: View {
         await MainActor.run {
             dataManager.versionsLastModified = response.headers["Last-Modified"]
         }
-        CoreState.versionManifest = .init(json: try response.json())
+        CoreState.versionManifest = try response.decode(VersionManifest.self)
         try response.data.write(to: AppURLs.cacheURL.appending(path: "version_manifest.json"))
         return CoreState.versionManifest
     }

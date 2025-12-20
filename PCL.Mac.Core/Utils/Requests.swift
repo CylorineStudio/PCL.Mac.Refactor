@@ -42,6 +42,10 @@ public enum Requests {
             return try JSON(data: data)
         }
         
+        public func decode<T: Decodable>(_ type: T.Type) throws -> T {
+            return try JSONDecoder.shared.decode(type, from: data)
+        }
+        
         private static func parseHeaders(_ headers: [AnyHashable: Any]) -> [String: String] {
             return headers.reduce(into: [:]) { result, entry in
                 if let key = entry.key as? String, let value = entry.value as? String {

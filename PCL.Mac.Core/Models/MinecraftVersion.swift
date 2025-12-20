@@ -26,7 +26,7 @@ public class MinecraftVersion: Comparable, Equatable, CustomStringConvertible {
     
     public lazy var description: String = { id }()
     
-    public enum VersionType {
+    public enum VersionType: Decodable {
         case release, snapshot, old, aprilFool
         
         init?(stringValue: String) {
@@ -36,6 +36,18 @@ public class MinecraftVersion: Comparable, Equatable, CustomStringConvertible {
             case "old_beta", "old_alpha": self = .old
             default: return nil
             }
+        }
+        
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.singleValueContainer()
+            let stringValue: String = try container.decode(String.self)
+            guard let result = VersionType(stringValue: stringValue) else {
+                throw DecodingError.dataCorruptedError(
+                    in: container,
+                    debugDescription: "无法解析 VersionType: \(stringValue)"
+                )
+            }
+            self = result
         }
     }
 }
