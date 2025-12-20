@@ -24,11 +24,15 @@ public class ClientManifest: Decodable {
         case arguments, assetIndex, downloads, id, libraries, logging, mainClass, type
     }
     
+    private enum ArgumentsCodingKeys: String, CodingKey {
+        case game, jvm
+    }
+    
     public required init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let arguments: Arguments = try container.decode(Arguments.self, forKey: .arguments)
-        self.gameArguments = arguments.game
-        self.jvmArguments = arguments.jvm
+        let argumentsContainer = try container.nestedContainer(keyedBy: ArgumentsCodingKeys.self, forKey: .arguments)
+        self.gameArguments = try argumentsContainer.decode([Argument].self, forKey: .game)
+        self.jvmArguments = try argumentsContainer.decode([Argument].self, forKey: .jvm)
         self.assetIndex = try container.decode(AssetIndex.self, forKey: .assetIndex)
         self.downloads = try container.decode(Downloads.self, forKey: .downloads)
         self.id = try container.decode(String.self, forKey: .id)
@@ -114,6 +118,10 @@ public class ClientManifest: Decodable {
             case name, downloads, natives, rules
         }
         
+        private enum DownloadsCodingKeys: String, CodingKey {
+            case artifact, classifiers
+        }
+        
         public lazy var groupId: String = { String(name.split(separator: ":")[0]) }()
         public lazy var artifactId: String = { String(name.split(separator: ":")[1]) }()
         public lazy var version: String = { String(name.split(separator: ":")[2]) }()
@@ -127,12 +135,14 @@ public class ClientManifest: Decodable {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             self.name = try container.decode(String.self, forKey: .name)
             self.isNativesLibrary = container.contains(.natives)
+            let downloadsContainer = try? container.nestedContainer(keyedBy: DownloadsCodingKeys.self, forKey: .downloads)
             if !isNativesLibrary {
-                self.artifact = try container.decode(LibraryDownloads.self, forKey: .downloads).artifact
+                self.artifact = try downloadsContainer.unwrap().decode(Artifact.self, forKey: .artifact)
             } else {
                 let natives: [String: String] = try container.decode([String: String].self, forKey: .natives)
                 if let key = natives["osx"] {
-                    self.artifact = try container.decode(LibraryDownloads.self, forKey: .downloads).classifiers.unwrap()[key].unwrap()
+                    let classifiers: [String: Artifact] = try downloadsContainer.unwrap().decode([String: Artifact].self, forKey: .classifiers)
+                    self.artifact = try classifiers[key].unwrap()
                 } else {
                     self.artifact = nil
                 }
@@ -201,17 +211,5 @@ public class ClientManifest: Decodable {
     /// - Returns: 所有可用的本地库。
     public func getNatives() -> [Library] {
         return libraries.filter { $0.isNativesLibrary && $0.isRulesSatisfied }
-    }
-    
-    // MARK: - Decodables
-    
-    private struct Arguments: Decodable {
-        public let game: [Argument]
-        public let jvm: [Argument]
-    }
-    
-    private struct LibraryDownloads: Decodable {
-        public let artifact: Artifact
-        public let classifiers: [String: Artifact]?
     }
 }
