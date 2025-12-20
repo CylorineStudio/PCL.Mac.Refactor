@@ -27,12 +27,6 @@ public struct VersionManifest: Decodable {
     }
     
     public struct Version: Decodable {
-        private static let dateFormatter: ISO8601DateFormatter = {
-            let formatter: ISO8601DateFormatter = .init()
-            formatter.timeZone = .current
-            return formatter
-        }()
-        
         public let id: String
         public let type: MinecraftVersion.VersionType
         public let url: URL
