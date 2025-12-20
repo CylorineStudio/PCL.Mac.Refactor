@@ -9,7 +9,7 @@ import Foundation
 import SwiftyJSON
 
 /// https://zh.minecraft.wiki/w/客户端清单文件格式
-public class ClientManifest {
+public class ClientManifest: Decodable {
     public let gameArguments: [Argument]
     public let jvmArguments: [Argument]
     public let assetIndex: AssetIndex
@@ -20,91 +20,99 @@ public class ClientManifest {
     public let mainClass: String
     public let type: String
     
-    public init(json: JSON) {
-        self.gameArguments = json["arguments"]["game"].arrayValue.map(Argument.init(json:))
-        self.jvmArguments = json["arguments"]["jvm"].arrayValue.map(Argument.init(json:))
-        self.assetIndex = AssetIndex(json: json["assetIndex"])
-        self.downloads = Downloads(json: json["downloads"])
-        self.id = json["id"].stringValue
-        self.libraries = json["libraries"].arrayValue.map(Library.init(json:))
-        self.logging = Logging(json: json["logging"])
-        self.mainClass = json["mainClass"].stringValue
-        self.type = json["type"].stringValue
+    private enum CodingKeys: String, CodingKey {
+        case arguments, assetIndex, downloads, id, libraries, logging, mainClass, type
     }
     
-    public class Argument {
+    public required init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let arguments: Arguments = try container.decode(Arguments.self, forKey: .arguments)
+        self.gameArguments = arguments.game
+        self.jvmArguments = arguments.jvm
+        self.assetIndex = try container.decode(AssetIndex.self, forKey: .assetIndex)
+        self.downloads = try container.decode(Downloads.self, forKey: .downloads)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.libraries = try container.decode([Library].self, forKey: .libraries)
+        self.logging = try container.decode(Logging.self, forKey: .logging)
+        self.mainClass = try container.decode(String.self, forKey: .mainClass)
+        self.type = try container.decode(String.self, forKey: .type)
+    }
+    
+    public class Argument: Decodable {
         public let value: [String]
         public let rules: [Rule]
         
-        public init(json: JSON) {
-            if json.type == .string {
-                self.value = [json.stringValue]
+        private enum RuledCodingKeys: String, CodingKey {
+            case value, rules
+        }
+        
+        public required init(from decoder: any Decoder) throws {
+            if let container = try? decoder.singleValueContainer(),
+               let value = try? container.decode(String.self) {
+                self.value = [value]
                 self.rules = []
             } else {
-                self.value = json["value"].type == .string ? [json["value"].stringValue] : json["value"].arrayValue.map(\.stringValue)
-                self.rules = json["rules"].arrayValue.map(Rule.init(json:))
+                let container = try decoder.container(keyedBy: RuledCodingKeys.self)
+                if let value = try? container.decode([String].self, forKey: .value) {
+                    self.value = value
+                } else {
+                    self.value = [try container.decode(String.self, forKey: .value)]
+                }
+                self.rules = try container.decode([Rule].self, forKey: .rules)
             }
         }
     }
     
-    public class Artifact {
+    public class Artifact: Decodable {
         public let path: String
         public let sha1: String?
         public let size: Int?
-        public let url: URL!
+        public let url: URL
         
-        public init(path: String, sha1: String?, size: Int?, url: URL?) {
+        public init(path: String, sha1: String?, size: Int?, url: URL) {
             self.path = path
             self.sha1 = sha1
             self.size = size
             self.url = url
         }
-        
-        public convenience init(json: JSON) {
-            self.init(
-                path: json["path"].stringValue,
-                sha1: json["sha1"].string,
-                size: json["size"].int,
-                url: URL(string: json["url"].stringValue)
-            )
-        }
     }
     
-    public class AssetIndex {
+    public class AssetIndex: Decodable {
         public let id: String
         public let sha1: String
         public let size: Int
         public let totalSize: Int
-        public let url: URL!
+        public let url: URL
+    }
+    
+    public class Downloads: Decodable {
+        public let client: Download
+        public let clientMappings: Download
+        public let server: Download
+        public let serverMappings: Download
         
-        public init(json: JSON) {
-            self.id = json["id"].stringValue
-            self.sha1 = json["sha1"].stringValue
-            self.size = json["size"].intValue
-            self.totalSize = json["totalSize"].intValue
-            self.url = URL(string: json["url"].stringValue)
+        private enum CodingKeys: String, CodingKey {
+            case client, server
+            case clientMappings = "client_mappings"
+            case serverMappings = "server_mappings"
+        }
+        
+        public struct Download: Decodable {
+            public let url: URL
+            public let size: Int
+            public let sha1: String
         }
     }
     
-    public class Downloads {
-        public let client: Artifact
-        public let clientMappings: Artifact
-        public let server: Artifact
-        public let serverMappings: Artifact
-        
-        public init(json: JSON) {
-            self.client = Artifact(json: json["client"])
-            self.clientMappings = Artifact(json: json["client_mappings"])
-            self.server = Artifact(json: json["server"])
-            self.serverMappings = Artifact(json: json["server_mappings"])
-        }
-    }
-    
-    public class Library {
+    public class Library: Decodable {
         public let name: String
         public let artifact: Artifact?
         public let rules: [Rule]
         public let isNativesLibrary: Bool
+        
+        private enum CodingKeys: String, CodingKey {
+            case name, downloads, natives, rules
+        }
         
         public lazy var groupId: String = { String(name.split(separator: ":")[0]) }()
         public lazy var artifactId: String = { String(name.split(separator: ":")[1]) }()
@@ -115,43 +123,62 @@ public class ClientManifest {
         }()
         public lazy var isRulesSatisfied: Bool = { rules.allSatisfy { $0.test() } }()
         
-        public init(json: JSON) {
-            self.name = json["name"].stringValue
-            self.isNativesLibrary = json["natives"].exists()
+        public required init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.name = try container.decode(String.self, forKey: .name)
+            self.isNativesLibrary = container.contains(.natives)
             if !isNativesLibrary {
-                self.artifact = .init(json: json["downloads"]["artifact"])
+                self.artifact = try container.decode(LibraryDownloads.self, forKey: .downloads).artifact
             } else {
-                if let key = json["natives"]["osx"].string {
-                    self.artifact = .init(json: json["downloads"]["classifiers"][key])
+                let natives: [String: String] = try container.decode([String: String].self, forKey: .natives)
+                if let key = natives["osx"] {
+                    self.artifact = try container.decode(LibraryDownloads.self, forKey: .downloads).classifiers.unwrap()[key].unwrap()
                 } else {
                     self.artifact = nil
                 }
             }
-            self.rules = json["rules"].arrayValue.map(Rule.init(json:))
+            self.rules = try container.decodeIfPresent([Rule].self, forKey: .rules) ?? []
         }
     }
     
-    public class Logging {
+    public class Logging: Decodable {
         public let argument: String
-        public let file: Artifact
+        public let file: File
         
-        public init(json: JSON) {
-            self.argument = json["client"]["argument"].stringValue
-            self.file = Artifact(json: json["client"]["file"])
+        private enum CodingKeys: String, CodingKey { case client }
+        private enum ClientCodingKeys: String, CodingKey { case argument, file }
+        
+        public required init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self).nestedContainer(keyedBy: ClientCodingKeys.self, forKey: .client)
+            self.argument = try container.decode(String.self, forKey: .argument)
+            self.file = try container.decode(File.self, forKey: .file)
+        }
+        
+        public struct File: Decodable {
+            public let id: String
+            public let url: URL
+            public let size: Int
+            public let sha1: String
         }
     }
     
-    public class Rule {
+    public class Rule: Decodable {
         public let allow: Bool
         public let osName: String?
         public let osArch: Architecture?
         public let hasFeaturesLimit: Bool
         
-        public init(json: JSON) {
-            self.allow = json["action"].stringValue == "allow"
-            self.osName = json["os"]["name"].string
-            self.osArch = json["os"]["arch"].string.flatMap(Architecture.init(rawValue:))
-            self.hasFeaturesLimit = json["features"].exists()
+        private enum CodingKeys: String, CodingKey {
+            case action, features, os
+        }
+        
+        public required init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.allow = try container.decode(String.self, forKey: .action) == "allow"
+            let os: [String: String] = try container.decodeIfPresent([String: String].self, forKey: .os) ?? [:]
+            self.osName = os["name"]
+            self.osArch = os["arch"].flatMap(Architecture.init(rawValue:))
+            self.hasFeaturesLimit = container.contains(.features)
         }
         
         /// 判断该 `Rule` 是否通过。
@@ -174,5 +201,17 @@ public class ClientManifest {
     /// - Returns: 所有可用的本地库。
     public func getNatives() -> [Library] {
         return libraries.filter { $0.isNativesLibrary && $0.isRulesSatisfied }
+    }
+    
+    // MARK: - Decodables
+    
+    private struct Arguments: Decodable {
+        public let game: [Argument]
+        public let jvm: [Argument]
+    }
+    
+    private struct LibraryDownloads: Decodable {
+        public let artifact: Artifact
+        public let classifiers: [String: Artifact]?
     }
 }

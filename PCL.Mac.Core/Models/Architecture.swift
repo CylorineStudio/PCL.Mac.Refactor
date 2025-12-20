@@ -10,6 +10,14 @@ import Foundation
 public enum Architecture: String {
     case arm64, x64, fatFile, unknown
     
+    public init?(rawValue: String) {
+        switch rawValue {
+        case "arm64", "aarch64": self = .arm64
+        case "x64", "x86_64": self = .x64
+        default: return nil
+        }
+    }
+    
     /// 获取文件的架构。
     /// - Parameter url: 文件的 `URL`。
     /// - Returns: 文件的架构。如果不是可执行文件或无法识别，返回 `.unknown`。

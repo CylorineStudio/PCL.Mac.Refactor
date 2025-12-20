@@ -34,13 +34,6 @@ public struct VersionManifest: Decodable {
         public let releaseTime: Date
     }
     
-    // MARK: - Decodables
-    
-    private struct Latest: Decodable {
-        public let release: String
-        public let snapshot: String
-    }
-    
     /// 根据版本号获取在 `versions` 中的顺序（版本号越大，返回值越小）。
     /// - Parameter id: 版本号。
     /// - Returns: 在 `versions` 中的顺序。
@@ -54,5 +47,12 @@ public struct VersionManifest: Decodable {
     /// - Returns: `Version` 对象。
     public func version(for id: String) -> Version? {
         return versions.first(where: { $0.id == id })
+    }
+    
+    // MARK: - Decodables
+    
+    private struct Latest: Decodable {
+        public let release: String
+        public let snapshot: String
     }
 }

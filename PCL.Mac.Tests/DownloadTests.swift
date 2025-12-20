@@ -57,7 +57,7 @@ struct DownloadTests {
     
     @Test func multiFileDownloadTest() async throws {
         let data: Data = try await URLSession.shared.data(from: URL(string: "https://piston-meta.mojang.com/v1/packages/48fc0ab195b88bc562d672cdcf7997de42fe9d51/27.json").unwrap()).0
-        let assetIndex: AssetIndex = try .init(json: .init(data: data))
+        let assetIndex: AssetIndex = try JSONDecoder.shared.decode(AssetIndex.self, from: data)
         let tempDirectory: URL = FileManager.default.temporaryDirectory.appending(path: "multiFileDownloadTest")
         if FileManager.default.fileExists(atPath: tempDirectory.path) {
             try FileManager.default.removeItem(at: tempDirectory)

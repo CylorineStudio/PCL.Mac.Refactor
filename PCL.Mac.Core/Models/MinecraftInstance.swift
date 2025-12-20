@@ -35,8 +35,7 @@ public class MinecraftInstance {
         log("正在加载实例 \(runningDirectory.lastPathComponent)")
         // 加载客户端清单
         let manifestURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
-        let manifestJSON: JSON = try JSON(data: Data(contentsOf: manifestURL))
-        let manifest: ClientManifest = .init(json: manifestJSON)
+        let manifest: ClientManifest = try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: manifestURL))
         // 获取版本
         let version: MinecraftVersion
         let jarURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).jar")

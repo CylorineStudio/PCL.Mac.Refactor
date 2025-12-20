@@ -17,7 +17,7 @@ struct MinecraftLaunchTests {
         var options: LaunchOptions = .init()
         options.javaURL = URL(fileURLWithPath: "/usr/bin/java")
         options.runningDirectory = runningDirectory
-        options.manifest = .init(json: try JSON(data: Data(contentsOf: runningDirectory.appending(path: "1.21.10.json"))))
+        options.manifest = try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: runningDirectory.appending(path: "1.21.10.json")))
         _ = try MinecraftLauncher(options: options).launch()
     }
 }
