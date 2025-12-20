@@ -25,14 +25,31 @@ public class MultiFileDownloader {
     }
     
     public func start() async throws {
+        var items: [DownloadItem] = []
+        if replaceMethod == .skip {
+            for item in self.items {
+                let path: String = item.destination.path
+                if FileManager.default.fileExists(atPath: path) {
+                    guard let sha1 = item.sha1 else { continue }
+                    if try FileUtils.sha1(of: item.destination) == sha1 {
+                        continue
+                    }
+                    try FileManager.default.removeItem(at: item.destination)
+                }
+                items.append(item)
+            }
+        } else {
+            items = self.items
+        }
         let total: Int = items.count
+        let skipped: Int = self.items.count - items.count
         var tickerTask: Task<Void, Error>? = nil
         if let progressHandler {
             tickerTask = Task {
                 while true {
                     try await Task.sleep(nanoseconds: 100_000_000) // 0.1s
                     await MainActor.run {
-                        progressHandler(Array(self.progress.values).reduce(0, +))
+                        progressHandler((Array(progress.values).reduce(0, +) + Double(skipped)) / Double(self.items.count))
                     }
                 }
             }
@@ -68,7 +85,7 @@ public class MultiFileDownloader {
             progress[uuid] = 0
         }
         try await SingleFileDownloader.download(item, replaceMethod: replaceMethod) { progress in
-            self.progress[uuid] = progress / Double(self.items.count)
+            self.progress[uuid] = progress
         }
     }
 }
