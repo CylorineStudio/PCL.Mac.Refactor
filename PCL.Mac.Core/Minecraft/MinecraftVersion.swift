@@ -7,13 +7,24 @@
 
 import Foundation
 
-public class MinecraftVersion: Comparable, Equatable, CustomStringConvertible {
+public class MinecraftVersion: Codable, Comparable, Equatable, CustomStringConvertible {
     public let id: String
     public let index: Int
     
     public init(_ id: String) {
         self.id = id
         self.index = CoreModel.versionManifest?.ordinal(of: id) ?? .max
+    }
+    
+    public required init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        self.id = try container.decode(String.self)
+        self.index = CoreModel.versionManifest?.ordinal(of: id) ?? .max
+    }
+    
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(self.id)
     }
     
     public static func == (lhs: MinecraftVersion, rhs: MinecraftVersion) -> Bool {

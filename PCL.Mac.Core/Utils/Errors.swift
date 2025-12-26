@@ -33,6 +33,10 @@ public enum TaskError: Error, Equatable {
     case unknownError
 }
 
+public enum MinecraftError: Error {
+    case invalidInstanceFormat
+}
+
 public struct SimpleError: LocalizedError {
     private let reason: String
     
