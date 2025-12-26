@@ -23,7 +23,7 @@ public class MinecraftRepository: ObservableObject, Codable {
         self.instances = instances
     }
     
-    /// 加载该目录中的所有实例。
+    /// 加载该仓库中的所有实例。
     public func load() throws {
         var instances: [Instance] = []
         let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])

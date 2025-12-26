@@ -36,6 +36,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         AppURLs.createDirectories()
         LogManager.shared.enableLogging(logsURL: AppURLs.logsDirectoryURL)
         log("App 正在启动")
+        _ = LauncherConfig.shared
         executeTask("加载字体") {
             let fontURL: URL = AppURLs.resourcesURL.appending(path: "PCL.ttf")
             var error: Unmanaged<CFError>?
@@ -68,5 +69,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
+    }
+    
+    func applicationWillTerminate(_ notification: Notification) {
+        executeTask("保存启动器配置") {
+            try LauncherConfig.save()
+        }
     }
 }
