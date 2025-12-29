@@ -26,7 +26,7 @@ struct MinecraftDownloadPage: View {
         }
         .task {
             do {
-                try await viewModel.refresh()
+                try await viewModel.load()
             } catch {
                 err("刷新版本清单失败：\(error.localizedDescription)")
                 // TODO
