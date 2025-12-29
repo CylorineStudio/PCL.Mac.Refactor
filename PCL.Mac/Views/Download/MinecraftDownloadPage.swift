@@ -10,15 +10,11 @@ import Core
 import SwiftyJSON
 
 struct MinecraftDownloadPage: View {
-    @EnvironmentObject private var dataManager: DataManager
-    @State private var loaded: Bool = false
-    @State private var latestRelease: VersionManifest.Version?
-    @State private var latestSnapshot: VersionManifest.Version?
-    @State private var categoryMap: [MinecraftVersion.VersionType: [VersionManifest.Version]] = [:]
+    @EnvironmentObject private var viewModel: MinecraftDownloadPageViewModel
     
     var body: some View {
         CardContainer {
-            if loaded {
+            if viewModel.loaded {
                 latestVersionsCard
                 categoryCard(.release)
                 categoryCard(.snapshot)
@@ -28,26 +24,9 @@ struct MinecraftDownloadPage: View {
                 MyText("正在加载版本列表")
             }
         }
-        .onDisappear {
-            loaded = false
-            latestRelease = nil
-            latestSnapshot = nil
-            categoryMap = [:]
-        }
         .task {
             do {
-                let manifest: VersionManifest = try await refresh()
-                await MainActor.run {
-                    latestRelease = manifest.version(for: manifest.latestRelease)
-                    if let latestSnapshot = manifest.latestSnapshot {
-                        self.latestSnapshot = manifest.version(for: latestSnapshot)
-                    }
-                    categoryMap[.release] = manifest.versions.filter { $0.type == .release }
-                    categoryMap[.snapshot] = manifest.versions.filter { $0.type == .snapshot }
-                    categoryMap[.aprilFool] = manifest.versions.filter { $0.type == .aprilFool }
-                    categoryMap[.old] = manifest.versions.filter { $0.type == .old }
-                    loaded = true
-                }
+                try await viewModel.refresh()
             } catch {
                 err("刷新版本清单失败：\(error.localizedDescription)")
                 // TODO
@@ -57,11 +36,11 @@ struct MinecraftDownloadPage: View {
     
     var latestVersionsCard: some View {
         Group {
-            if let latestRelease {
+            if let latestRelease = viewModel.latestRelease {
                 MyCard("最新版本", foldable: false) {
                     VStack(spacing: 0) {
                         VersionView(latestRelease, prefix: "最新正式版，更新于 ")
-                        if let latestSnapshot {
+                        if let latestSnapshot = viewModel.latestSnapshot {
                             VersionView(latestSnapshot, prefix: "最新快照版，更新于 ")
                         }
                     }
@@ -72,7 +51,7 @@ struct MinecraftDownloadPage: View {
     
     @ViewBuilder
     func categoryCard(_ category: MinecraftVersion.VersionType) -> some View {
-        let versions: [VersionManifest.Version] = categoryMap[category] ?? []
+        let versions: [VersionManifest.Version] = viewModel.versionMap[category] ?? []
         MyCard("\(category.name)（\(versions.count)）") {
             LazyVStack(spacing: 0) {
                 ForEach(versions, id: \.id) { version in
@@ -80,19 +59,6 @@ struct MinecraftDownloadPage: View {
                 }
             }
         }
-    }
-    
-    private func refresh() async throws -> VersionManifest {
-        let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
-        if response.headers["Last-Modified"] == dataManager.versionsLastModified {
-            return CoreState.versionManifest
-        }
-        await MainActor.run {
-            dataManager.versionsLastModified = response.headers["Last-Modified"]
-        }
-        CoreState.versionManifest = try response.decode(VersionManifest.self)
-        try response.data.write(to: AppURLs.cacheURL.appending(path: "version_manifest.json"))
-        return CoreState.versionManifest
     }
 }
 

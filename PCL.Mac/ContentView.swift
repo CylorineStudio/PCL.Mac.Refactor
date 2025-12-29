@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject private var dataManager: DataManager
     @ObservedObject private var router: AppRouter = .shared
     @State private var sidebarWidth: CGFloat = AppRouter.shared.sidebar.width
     
