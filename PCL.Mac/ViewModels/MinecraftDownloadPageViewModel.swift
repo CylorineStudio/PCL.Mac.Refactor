@@ -17,7 +17,7 @@ class MinecraftDownloadPageViewModel: ObservableObject {
     @discardableResult
     public func load(noCache: Bool = false) async throws -> VersionManifest {
         let manifest: VersionManifest = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", noCache: noCache).decode(VersionManifest.self)
-        CoreState.versionManifest = manifest
+        CoreModel.versionManifest = manifest
         
         await MainActor.run {
             latestRelease = manifest.version(for: manifest.latestRelease)
@@ -31,6 +31,17 @@ class MinecraftDownloadPageViewModel: ObservableObject {
             loaded = true
         }
         return manifest
+    }
+    
+    public func reload() {
+        Task {
+            do {
+                try await load(noCache: true)
+                log("Minecraft 版本列表刷新成功")
+            } catch {
+                err("Minecraft 版本列表刷新失败：\(error.localizedDescription)")
+            }
+        }
     }
     
     public func destroy() {

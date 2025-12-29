@@ -81,7 +81,7 @@ public enum Requests {
         request.httpMethod = method
         request.allHTTPHeaderFields = headers
         if noCache {
-            request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+            request.cachePolicy = .reloadIgnoringLocalCacheData
         }
         
         if let body {

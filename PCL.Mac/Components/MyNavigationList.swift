@@ -10,17 +10,17 @@ import SwiftUI
 struct MyNavigationList: View {
     @ObservedObject private var router: AppRouter = .shared
     private let routes: [(AppRoute, String, String)]
-    private let refresh: ((AppRoute) -> Void)?
+    private let performRefresh: ((AppRoute) -> Void)?
     
-    init(_ routes: (AppRoute, String, String)..., refresh: ((AppRoute) -> Void)? = nil) {
+    init(_ routes: (AppRoute, String, String)..., performRefresh: ((AppRoute) -> Void)? = nil) {
         self.routes = routes
-        self.refresh = refresh
+        self.performRefresh = performRefresh
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(routes, id: \.0) { route in
-                RouteView(route: route.0, image: route.1, label: route.2, refresh: refresh)
+                RouteView(route: route.0, image: route.1, label: route.2, refresh: performRefresh)
                     .onTapGesture {
                         if router.getLast() != route.0 {
                             router.removeLast()
@@ -36,6 +36,7 @@ private struct RouteView: View {
     @ObservedObject private var router: AppRouter = .shared
     @State private var hovered: Bool = false
     @State private var selected: Bool
+    @State private var lastRefresh: Date = .distantPast
     private let route: AppRoute
     private let image: String
     private let label: String
@@ -68,7 +69,10 @@ private struct RouteView: View {
                     .frame(width: 13)
                     .contentShape(.rect)
                     .onTapGesture {
-                        refresh(route)
+                        if Date.now.timeIntervalSince(lastRefresh) > 0.5 {
+                            lastRefresh = Date.now
+                            refresh(route)
+                        }
                     }
                     .padding(.trailing, 6)
             }
