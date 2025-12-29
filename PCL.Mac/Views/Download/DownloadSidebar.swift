@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DownloadSidebar: Sidebar {
-    let width: CGFloat = 120
+    let width: CGFloat = 150
     
     var body: some View {
         VStack {
@@ -16,7 +16,9 @@ struct DownloadSidebar: Sidebar {
                 (.minecraftDownload, "LaunchPageIcon", "游戏下载"),
                 (.downloadPage2, "DownloadPageIcon", "Page2"),
                 (.downloadPage3, "MultiplayerPageIcon", "Page3")
-            )
+            ) { router in
+                
+            }
             Spacer()
         }
     }
