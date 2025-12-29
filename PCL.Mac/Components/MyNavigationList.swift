@@ -9,11 +9,15 @@ import SwiftUI
 
 struct MyNavigationList: View {
     @ObservedObject private var router: AppRouter = .shared
-    private let routes: [(AppRoute, String, String)]
+    private let routes: [(AppRoute, String?, String)]
     private let performRefresh: ((AppRoute) -> Void)?
     
-    init(_ routes: (AppRoute, String, String)..., performRefresh: ((AppRoute) -> Void)? = nil) {
-        self.routes = routes
+    init(_ routes: (AppRoute, String?, String)..., performRefresh: ((AppRoute) -> Void)? = nil) {
+        self.init(routeList: routes, performRefresh: performRefresh)
+    }
+    
+    init(routeList: [(AppRoute, String?, String)], performRefresh: ((AppRoute) -> Void)? = nil) {
+        self.routes = routeList
         self.performRefresh = performRefresh
     }
     
@@ -38,11 +42,11 @@ private struct RouteView: View {
     @State private var selected: Bool
     @State private var lastRefresh: Date = .distantPast
     private let route: AppRoute
-    private let image: String
+    private let image: String?
     private let label: String
     private let refresh: ((AppRoute) -> Void)?
     
-    init(route: AppRoute, image: String, label: String, refresh: ((AppRoute) -> Void)?) {
+    init(route: AppRoute, image: String?, label: String, refresh: ((AppRoute) -> Void)?) {
         self.route = route
         self.image = image
         self.label = label
@@ -55,10 +59,12 @@ private struct RouteView: View {
             RoundedRectangle(cornerRadius: 2)
                 .fill(selected ? Color.color3 : .clear)
                 .frame(width: 4, height: selected ? 24 : 10)
-            Image(image)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 20, height: 20)
+            if let image {
+                Image(image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+            }
             Text(label)
                 .font(.custom("PCLEnglish", size: 14))
             if selected, hovered, let refresh {

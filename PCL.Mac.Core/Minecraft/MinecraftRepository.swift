@@ -8,7 +8,7 @@
 import Foundation
 
 /// Minecraft 仓库（`.minecraft`）。
-public class MinecraftRepository: ObservableObject, Codable {
+public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable {
     @Published public var name: String
     @Published public var url: URL
     @Published public var instances: [Instance]?
@@ -32,12 +32,41 @@ public class MinecraftRepository: ObservableObject, Codable {
                 continue
             }
             let model: Instance = .init(
-                name: instance.name,
+                id: instance.name,
                 version: instance.version
             )
             instances.append(model)
         }
         self.instances = instances
+    }
+    
+    /// 异步加载该仓库中的所有实例。
+    public func loadAsync() async throws {
+        var instances: [Instance] = []
+        let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])
+        for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {
+            guard let instance: MinecraftInstance = try? MinecraftInstance.load(from: content) else {
+                continue
+            }
+            let model: Instance = .init(
+                id: instance.name,
+                version: instance.version
+            )
+            instances.append(model)
+        }
+        let loadedInstances: [Instance] = instances
+        await MainActor.run {
+            self.instances = loadedInstances
+        }
+    }
+    
+    public static func == (lhs: MinecraftRepository, rhs: MinecraftRepository) -> Bool {
+        return lhs.url == rhs.url
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(url)
+        hasher.combine(name)
     }
     
     public enum CodingKeys: String, CodingKey { case name, url, instances }
@@ -56,8 +85,8 @@ public class MinecraftRepository: ObservableObject, Codable {
         try container.encode(self.instances, forKey: .instances)
     }
     
-    public struct Instance: Codable {
-        public let name: String
+    public struct Instance: Codable, Hashable, Identifiable {
+        public let id: String
         public let version: MinecraftVersion
     }
 }

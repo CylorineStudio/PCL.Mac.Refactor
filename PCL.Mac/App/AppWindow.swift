@@ -27,6 +27,7 @@ class AppWindow: NSWindow {
             rootView: ContentView()
                 .ignoresSafeArea(.container, edges: .top)
                 .environmentObject(MinecraftDownloadPageViewModel())
+                .environmentObject(InstanceListViewModel())
         )
         
         self.setFrameAutosaveName("AppWindow")

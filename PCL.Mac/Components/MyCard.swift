@@ -89,6 +89,7 @@ struct MyCard<Content: View>: View {
                 }
             }
             .frame(height: internalContentHeight, alignment: .top)
+            .clipped()
             .opacity(showContent ? 1 : 0)
         }
         .onHover { hovered in

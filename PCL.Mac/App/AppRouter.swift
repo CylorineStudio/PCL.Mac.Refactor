@@ -6,13 +6,14 @@
 //
 
 import SwiftUI
+import Core
 
-enum AppRoute: Identifiable {
+enum AppRoute: Identifiable, Hashable, Equatable {
     // 根页面
     case launch, download, multiplayer, settings, other, tasks
     
     // 启动页面的子页面
-    case instanceList, instanceSettings
+    case instanceList(MinecraftRepository), emptyInstanceList, instanceSettings
     
     // 下载页面的子页面
     case minecraftDownload, downloadPage2, downloadPage3
@@ -46,6 +47,10 @@ class AppRouter: ObservableObject {
             DownloadPage3()
         case .tasks:
             TasksPage()
+        case .instanceList(let repository):
+            InstanceListPage(repository: repository)
+        case .emptyInstanceList:
+            EmptyInstanceDirectoryPage()
         default:
             Spacer()
         }
@@ -53,12 +58,12 @@ class AppRouter: ObservableObject {
     
     /// 当前页面的侧边栏（左半部分）
     var sidebar: any Sidebar {
-        if getLast() == .launch { return LaunchSidebar() }
-        if getLast() == .instanceList { return InstanceListSidebar() }
-        if getLast() == .instanceSettings { return EmptySidebar() }
-        
-        if getRoot() == .download { return DownloadSidebar() }
-        return EmptySidebar()
+        switch getLast() {
+        case .launch: LaunchSidebar()
+        case .instanceList, .emptyInstanceList: InstanceListSidebar()
+        case .minecraftDownload, .downloadPage2, .downloadPage3: DownloadSidebar()
+        default: EmptySidebar()
+        }
     }
     
     /// 当前页面是不是子页面（需要显示返回键和标题，隐藏导航按钮）
@@ -72,7 +77,7 @@ class AppRouter: ObservableObject {
     var title: String {
         switch getLast() {
         case .tasks: "任务列表"
-        case .instanceList: "实例列表"
+        case .instanceList, .emptyInstanceList: "实例列表"
         case .instanceSettings: "实例设置"
         default: "错误：当前页面没有标题，请报告此问题！"
         }

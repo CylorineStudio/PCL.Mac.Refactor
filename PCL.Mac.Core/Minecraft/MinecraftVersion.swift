@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class MinecraftVersion: Codable, Comparable, Equatable, CustomStringConvertible {
+public class MinecraftVersion: Codable, Comparable, Equatable, Hashable, CustomStringConvertible {
     public let id: String
     public let index: Int
     
@@ -25,6 +25,10 @@ public class MinecraftVersion: Codable, Comparable, Equatable, CustomStringConve
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(self.id)
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
     
     public static func == (lhs: MinecraftVersion, rhs: MinecraftVersion) -> Bool {

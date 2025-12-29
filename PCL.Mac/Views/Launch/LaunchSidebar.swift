@@ -32,7 +32,11 @@ struct LaunchSidebar: Sidebar {
             .frame(height: 50)
             HStack(spacing: 11) {
                 MyButton("实例选择") {
-                    router.append(.instanceList)
+                    if let repository: MinecraftRepository = LauncherConfig.shared.minecraftRepositories.first {
+                        router.append(.instanceList(repository))
+                    } else {
+                        router.append(.emptyInstanceList)
+                    }
                 }
                 MyButton("实例设置") {
                     router.append(.instanceSettings)
