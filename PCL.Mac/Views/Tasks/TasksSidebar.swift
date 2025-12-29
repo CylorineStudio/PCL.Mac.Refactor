@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct TasksSidebar: Sidebar {
-    @EnvironmentObject private var dataManager: DataManager
     let width: CGFloat = 220
     
     var body: some View {

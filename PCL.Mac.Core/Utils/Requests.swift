@@ -62,12 +62,16 @@ public enum Requests {
     ///   - headers: 请求头。
     ///   - body: 请求体，在请求方法为 `GET` 时被视为 URL params。
     ///   - encodeMethod: 请求体的编码方式。
+    ///   - noCache: 是否禁用缓存。
     /// - Returns: 返回的响应。
-    public static func request(url: URLConvertible,
-                               method: String,
-                               headers: [String: String]?,
-                               body: [String: Any]?,
-                               using encodeMethod: EncodeMethod) async throws -> Response {
+    public static func request(
+        url: URLConvertible,
+        method: String,
+        headers: [String: String]?,
+        body: [String: Any]?,
+        using encodeMethod: EncodeMethod,
+        noCache: Bool
+    ) async throws -> Response {
         guard let url = url.url else { throw URLError.invalidURL }
         guard let scheme = url.scheme?.lowercased(),
               scheme == "http" || scheme == "https"
@@ -76,6 +80,9 @@ public enum Requests {
         var request: URLRequest = .init(url: url)
         request.httpMethod = method
         request.allHTTPHeaderFields = headers
+        if noCache {
+            request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        }
         
         if let body {
             if method == "GET" {
@@ -102,11 +109,15 @@ public enum Requests {
     ///   - url: 目标 URL，可以是 `String` 与 `URL`。
     ///   - headers: 请求头。
     ///   - params: 请求的 URL params。
+    ///   - noCache: 是否禁用缓存。
     /// - Returns: 返回的响应。
-    public static func get(_ url: URLConvertible,
-                           headers: [String: String]? = nil,
-                           params: [String: String]? = nil) async throws -> Response {
-        return try await request(url: url, method: "GET", headers: headers, body: params, using: .urlEncoded)
+    public static func get(
+        _ url: URLConvertible,
+        headers: [String: String]? = nil,
+        params: [String: String]? = nil,
+        noCache: Bool = false
+    ) async throws -> Response {
+        return try await request(url: url, method: "GET", headers: headers, body: params, using: .urlEncoded, noCache: noCache)
     }
     
     /// 向目标 URL 发送 `POST` 请求。
@@ -116,11 +127,13 @@ public enum Requests {
     ///   - body: 请求体。
     ///   - encodeMethod: 请求体的编码方式。
     /// - Returns: 返回的响应。
-    public static func post(_ url: URLConvertible,
-                            headers: [String: String]? = nil,
-                            body: [String: String]?,
-                            using encodeMethod: EncodeMethod) async throws -> Response {
-        return try await request(url: url, method: "POST", headers: headers, body: body, using: encodeMethod)
+    public static func post(
+        _ url: URLConvertible,
+        headers: [String: String]? = nil,
+        body: [String: String]?,
+        using encodeMethod: EncodeMethod
+    ) async throws -> Response {
+        return try await request(url: url, method: "POST", headers: headers, body: body, using: encodeMethod, noCache: false)
     }
     
     private static func encode(_ body: [String: Any], using method: EncodeMethod) throws -> (Data, String) {
