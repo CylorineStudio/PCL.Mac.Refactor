@@ -30,15 +30,47 @@ public class LauncherConfig: Codable {
         }
     }()
     
-    public var minecraftRepositories: [MinecraftRepository]
+    public var minecraftRepositories: [UUID: MinecraftRepository]
+    public var currentRepository: UUID?
+    public var currentInstance: String?
     
     public init() {
-        self.minecraftRepositories = []
+        self.minecraftRepositories = [:]
     }
     
     public required init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.minecraftRepositories = try container.decodeIfPresent([MinecraftRepository].self, forKey: .minecraftRepositories) ?? []
+        self.minecraftRepositories = try container.decodeIfPresent([UUID: MinecraftRepository].self, forKey: .minecraftRepositories) ?? [:]
+        
+        if let currentRepository = try container.decodeIfPresent(UUID.self, forKey: .currentRepository) {
+            self.currentRepository = minecraftRepositories[currentRepository] == nil ? nil : currentRepository
+        } else {
+            self.currentRepository = minecraftRepositories.first?.key
+        }
+        
+        loadInstance: if let currentRepository = self.currentRepository,
+                         let repository: MinecraftRepository = self.minecraftRepositories[currentRepository] {
+            do {
+                try repository.load()
+            } catch {
+                err("无法读取 currentInstance，因为无法加载 currentRepository：\(error.localizedDescription)")
+                break loadInstance
+            }
+            
+            guard let instances = repository.instances else { break loadInstance }
+            if let currentInstance = try container.decodeIfPresent(String.self, forKey: .currentInstance) { // 尝试从 JSON 中加载当前实例，若合法会直接跳出整个代码块
+                if instances.contains(where: { $0.id == currentInstance }) {
+                    self.currentInstance = currentInstance
+                    break loadInstance
+                } else {
+                    warn("currentRepository 中不存在 \(currentInstance)")
+                }
+            }
+            // fallback
+            if !instances.isEmpty {
+                self.currentInstance = instances.first?.id
+            }
+        }
     }
     
     public static func save(_ config: LauncherConfig = .shared, to url: URL = AppURLs.configURL) throws {
@@ -48,5 +80,7 @@ public class LauncherConfig: Codable {
     
     private enum CodingKeys: String, CodingKey {
         case minecraftRepositories
+        case currentRepository
+        case currentInstance
     }
 }

@@ -24,7 +24,8 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     }
     
     /// 加载该仓库中的所有实例。
-    public func load() throws {
+    @discardableResult
+    public func load() throws -> [Instance] {
         var instances: [Instance] = []
         let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])
         for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {
@@ -38,10 +39,12 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
             instances.append(model)
         }
         self.instances = instances
+        return instances
     }
     
     /// 异步加载该仓库中的所有实例。
-    public func loadAsync() async throws {
+    @discardableResult
+    public func loadAsync() async throws -> [Instance] {
         var instances: [Instance] = []
         let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])
         for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {
@@ -58,6 +61,14 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
         await MainActor.run {
             self.instances = loadedInstances
         }
+        return loadedInstances
+    }
+    
+    /// 从仓库中加载实例。
+    /// - Parameter id: 实例的 ID。
+    /// - Returns: 实例对象。
+    public func instance(id: String) throws -> MinecraftInstance {
+        return try .load(from: versionsURL.appending(path: id))
     }
     
     public static func == (lhs: MinecraftRepository, rhs: MinecraftRepository) -> Bool {

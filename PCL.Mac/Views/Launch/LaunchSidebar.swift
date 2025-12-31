@@ -37,7 +37,7 @@ struct LaunchSidebar: Sidebar {
             }
             HStack(spacing: 11) {
                 MyButton("实例选择") {
-                    if let repository: MinecraftRepository = LauncherConfig.shared.minecraftRepositories.first {
+                    if let repository: MinecraftRepository = instanceModel.currentRepository {
                         router.append(.instanceList(repository))
                     } else {
                         router.append(.noInstanceRepository)
