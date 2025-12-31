@@ -13,13 +13,13 @@ public class MinecraftVersion: Codable, Comparable, Equatable, Hashable, CustomS
     
     public init(_ id: String) {
         self.id = id
-        self.index = CoreModel.versionManifest?.ordinal(of: id) ?? .max
+        self.index = CoreState.versionManifest?.ordinal(of: id) ?? .max
     }
     
     public required init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         self.id = try container.decode(String.self)
-        self.index = CoreModel.versionManifest?.ordinal(of: id) ?? .max
+        self.index = CoreState.versionManifest?.ordinal(of: id) ?? .max
     }
     
     public func encode(to encoder: any Encoder) throws {

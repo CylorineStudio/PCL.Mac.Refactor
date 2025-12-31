@@ -19,6 +19,7 @@ public enum LaunchError: Error {
     case missingRunningDirectory
     case missingManifest
     case missingAccount
+    case missingRepository
     case invalidMemory
 }
 

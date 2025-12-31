@@ -9,6 +9,7 @@ import SwiftUI
 import Core
 
 struct InstanceListPage: View {
+    @EnvironmentObject private var viewModel: InstanceViewModel
     @ObservedObject private var repository: MinecraftRepository
     @State private var error: Error?
     
@@ -24,6 +25,10 @@ struct InstanceListPage: View {
                         VStack(spacing: 0) {
                             ForEach(instances, id: \.self) { instance in
                                 InstanceView(instance: instance)
+                                    .onTapGesture {
+                                        viewModel.switchInstance(instance.id, repository)
+                                        AppRouter.shared.removeLast()
+                                    }
                             }
                         }
                     }

@@ -9,7 +9,7 @@ import SwiftUI
 import Core
 
 struct InstanceListSidebar: Sidebar {
-    @EnvironmentObject private var viewModel: InstanceListViewModel
+    @EnvironmentObject private var viewModel: InstanceViewModel
     
     let width: CGFloat = 300
     
@@ -37,18 +37,7 @@ struct InstanceListSidebar: Sidebar {
                 .padding(.top, 18)
             VStack(spacing: 0) {
                 ImportButton("IconAdd", "添加已有目录") {
-                    let panel = NSOpenPanel()
-                    panel.allowsMultipleSelection = false
-                    panel.canChooseFiles = false
-                    panel.canChooseDirectories = true
-                    panel.allowedContentTypes = [.folder]
-                    if panel.runModal() == .OK {
-                        guard let url = panel.url else { return }
-                        if viewModel.repositories.contains(where: { $0.url == url }) {
-                            throw SimpleError("该目录已存在！")
-                        }
-                        viewModel.addRepository(url: url)
-                    }
+                    try viewModel.requestAddRepository()
                 }
                 ImportButton("IconImportModpack", "导入整合包（暂未完成）") {
                     
@@ -58,7 +47,7 @@ struct InstanceListSidebar: Sidebar {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onChange(of: viewModel.repositories) { newValue in
-            if let repository = newValue.first, AppRouter.shared.getLast() == .emptyInstanceList {
+            if let repository = newValue.first, AppRouter.shared.getLast() == .noInstanceRepository {
                 AppRouter.shared.removeLast()
                 AppRouter.shared.append(.instanceList(repository))
             }

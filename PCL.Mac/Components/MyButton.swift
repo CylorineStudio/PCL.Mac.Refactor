@@ -31,6 +31,7 @@ struct MyButton: View {
             RoundedRectangle(cornerRadius: 4)
                 .stroke(style: .init(lineWidth: 1.2))
                 .fill(color)
+                .padding(1.2)
                 .brightness(hovered ? 0.2 : 0)
             VStack(spacing: 4) {
                 MyText(label, color: color)

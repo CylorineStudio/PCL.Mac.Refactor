@@ -28,7 +28,7 @@ public class MinecraftInstance {
     }
     
     /// 从磁盘加载实例。
-    /// 对于老版本（如 `1.8.9`），可能无法正确检测 Minecraft 版本，所以请在安装时调用 `MinecraftInstance.init` 而不是本函数。
+    /// 对于老版本（如 `1.8.9`），可能无法正确检测 Minecraft 版本，所以请在安装完成时调用 `MinecraftInstance.init` 而不是本函数。
     /// - Parameter runningDirectory: 实例运行目录。
     /// - Returns: 实例对象。
     public static func load(from runningDirectory: URL) throws -> MinecraftInstance {

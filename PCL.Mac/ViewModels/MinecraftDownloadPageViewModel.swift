@@ -17,7 +17,7 @@ class MinecraftDownloadPageViewModel: ObservableObject {
     @discardableResult
     public func load(noCache: Bool = false) async throws -> VersionManifest {
         let manifest: VersionManifest = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", noCache: noCache).decode(VersionManifest.self)
-        CoreModel.versionManifest = manifest
+        CoreState.versionManifest = manifest
         
         await MainActor.run {
             latestRelease = manifest.version(for: manifest.latestRelease)

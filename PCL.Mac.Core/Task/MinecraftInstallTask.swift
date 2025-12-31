@@ -39,7 +39,7 @@ public enum MinecraftInstallTask {
     }
     
     private static func downloadClientManifest(task: SubTask, model: Model) async throws {
-        guard let manifest = CoreModel.versionManifest else {
+        guard let manifest = CoreState.versionManifest else {
             err("CoreState.versionManifest 为空")
             throw TaskError.unknownError
         }

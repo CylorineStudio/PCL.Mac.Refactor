@@ -17,7 +17,7 @@ public class MinecraftLauncher {
     public init(options: LaunchOptions) {
         self.manifest = options.manifest
         self.runningDirectory = options.runningDirectory
-        self.librariesURL = options.runningDirectory.deletingLastPathComponent().deletingLastPathComponent().appending(path: "libraries") // TODO
+        self.librariesURL = options.repository.librariesURL
         self.options = options
         // test only
         self.values = [

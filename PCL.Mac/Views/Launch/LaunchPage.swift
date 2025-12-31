@@ -50,7 +50,7 @@ struct LaunchPage: View {
             }
             MyCard("", titled: false) {
                 MyButton(".tasks") {
-                    AppRouter.shared.setRoot(.tasks)
+                    AppRouter.shared.append(.tasks)
                 }
                 .frame(width: 80, height: 40)
             }

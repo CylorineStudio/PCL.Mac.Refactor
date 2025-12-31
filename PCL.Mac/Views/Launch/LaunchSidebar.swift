@@ -9,6 +9,7 @@ import SwiftUI
 import Core
 
 struct LaunchSidebar: Sidebar {
+    @EnvironmentObject private var instanceModel: InstanceViewModel
     @ObservedObject private var router: AppRouter = .shared
     
     let width: CGFloat = 285
@@ -17,25 +18,29 @@ struct LaunchSidebar: Sidebar {
         MyText("LaunchSidebar")
         VStack(spacing: 11) {
             Spacer()
-            MyButton("启动游戏", subLabel: "1.21.10", type: .highlight) {
-                Task.detached {
-                    let instance = try MinecraftInstance.load(from: URL(fileURLWithPath: "/tmp/versions/test"))
-                    var options: LaunchOptions = .init()
-                    options.runningDirectory = URL(fileURLWithPath: "/tmp/versions/test")
-                    options.javaURL = URL(fileURLWithPath: "/usr/bin/java")
-                    options.manifest = instance.manifest
-                    options.memory = 4096
-                    let launcher: MinecraftLauncher = .init(options: options)
-                    let _ = try launcher.launch()
+            if let instance = instanceModel.currentInstance,
+               let repository = instanceModel.currentRepository {
+                MyButton("启动游戏", subLabel: instance.name, type: .highlight) {
+                    Task.detached {
+                        var options: LaunchOptions = .init()
+                        options.runningDirectory = instance.runningDirectory
+                        options.javaURL = URL(fileURLWithPath: "/usr/bin/java")
+                        options.manifest = instance.manifest
+                        options.repository = repository
+                        options.memory = 4096
+                        try options.validate()
+                        let launcher: MinecraftLauncher = .init(options: options)
+                        let _ = try launcher.launch()
+                    }
                 }
+                .frame(height: 50)
             }
-            .frame(height: 50)
             HStack(spacing: 11) {
                 MyButton("实例选择") {
                     if let repository: MinecraftRepository = LauncherConfig.shared.minecraftRepositories.first {
                         router.append(.instanceList(repository))
                     } else {
-                        router.append(.emptyInstanceList)
+                        router.append(.noInstanceRepository)
                     }
                 }
                 MyButton("实例设置") {

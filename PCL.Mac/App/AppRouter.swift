@@ -13,7 +13,7 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     case launch, download, multiplayer, settings, other, tasks
     
     // 启动页面的子页面
-    case instanceList(MinecraftRepository), emptyInstanceList, instanceSettings
+    case instanceList(MinecraftRepository), noInstanceRepository, instanceSettings
     
     // 下载页面的子页面
     case minecraftDownload, downloadPage2, downloadPage3
@@ -49,8 +49,8 @@ class AppRouter: ObservableObject {
             TasksPage()
         case .instanceList(let repository):
             InstanceListPage(repository: repository)
-        case .emptyInstanceList:
-            EmptyInstanceDirectoryPage()
+        case .noInstanceRepository:
+            NoInstanceRepositoryPage()
         default:
             Spacer()
         }
@@ -60,7 +60,7 @@ class AppRouter: ObservableObject {
     var sidebar: any Sidebar {
         switch getLast() {
         case .launch: LaunchSidebar()
-        case .instanceList, .emptyInstanceList: InstanceListSidebar()
+        case .instanceList, .noInstanceRepository: InstanceListSidebar()
         case .minecraftDownload, .downloadPage2, .downloadPage3: DownloadSidebar()
         default: EmptySidebar()
         }
@@ -77,7 +77,7 @@ class AppRouter: ObservableObject {
     var title: String {
         switch getLast() {
         case .tasks: "任务列表"
-        case .instanceList, .emptyInstanceList: "实例列表"
+        case .instanceList, .noInstanceRepository: "实例列表"
         case .instanceSettings: "实例设置"
         default: "错误：当前页面没有标题，请报告此问题！"
         }
