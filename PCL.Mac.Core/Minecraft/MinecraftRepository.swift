@@ -67,8 +67,15 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     /// 从仓库中加载实例。
     /// - Parameter id: 实例的 ID。
     /// - Returns: 实例对象。
-    public func instance(id: String) throws -> MinecraftInstance {
-        return try .load(from: versionsURL.appending(path: id))
+    public func instance(id: String, version: MinecraftVersion? = nil) throws -> MinecraftInstance {
+        return try .load(from: versionsURL.appending(path: id), version: version)
+    }
+    
+    /// 将 `MinecraftRepository.Instance` 模型加载成 `MinecraftInstance` 对象。
+    /// - Parameter instance: `Instance` 实例。
+    /// - Returns: `MinecraftInstance` 对象。
+    public func instance(_ instance: Instance) throws -> MinecraftInstance {
+        return try self.instance(id: instance.id, version: instance.version)
     }
     
     public static func == (lhs: MinecraftRepository, rhs: MinecraftRepository) -> Bool {

@@ -26,7 +26,7 @@ struct InstanceListPage: View {
                             ForEach(instances, id: \.self) { instance in
                                 InstanceView(instance: instance)
                                     .onTapGesture {
-                                        viewModel.switchInstance(instance.id, repository)
+                                        viewModel.switchInstance(to: instance, repository)
                                         AppRouter.shared.removeLast()
                                     }
                             }

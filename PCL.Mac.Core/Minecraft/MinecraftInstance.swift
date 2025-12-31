@@ -29,9 +29,11 @@ public class MinecraftInstance {
     
     /// 从磁盘加载实例。
     /// 对于老版本（如 `1.8.9`），可能无法正确检测 Minecraft 版本，所以请在安装完成时调用 `MinecraftInstance.init` 而不是本函数。
-    /// - Parameter runningDirectory: 实例运行目录。
+    /// - Parameters:
+    ///   - runningDirectory: 实例运行目录。
+    ///   - version: （可选）缓存的版本号。
     /// - Returns: 实例对象。
-    public static func load(from runningDirectory: URL) throws -> MinecraftInstance {
+    public static func load(from runningDirectory: URL, version cachedVersion: MinecraftVersion? = nil) throws -> MinecraftInstance {
         log("正在加载实例 \(runningDirectory.lastPathComponent)")
         // 加载客户端清单
         let manifestURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
@@ -39,15 +41,19 @@ public class MinecraftInstance {
         let manifest: ClientManifest = try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: manifestURL))
         // 获取版本
         let version: MinecraftVersion
-        let jarURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).jar")
-        if FileManager.default.fileExists(atPath: jarURL.path),
-           try ArchiveUtils.hasEntry(url: jarURL, path: "version.json") {
-            let json: JSON = try JSON(data: ArchiveUtils.getEntry(url: jarURL, path: "version.json"))
-            log("成功解析 version.json")
-            version = .init(json["id"].stringValue)
+        if let cachedVersion {
+            version = cachedVersion
         } else {
-            warn("version.json 不存在，使用客户端清单中的 id")
-            version = .init(manifest.id)
+            let jarURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).jar")
+            if FileManager.default.fileExists(atPath: jarURL.path),
+               try ArchiveUtils.hasEntry(url: jarURL, path: "version.json") {
+                let json: JSON = try JSON(data: ArchiveUtils.getEntry(url: jarURL, path: "version.json"))
+                log("成功解析 version.json")
+                version = .init(json["id"].stringValue)
+            } else {
+                warn("version.json 不存在，使用客户端清单中的 id")
+                version = .init(manifest.id)
+            }
         }
         return .init(
             runningDirectory: runningDirectory,
