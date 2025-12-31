@@ -83,6 +83,7 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
         @Published public private(set) var state: SubTaskState = .waiting
         public let ordinal: Int
         public let name: String
+        public let display: Bool
         private let execute: (SubTask, Model) async throws -> Void
         
         /// 创建一个子任务。
@@ -93,10 +94,12 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
         public init(
             _ ordinal: Int,
             _ name: String,
+            display: Bool = true,
             _ execute: @escaping (SubTask, Model) async throws -> Void
         ) {
             self.ordinal = ordinal
             self.name = name
+            self.display = display
             self.execute = execute
         }
         

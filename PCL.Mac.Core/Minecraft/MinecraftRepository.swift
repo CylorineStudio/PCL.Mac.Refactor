@@ -23,9 +23,19 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
         self.instances = instances
     }
     
+    /// 创建必要目录。
+    public func createDirectories() throws {
+        let fileManager: FileManager = .default
+        try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: assetsURL, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: librariesURL, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: versionsURL, withIntermediateDirectories: true)
+    }
+    
     /// 加载该仓库中的所有实例。
     @discardableResult
     public func load() throws -> [Instance] {
+        try createDirectories()
         var instances: [Instance] = []
         let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])
         for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {
@@ -45,6 +55,7 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     /// 异步加载该仓库中的所有实例。
     @discardableResult
     public func loadAsync() async throws -> [Instance] {
+        try createDirectories()
         var instances: [Instance] = []
         let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])
         for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {

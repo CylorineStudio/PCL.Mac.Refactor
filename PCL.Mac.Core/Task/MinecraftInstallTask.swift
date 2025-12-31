@@ -17,11 +17,13 @@ public enum MinecraftInstallTask {
     ///   - name: 实例名。
     ///   - version: Minecraft 版本。
     ///   - minecraftDirectory: 实例所在的 Minecraft 目录。
+    ///   - completion: 任务完成回调，会在主线程执行。
     /// - Returns: 实例安装任务。
     public static func create(
         name: String,
         version: MinecraftVersion,
-        repository: MinecraftRepository
+        repository: MinecraftRepository,
+        completion: (() -> Void)? = nil
     ) -> MyTask<Model> {
         let model: Model = .init(
             name: name,
@@ -35,6 +37,12 @@ public enum MinecraftInstallTask {
             .init(2, "下载客户端本体", downloadClient(task:model:)),
             .init(2, "下载散列资源文件", downloadAssets(task:model:)),
             .init(2, "下载依赖库文件", downloadLibraries(task:model:)),
+            .init(3, "__completion", display: false) { _, _ in
+                try repository.load()
+                await MainActor.run {
+                    completion?()
+                }
+            }
         )
     }
     

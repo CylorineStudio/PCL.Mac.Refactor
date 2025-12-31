@@ -62,6 +62,7 @@ class AppRouter: ObservableObject {
         case .launch: LaunchSidebar()
         case .instanceList, .noInstanceRepository: InstanceListSidebar()
         case .minecraftDownload, .downloadPage2, .downloadPage3: DownloadSidebar()
+        case .tasks: TasksSidebar()
         default: EmptySidebar()
         }
     }

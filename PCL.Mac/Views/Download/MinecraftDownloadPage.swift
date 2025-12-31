@@ -63,6 +63,8 @@ struct MinecraftDownloadPage: View {
 }
 
 private struct VersionView: View {
+    @EnvironmentObject private var viewModel: InstanceViewModel
+    
     private static let dateFormatter: DateFormatter = {
         let formatter: DateFormatter = .init()
         formatter.dateFormat = "yyyy/MM/dd HH:mm"
@@ -91,9 +93,17 @@ private struct VersionView: View {
             }
         }
         .onTapGesture {
-            let repository: MinecraftRepository = .init(name: "Test", url: URL(fileURLWithPath: "/tmp"))
-            TaskManager.shared.execute(task: MinecraftInstallTask.create(name: "test", version: .init(version.id), repository: repository))
-            AppRouter.shared.setRoot(.tasks)
+            guard let repository = viewModel.currentRepository else {
+                // TODO: Hint
+                warn("试图安装 \(version.id)，但没有设置游戏仓库")
+                return
+            }
+            let id: String = version.id
+            let version: MinecraftVersion = .init(version.id)
+            TaskManager.shared.execute(task: MinecraftInstallTask.create(name: id, version: version, repository: repository) {
+                viewModel.switchInstance(id: id, version: version, repository)
+            })
+            AppRouter.shared.append(.tasks)
         }
     }
 }
