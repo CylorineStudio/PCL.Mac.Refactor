@@ -20,7 +20,7 @@ struct InstanceListSidebar: Sidebar {
                     .padding(.leading, 13)
                     .padding(.top, 18)
                 MyNavigationList(
-                    routeList: viewModel.repositories.values.map({ (AppRoute.instanceList($0), nil, $0.name) })
+                    routeList: viewModel.repositories.map({ (AppRoute.instanceList($0), nil, $0.name) })
                 ) { route in
                     if case .instanceList(let directory) = route {
                         do {
@@ -47,7 +47,7 @@ struct InstanceListSidebar: Sidebar {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onChange(of: viewModel.repositories) { newValue in
-            if let repository = newValue.values.first, AppRouter.shared.getLast() == .noInstanceRepository {
+            if let repository = newValue.first, AppRouter.shared.getLast() == .noInstanceRepository {
                 AppRouter.shared.removeLast()
                 AppRouter.shared.append(.instanceList(repository))
             }

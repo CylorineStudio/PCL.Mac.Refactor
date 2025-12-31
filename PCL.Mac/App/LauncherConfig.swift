@@ -30,33 +30,26 @@ public class LauncherConfig: Codable {
         }
     }()
     
-    public var minecraftRepositories: [UUID: MinecraftRepository]
-    public var currentRepository: UUID?
+    public var minecraftRepositories: [MinecraftRepository]
+    public var currentRepository: Int?
     public var currentInstance: String?
     
     public init() {
-        self.minecraftRepositories = [:]
+        self.minecraftRepositories = []
     }
     
     public required init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.minecraftRepositories = try container.decodeIfPresent([UUID: MinecraftRepository].self, forKey: .minecraftRepositories) ?? [:]
+        self.minecraftRepositories = try container.decodeIfPresent([MinecraftRepository].self, forKey: .minecraftRepositories) ?? []
         
-        if let currentRepository = try container.decodeIfPresent(UUID.self, forKey: .currentRepository) {
-            self.currentRepository = minecraftRepositories[currentRepository] == nil ? nil : currentRepository
+        if let currentRepository = try container.decodeIfPresent(Int.self, forKey: .currentRepository) {
+            self.currentRepository = minecraftRepositories.count > currentRepository ? currentRepository : nil
         } else {
-            self.currentRepository = minecraftRepositories.first?.key
+            self.currentRepository = minecraftRepositories.isEmpty ? nil : 0
         }
         
-        loadInstance: if let currentRepository = self.currentRepository,
-                         let repository: MinecraftRepository = self.minecraftRepositories[currentRepository] {
-            do {
-                try repository.load()
-            } catch {
-                err("无法读取 currentInstance，因为无法加载 currentRepository：\(error.localizedDescription)")
-                break loadInstance
-            }
-            
+        loadInstance: if let currentRepository = self.currentRepository {
+            let repository: MinecraftRepository = self.minecraftRepositories[currentRepository]
             guard let instances = repository.instances else { break loadInstance }
             if let currentInstance = try container.decodeIfPresent(String.self, forKey: .currentInstance) { // 尝试从 JSON 中加载当前实例，若合法会直接跳出整个代码块
                 if instances.contains(where: { $0.id == currentInstance }) {

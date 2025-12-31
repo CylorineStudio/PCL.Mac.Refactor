@@ -41,19 +41,23 @@ struct InstanceListPage: View {
                         MyText("加载中", size: 16, color: .color3)
                     }
                 }
+                .padding()
             }
         }
-        .task {
+        .onAppear {
             if repository.instances != nil { return }
-            do {
-                try await repository.loadAsync()
-            } catch {
-                err("加载实例列表失败：\(error.localizedDescription)")
-                await MainActor.run {
-                    self.error = error
+            Task {
+                do {
+                    try await repository.loadAsync()
+                } catch {
+                    err("加载实例列表失败：\(error.localizedDescription)")
+                    await MainActor.run {
+                        self.error = error
+                    }
                 }
             }
         }
+        .id(repository.url)
     }
 }
 
