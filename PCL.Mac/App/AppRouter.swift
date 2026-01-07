@@ -10,13 +10,16 @@ import Core
 
 enum AppRoute: Identifiable, Hashable, Equatable {
     // 根页面
-    case launch, download, multiplayer, settings, other, tasks
+    case launch, download, multiplayer, settings, more, tasks
     
     // 启动页面的子页面
     case instanceList(MinecraftRepository), noInstanceRepository, instanceSettings
     
     // 下载页面的子页面
     case minecraftDownload, downloadPage2, downloadPage3
+    
+    // 更多页面的子页面
+    case about
     
     var id: String { stringValue }
     
@@ -29,7 +32,7 @@ enum AppRoute: Identifiable, Hashable, Equatable {
 
 class AppRouter: ObservableObject {
     static let shared: AppRouter = .init()
-    private static let rootRoutes: [AppRoute] = [.launch, .download, .multiplayer, .settings, .other]
+    private static let rootRoutes: [AppRoute] = [.launch, .download, .multiplayer, .settings, .more]
     
     @Published private(set) var path: [AppRoute] = [.launch]
     
@@ -51,6 +54,8 @@ class AppRouter: ObservableObject {
             InstanceListPage(repository: repository)
         case .noInstanceRepository:
             NoInstanceRepositoryPage()
+        case .about:
+            AboutPage()
         default:
             Spacer()
         }
@@ -62,6 +67,7 @@ class AppRouter: ObservableObject {
         case .launch: LaunchSidebar()
         case .instanceList, .noInstanceRepository: InstanceListSidebar()
         case .minecraftDownload, .downloadPage2, .downloadPage3: DownloadSidebar()
+        case .more, .about: MoreSidebar()
         case .tasks: TasksSidebar()
         default: EmptySidebar()
         }
@@ -69,9 +75,13 @@ class AppRouter: ObservableObject {
     
     /// 当前页面是不是子页面（需要显示返回键和标题，隐藏导航按钮）
     var isSubPage: Bool {
-        if Self.rootRoutes.contains(getLast()) { return false }
-        if getRoot() == .download { return false } // TODO
-        return true
+        switch getLast() {
+        case .tasks: return true
+        case .instanceList(_): return true
+        case .noInstanceRepository: return true
+        case .instanceSettings: return true
+        default: return false
+        }
     }
     
     /// 当前子页面的标题
@@ -96,6 +106,7 @@ class AppRouter: ObservableObject {
         path = [newRoot]
         // 各根页面的默认子页面
         if newRoot == .download { append(.minecraftDownload) }
+        if newRoot == .more { append(.about) }
     }
     
     func append(_ route: AppRoute) {

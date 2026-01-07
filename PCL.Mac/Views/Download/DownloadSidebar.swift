@@ -16,9 +16,9 @@ struct DownloadSidebar: Sidebar {
     var body: some View {
         VStack {
             MyNavigationList(
-                (.minecraftDownload, "LaunchPageIcon", "游戏下载"),
-                (.downloadPage2, "DownloadPageIcon", "Page2"),
-                (.downloadPage3, "MultiplayerPageIcon", "Page3")
+                .init(.minecraftDownload, "LaunchPageIcon", "游戏下载"),
+                .init(.downloadPage2, "DownloadPageIcon", "Page2"),
+                .init(.downloadPage3, "MultiplayerPageIcon", "Page3")
             ) { router in
                 switch router {
                 case .minecraftDownload:

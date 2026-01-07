@@ -20,7 +20,7 @@ struct InstanceListSidebar: Sidebar {
                     .padding(.leading, 13)
                     .padding(.top, 18)
                 MyNavigationList(
-                    routeList: viewModel.repositories.map({ (AppRoute.instanceList($0), nil, $0.name) })
+                    routeList: viewModel.repositories.map({ .init(AppRoute.instanceList($0), nil, $0.name) })
                 ) { route in
                     if case .instanceList(let directory) = route {
                         do {

@@ -38,7 +38,7 @@ struct TitleBarView: View {
                         PageButton("下载", "DownloadPageIcon", .download)
                         PageButton("联机", "MultiplayerPageIcon", .multiplayer)
                         PageButton("设置", "SettingsPageIcon", .settings)
-                        PageButton("更多", "OthersPageIcon", .other)
+                        PageButton("更多", "MorePageIcon", .more)
                         Spacer()
                     }
                 }

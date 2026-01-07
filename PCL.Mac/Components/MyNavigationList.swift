@@ -9,29 +9,41 @@ import SwiftUI
 
 struct MyNavigationList: View {
     @ObservedObject private var router: AppRouter = .shared
-    private let routes: [(AppRoute, String?, String)]
+    private let routes: [Route]
     private let performRefresh: ((AppRoute) -> Void)?
     
-    init(_ routes: (AppRoute, String?, String)..., performRefresh: ((AppRoute) -> Void)? = nil) {
+    init(_ routes: Route..., performRefresh: ((AppRoute) -> Void)? = nil) {
         self.init(routeList: routes, performRefresh: performRefresh)
     }
     
-    init(routeList: [(AppRoute, String?, String)], performRefresh: ((AppRoute) -> Void)? = nil) {
+    init(routeList: [Route], performRefresh: ((AppRoute) -> Void)? = nil) {
         self.routes = routeList
         self.performRefresh = performRefresh
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(routes, id: \.0) { route in
-                RouteView(route: route.0, image: route.1, label: route.2, refresh: performRefresh)
+            ForEach(routes, id: \.route) { route in
+                RouteView(route: route, refresh: performRefresh)
                     .onTapGesture {
-                        if router.getLast() != route.0 {
+                        if router.getLast() != route.route {
                             router.removeLast()
-                            router.append(route.0)
+                            router.append(route.route)
                         }
                     }
             }
+        }
+    }
+    
+    struct Route {
+        let route: AppRoute
+        let image: String?
+        let text: String
+        
+        init(_ route: AppRoute, _ image: String?, _ text: String) {
+            self.route = route
+            self.image = image
+            self.text = text
         }
     }
 }
@@ -46,12 +58,12 @@ private struct RouteView: View {
     private let label: String
     private let refresh: ((AppRoute) -> Void)?
     
-    init(route: AppRoute, image: String?, label: String, refresh: ((AppRoute) -> Void)?) {
-        self.route = route
-        self.image = image
-        self.label = label
+    init(route: MyNavigationList.Route, refresh: ((AppRoute) -> Void)?) {
+        self.route = route.route
+        self.image = route.image
+        self.label = route.text
         self.refresh = refresh
-        self._selected = State(initialValue: AppRouter.shared.getLast() == route)
+        self._selected = State(initialValue: AppRouter.shared.getLast() == route.route)
     }
     
     var body: some View {
@@ -99,7 +111,7 @@ private struct RouteView: View {
 
 #Preview {
     MyNavigationList(
-        (.launch, "LaunchPageIcon", "启动")
+        .init(.launch, "LaunchPageIcon", "启动")
     )
     .frame(width: 150)
     .padding()
