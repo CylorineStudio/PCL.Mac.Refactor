@@ -12,10 +12,20 @@ struct AboutPage: View {
         CardContainer {
             MyCard("关于", foldable: false) {
                 VStack(spacing: 0) {
-                    ProfileView("LTCatt", "龙腾猫跃", "Plain Craft Launcher 的作者！")
-                    ProfileView("AnemoFlower", "风花AnemoFlower", "PCL.Mac 的作者")
-                    ProfileView("CeciliaStudio", "Cecilia Studio", "PCL.Mac 的开发团队")
-                    ProfileView("PCL.Mac", "Cecilia Studio", "PCL.Mac 的开发团队")
+                    ProfileView("LTCatt", "龙腾猫跃", "Plain Craft Launcher 的作者！",
+                                .init("GitHub", URL(string: "https://github.com/LTCatt")!),
+                                .init("Afdian", URL(string: "https://afdian.com/a/LTCat")!))
+                    
+                    ProfileView("AnemoFlower", "风花AnemoFlower", "PCL.Mac 的作者",
+                                .init("GitHub", URL(string: "https://github.com/AnemoFlower")!),
+                                .init("Bilibili", URL(string: "https://space.bilibili.com/3461564927576750")!),
+                                .init("Afdian", URL(string: "https://afdian.com/a/AnemoFlower")!))
+                    ProfileView("CeciliaStudio", "Cecilia Studio", "PCL.Mac 的开发团队",
+                                .init("GitHub", URL(string: "https://github.com/CeciliaStudio")!),
+                                .init("CeciliaStudio", URL(string: "https://ceciliastudio.top")!))
+                    ProfileView("PCL.Mac", "PCL.Mac.Refactor", "当前版本：0.1.1",
+                                .init("GitHub", URL(string: "https://github.com/CeciliaStudio/PCL.Mac.Refactor")!),
+                                .init("CeciliaStudio", URL(string: "https://ceciliastudio.top/projects/PCL.Mac.Refactor")!))
                 }
             }
         }
@@ -25,11 +35,13 @@ struct AboutPage: View {
         private let image: String
         private let nickname: String
         private let description: String
+        private let links: [Link]
         
-        init(_ image: String, _ nickname: String, _ description: String) {
+        init(_ image: String, _ nickname: String, _ description: String, _ links: Link...) {
             self.image = image
             self.nickname = nickname
             self.description = description
+            self.links = links
         }
         
         var body: some View {
@@ -39,14 +51,38 @@ struct AboutPage: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 32, height: 32)
-                        .clipShape(Circle())
+                        .clipShape(.circle)
                     VStack(alignment: .leading) {
                         MyText(nickname)
                         MyText(description, color: .colorGray3)
                     }
                     Spacer()
+                    HStack {
+                        ForEach(links, id: \.url) { link in
+                            Image(link.image)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 28, height: 28)
+                                .clipShape(.circle)
+                                .contentShape(.rect)
+                                .onTapGesture {
+                                    NSWorkspace.shared.open(link.url)
+                                }
+                        }
+                    }
+                    .padding(.trailing, 2)
                 }
                 .padding(2)
+            }
+        }
+        
+        struct Link {
+            let image: String
+            let url: URL
+            
+            init(_ image: String, _ url: URL) {
+                self.image = image
+                self.url = url
             }
         }
     }
