@@ -31,7 +31,7 @@ struct MyLoading: View {
                     path.move(to: CGPoint(x: 5, y: 66))
                     path.addLine(to: CGPoint(x: 29, y: 66))
                 }
-                .stroke(isFailed ? Color.red : Color.color2, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                .stroke(viewModel.isFailed ? Color.red : Color.color2, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                 
                 // 镐子
                 Path { path in
@@ -50,7 +50,7 @@ struct MyLoading: View {
                     path.addLine(to: CGPoint(x: 53.7693, y: 59.6884))
                     path.closeSubpath()
                 }
-                .stroke(isFailed ? Color.red : Color.color2, lineWidth: 2)
+                .stroke(viewModel.isFailed ? Color.red : Color.color2, lineWidth: 2)
                 .rotationEffect(.init(degrees: pickaxeAngle), anchor: .init(x: 0.625, y: 0.6875))
                 
                 // 小碎片
@@ -97,9 +97,9 @@ struct MyLoading: View {
                     }
                 }
             }
-            .foregroundStyle(isFailed ? Color.red : Color.color2)
+            .foregroundStyle(viewModel.isFailed ? Color.red : Color.color2)
             .frame(width: 80, height: 80)
-            MyText("Test", size: 16, color: .color2)
+            MyText(viewModel.text, size: 16, color: viewModel.isFailed ? Color.red : Color.color2)
         }
         .fixedSize()
         .onReceive(timer) { _ in
@@ -119,10 +119,15 @@ struct MyLoading: View {
                 try await setPickaxeAngle(50, duration: 0.35, animation: .easeOut(duration: 0.35), wait: true)
                 try await setPickaxeAngle(25, duration: 0.35, animation: .easeOut(duration: 0.35))
                 if viewModel.isFailed {
-                    await MainActor.run { self.isFailed = true }
+                    await MainActor.run {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            self.isFailed = true
+                        }
+                    }
                 }
             }
         }
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isFailed)
     }
     
     private func setPickaxeAngle(_ value: Double, duration: Double, animation: Animation, wait: Bool = false) async throws {
@@ -143,9 +148,9 @@ fileprivate struct PreviewView: View {
     var body: some View {
         VStack {
             MyLoading(viewModel: viewModel)
-                .padding()
-            MyButton("fail()") { viewModel.fail() }
+            MyButton("fail()") { viewModel.fail(message: "网络环境不佳，请重试或尝试使用 VPN") }
         }
+        .padding()
     }
 }
 

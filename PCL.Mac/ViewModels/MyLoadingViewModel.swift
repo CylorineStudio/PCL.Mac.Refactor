@@ -15,7 +15,8 @@ class MyLoadingViewModel: ObservableObject {
         self.text = text
     }
     
-    func fail() {
+    func fail(message: String) {
         isFailed = true
+        text = message
     }
 }
