@@ -20,12 +20,24 @@ struct AboutPage: View {
                                 .init("GitHub", URL(string: "https://github.com/AnemoFlower")!),
                                 .init("Bilibili", URL(string: "https://space.bilibili.com/3461564927576750")!),
                                 .init("Afdian", URL(string: "https://afdian.com/a/AnemoFlower")!))
+                    
                     ProfileView("CeciliaStudio", "Cecilia Studio", "PCL.Mac 的开发团队",
                                 .init("GitHub", URL(string: "https://github.com/CeciliaStudio")!),
                                 .init("CeciliaStudio", URL(string: "https://ceciliastudio.top")!))
+                    
                     ProfileView("PCL.Mac", "PCL.Mac.Refactor", "当前版本：0.1.1",
                                 .init("GitHub", URL(string: "https://github.com/CeciliaStudio/PCL.Mac.Refactor")!),
                                 .init("CeciliaStudio", URL(string: "https://ceciliastudio.top/projects/PCL.Mac.Refactor")!))
+                }
+            }
+            
+            MyCard("特别鸣谢", foldable: false) {
+                VStack(spacing: 0) {
+                    ProfileView("PCL-Community", "PCL Community", "Plain Craft Launcher 非官方社区",
+                                .init("GitHub", URL(string: "https://github.com/PCL-Community")!))
+                    
+                    ProfileView("PCL.Proto", "PCL.Proto", "以 PCL2 和 PCL2-CE 为蓝本，旨在为各 PCL 分支版本提供一个标准化的原型样本。",
+                                .init("GitHub", URL(string: "https://github.com/PCL-Community/PCL.Proto")!))
                 }
             }
         }
