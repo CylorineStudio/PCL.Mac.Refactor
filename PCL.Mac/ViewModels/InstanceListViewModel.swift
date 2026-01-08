@@ -10,6 +10,7 @@ import Core
 
 class InstanceListViewModel: ObservableObject {
     @Published var loadingViewModel: MyLoadingViewModel = .init(text: "加载中")
+    @Published var loadTask: Task<Void, Error>?
     
     /// 重新加载 `MinecraftRepository` 的实例列表。
     public func reload(_ repository: MinecraftRepository) {
@@ -25,15 +26,17 @@ class InstanceListViewModel: ObservableObject {
     
     /// 异步重新加载 `MinecraftRepository` 的实例列表。
     public func reloadAsync(_ repository: MinecraftRepository) {
+        if loadTask != nil { return }
         reset()
         repository.instances = nil
-        Task {
+        loadTask = Task {
             do {
                 try await repository.loadAsync()
             } catch {
                 err("加载实例列表失败：\(error.localizedDescription)")
                 await MainActor.run {
                     loadingViewModel.fail(with: "加载失败：\(error.localizedDescription)")
+                    loadTask = nil
                 }
             }
         }
