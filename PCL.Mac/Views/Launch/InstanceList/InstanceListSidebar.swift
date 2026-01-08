@@ -9,26 +9,22 @@ import SwiftUI
 import Core
 
 struct InstanceListSidebar: Sidebar {
-    @EnvironmentObject private var viewModel: InstanceViewModel
+    @EnvironmentObject private var instanceViewModel: InstanceViewModel
+    @EnvironmentObject private var viewModel: InstanceListViewModel
     
     let width: CGFloat = 300
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if !viewModel.repositories.isEmpty {
+            if !instanceViewModel.repositories.isEmpty {
                 MyText("目录列表", size: 12, color: .colorGray3)
                     .padding(.leading, 13)
                     .padding(.top, 18)
                 MyNavigationList(
-                    routeList: viewModel.repositories.map({ .init(AppRoute.instanceList($0), nil, $0.name) })
+                    routeList: instanceViewModel.repositories.map({ .init(AppRoute.instanceList($0), nil, $0.name) })
                 ) { route in
-                    if case .instanceList(let directory) = route {
-                        do {
-                            try directory.load()
-                        } catch {
-                            err("加载实例列表失败：\(error.localizedDescription)")
-                            // TODO: Hint
-                        }
+                    if case .instanceList(let repository) = route {
+                        viewModel.reloadAsync(repository)
                     }
                 }
             }
@@ -37,7 +33,7 @@ struct InstanceListSidebar: Sidebar {
                 .padding(.top, 18)
             VStack(spacing: 0) {
                 ImportButton("IconAdd", "添加已有目录") {
-                    try viewModel.requestAddRepository()
+                    try instanceViewModel.requestAddRepository()
                 }
                 ImportButton("IconImportModpack", "导入整合包（暂未完成）") {
                     
@@ -46,7 +42,7 @@ struct InstanceListSidebar: Sidebar {
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .onChange(of: viewModel.repositories) { newValue in
+        .onChange(of: instanceViewModel.repositories) { newValue in
             if let repository = newValue.first, AppRouter.shared.getLast() == .noInstanceRepository {
                 AppRouter.shared.removeLast()
                 AppRouter.shared.append(.instanceList(repository))

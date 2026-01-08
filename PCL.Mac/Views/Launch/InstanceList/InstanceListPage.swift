@@ -9,9 +9,9 @@ import SwiftUI
 import Core
 
 struct InstanceListPage: View {
-    @EnvironmentObject private var viewModel: InstanceViewModel
+    @EnvironmentObject private var instanceViewModel: InstanceViewModel
+    @EnvironmentObject private var viewModel: InstanceListViewModel
     @ObservedObject private var repository: MinecraftRepository
-    @State private var error: Error?
     
     init(repository: MinecraftRepository) {
         self.repository = repository
@@ -26,7 +26,7 @@ struct InstanceListPage: View {
                             ForEach(instances, id: \.self) { instance in
                                 InstanceView(instance: instance)
                                     .onTapGesture {
-                                        viewModel.switchInstance(to: instance, repository)
+                                        instanceViewModel.switchInstance(to: instance, repository)
                                         AppRouter.shared.removeLast()
                                     }
                             }
@@ -34,28 +34,12 @@ struct InstanceListPage: View {
                     }
                 }
             } else {
-                MyCard("", titled: false) {
-                    if let error {
-                        MyText("加载版本列表失败：\(error.localizedDescription)", size: 16, color: .red)
-                    } else {
-                        MyText("加载中", size: 16, color: .color3)
-                    }
-                }
-                .padding()
+                MyLoading(viewModel: viewModel.loadingViewModel)
             }
         }
         .onAppear {
             if repository.instances != nil { return }
-            Task {
-                do {
-                    try await repository.loadAsync()
-                } catch {
-                    err("加载实例列表失败：\(error.localizedDescription)")
-                    await MainActor.run {
-                        self.error = error
-                    }
-                }
-            }
+            viewModel.reloadAsync(repository)
         }
         .id(repository.url)
     }

@@ -12,6 +12,7 @@ class InstanceViewModel: ObservableObject {
     @Published public var repositories: [MinecraftRepository]
     @Published public var currentRepository: MinecraftRepository?
     @Published public var currentInstance: MinecraftInstance?
+    @Published public var reloadErrorMessage: String?
     
     public init() {
         self.repositories = LauncherConfig.shared.minecraftRepositories
