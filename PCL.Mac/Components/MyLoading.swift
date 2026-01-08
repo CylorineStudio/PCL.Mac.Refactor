@@ -107,6 +107,12 @@ struct MyLoading: View {
         }
         .onAppear(perform: animate)
         .animation(.easeInOut(duration: 0.2), value: viewModel.isFailed)
+        .onChange(of: viewModel.isFailed) { newValue in
+            if newValue == false {
+                isFailed = false
+                animate()
+            }
+        }
     }
     
     private func animate() {
@@ -153,7 +159,7 @@ fileprivate struct PreviewView: View {
     var body: some View {
         VStack {
             MyLoading(viewModel: viewModel)
-            MyButton("fail()") { viewModel.fail(message: "网络环境不佳，请重试或尝试使用 VPN") }
+            MyButton("fail()") { viewModel.fail(with: "网络环境不佳，请重试或尝试使用 VPN") }
         }
         .padding()
     }

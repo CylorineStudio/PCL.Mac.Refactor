@@ -13,6 +13,7 @@ class MinecraftDownloadPageViewModel: ObservableObject {
     @Published public var latestRelease: VersionManifest.Version?
     @Published public var latestSnapshot: VersionManifest.Version?
     @Published public var versionMap: [MinecraftVersion.VersionType: [VersionManifest.Version]] = [:]
+    @Published public var errorMessage: String?
     
     @discardableResult
     public func load(noCache: Bool = false) async throws -> VersionManifest {
@@ -34,12 +35,17 @@ class MinecraftDownloadPageViewModel: ObservableObject {
     }
     
     public func reload() {
+        errorMessage = nil
+        loaded = false
         Task {
             do {
                 try await load(noCache: true)
                 log("Minecraft 版本列表刷新成功")
             } catch {
                 err("Minecraft 版本列表刷新失败：\(error.localizedDescription)")
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                }
             }
         }
     }

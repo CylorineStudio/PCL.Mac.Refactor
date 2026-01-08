@@ -10,13 +10,20 @@ import Foundation
 class MyLoadingViewModel: ObservableObject {
     @Published var isFailed: Bool = false
     @Published var text: String
+    private let initialText: String
     
     init(text: String) {
         self.text = text
+        self.initialText = text
     }
     
-    func fail(message: String) {
+    func fail(with message: String) {
         isFailed = true
         text = message
+    }
+    
+    func reset() {
+        text = initialText
+        isFailed = false
     }
 }

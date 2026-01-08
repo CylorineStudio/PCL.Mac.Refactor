@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct MyCard<Content: View>: View {
+    @Environment(\.cardIndex) private var index: Int?
+    @State private var appered: Bool = false
     @State private var folded: Bool = true
     @State private var hovered: Bool = false
     @State private var showContent: Bool = false
@@ -100,14 +102,37 @@ struct MyCard<Content: View>: View {
                 .fill(Color.colorGray8)
                 .shadow(color: hovered ? .color3.opacity(0.6) : .black.opacity(0.1), radius: 6)
         }
+        .offset(y: appered ? 0 : -25)
+        .opacity(appered ? 1 : 0)
         .animation(.easeInOut(duration: 0.2), value: hovered)
+        .animation(.spring(response: 0.4, dampingFraction: 0.5), value: appered)
         .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index ?? 0) * 0.04) {
+                appered = true
+            }
             if !foldable || !titled {
                 folded = false
                 showContent = true
                 internalContentHeight = contentHeight
             }
         }
+    }
+}
+
+private struct CardIndexKey: EnvironmentKey {
+    static let defaultValue: Int? = nil
+}
+
+extension EnvironmentValues {
+    var cardIndex: Int? {
+        get { self[CardIndexKey.self] }
+        set { self[CardIndexKey.self] = newValue }
+    }
+}
+
+extension View {
+    func cardIndex(_ index: Int) -> some View {
+        environment(\.cardIndex, index)
     }
 }
 

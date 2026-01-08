@@ -11,25 +11,32 @@ import SwiftyJSON
 
 struct MinecraftDownloadPage: View {
     @EnvironmentObject private var viewModel: MinecraftDownloadPageViewModel
+    private let loadingModel: MyLoadingViewModel = .init(text: "加载中")
     
     var body: some View {
         CardContainer {
             if viewModel.loaded {
                 latestVersionsCard
                 categoryCard(.release)
+                    .cardIndex(1)
                 categoryCard(.snapshot)
+                    .cardIndex(2)
                 categoryCard(.old)
+                    .cardIndex(3)
                 categoryCard(.aprilFool)
+                    .cardIndex(4)
             } else {
-                MyText("正在加载版本列表")
+                MyLoading(viewModel: loadingModel)
             }
         }
-        .task {
-            do {
-                try await viewModel.load()
-            } catch {
-                err("刷新版本清单失败：\(error.localizedDescription)")
-                // TODO
+        .onAppear {
+            viewModel.reload()
+        }
+        .onChange(of: viewModel.errorMessage) { errorMessage in
+            if let errorMessage {
+                loadingModel.fail(with: errorMessage)
+            } else {
+                loadingModel.reset()
             }
         }
     }

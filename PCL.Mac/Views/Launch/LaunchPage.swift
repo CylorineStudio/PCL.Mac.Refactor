@@ -45,24 +45,33 @@ struct LaunchPage: View {
             MyCard("不可折叠的卡片", foldable: false) {
                 MyText("该卡片默认展开")
             }
+            .cardIndex(1)
+            
             MyCard("", titled: false) {
                 MyText("不可折叠也没有标题的卡片")
             }
+            .cardIndex(2)
+            
             MyCard("", titled: false) {
                 MyButton(".tasks") {
                     AppRouter.shared.append(.tasks)
                 }
                 .frame(width: 80, height: 40)
             }
+            .cardIndex(3)
+            
             MyLoading(viewModel: loadingModel)
+                .cardIndex(4)
+            
             MyCard("修改 MyLoading 状态", foldable: false) {
                 HStack(spacing: 22) {
-                    MyButton("fail()", type: .red) { loadingModel.fail(message: "加载失败") }
+                    MyButton("fail()", type: .red) { loadingModel.fail(with: "加载失败") }
                         .frame(width: 120)
                     Spacer()
                 }
                 .frame(height: 32)
             }
+            .cardIndex(5)
         }
     }
 }
