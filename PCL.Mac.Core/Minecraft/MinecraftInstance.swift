@@ -8,7 +8,6 @@
 import Foundation
 import SwiftyJSON
 
-/// Minecraft 实例的数据模型与业务逻辑。
 public class MinecraftInstance {
     public let runningDirectory: URL
     public let version: MinecraftVersion
