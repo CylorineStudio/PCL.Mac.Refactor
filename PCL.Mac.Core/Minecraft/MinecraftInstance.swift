@@ -27,6 +27,7 @@ public class MinecraftInstance {
         self.runningDirectory = runningDirectory
         self.version = version
         self.manifest = manifest
+        VersionCache.add(version: version, for: self)
     }
     
     /// 从磁盘加载实例。
@@ -35,7 +36,7 @@ public class MinecraftInstance {
     ///   - runningDirectory: 实例运行目录。
     ///   - version: （可选）缓存的版本号。
     /// - Returns: 实例对象。
-    public static func load(from runningDirectory: URL, version _: MinecraftVersion? = nil) throws -> MinecraftInstance {
+    public static func load(from runningDirectory: URL) throws -> MinecraftInstance {
         // 加载客户端清单
         let manifestURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
         guard FileManager.default.fileExists(atPath: manifestURL.path) else { throw MinecraftError.missingManifest }
@@ -56,11 +57,11 @@ public class MinecraftInstance {
                let json: JSON = try? JSON(data: ArchiveUtils.getEntry(url: jarURL, path: "version.json")) {
                 log("成功解析 version.json")
                 version = .init(json["id"].stringValue)
-                VersionCache.add(version: version.id, for: manifestURL)
             } else {
-                warn("version.json 不存在或解析失败，使用客户端清单中的 id 作为版本号")
+                warn("\(jarURL.lastPathComponent)!/version.json 不存在或解析失败，使用客户端清单中的 id 作为版本号")
                 version = .init(manifest.id)
             }
+            VersionCache.add(version: version.id, for: manifestURL)
         }
         return .init(
             runningDirectory: runningDirectory,

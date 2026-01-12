@@ -107,8 +107,8 @@ private struct VersionView: View {
             }
             let id: String = version.id
             let version: MinecraftVersion = .init(version.id)
-            TaskManager.shared.execute(task: MinecraftInstallTask.create(name: id, version: version, repository: repository) {
-                viewModel.switchInstance(id: id, version: version, repository)
+            TaskManager.shared.execute(task: MinecraftInstallTask.create(name: id, version: version, repository: repository) { instance in
+                viewModel.switchInstance(to: instance, repository)
             })
             AppRouter.shared.append(.tasks)
         }

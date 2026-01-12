@@ -11,13 +11,13 @@ import Foundation
 public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable {
     @Published public var name: String
     @Published public var url: URL
-    @Published public var instances: [Instance]?
+    @Published public var instances: [MinecraftInstance]?
     
     public lazy var assetsURL: URL = { url.appending(path: "assets") }()
     public lazy var librariesURL: URL = { url.appending(path: "libraries") }()
     public lazy var versionsURL: URL = { url.appending(path: "versions") }()
     
-    public init(name: String, url: URL, instances: [Instance]? = nil) {
+    public init(name: String, url: URL, instances: [MinecraftInstance]? = nil) {
         self.name = name
         self.url = url
         self.instances = instances
@@ -33,17 +33,19 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     }
     
     /// 加载该仓库中的所有实例。
+    /// 只会在权限不足或查找失败时抛出错误。
     @discardableResult
-    public func load() throws -> [Instance] {
+    public func load() throws -> [MinecraftInstance] {
         let instances = try getInstanceList()
         self.instances = instances
         return instances
     }
     
     /// 异步加载该仓库中的所有实例。
+    /// 只会在权限不足或查找失败时抛出错误。
     @discardableResult
-    public func loadAsync() async throws -> [Instance] {
-        let instances: [Instance] = try getInstanceList()
+    public func loadAsync() async throws -> [MinecraftInstance] {
+        let instances: [MinecraftInstance] = try getInstanceList()
         await MainActor.run {
             self.instances = instances
         }
@@ -54,20 +56,13 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     /// - Parameter id: 实例的 ID。
     /// - Returns: 实例对象。
     public func instance(id: String, version: MinecraftVersion? = nil) throws -> MinecraftInstance {
-        return try .load(from: versionsURL.appending(path: id), version: version)
-    }
-    
-    /// 将 `MinecraftRepository.Instance` 模型加载成 `MinecraftInstance` 对象。
-    /// - Parameter instance: `Instance` 实例。
-    /// - Returns: `MinecraftInstance` 对象。
-    public func instance(_ instance: Instance) throws -> MinecraftInstance {
-        return try self.instance(id: instance.id, version: instance.version)
+        return try .load(from: versionsURL.appending(path: id))
     }
     
     
-    private func getInstanceList() throws -> [Instance] {
+    private func getInstanceList() throws -> [MinecraftInstance] {
         try createDirectories()
-        var instances: [Instance] = []
+        var instances: [MinecraftInstance] = []
         let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])
         for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {
             let instance: MinecraftInstance
@@ -78,11 +73,7 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
                 err("加载实例失败：\(error.localizedDescription)")
                 continue
             }
-            let model: Instance = .init(
-                id: instance.name,
-                version: instance.version
-            )
-            instances.append(model)
+            instances.append(instance)
         }
         return instances
     }
@@ -102,18 +93,11 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.name = try container.decode(String.self, forKey: .name)
         self.url = try container.decode(URL.self, forKey: .url)
-        self.instances = try container.decode([Instance].self, forKey: .instances)
     }
     
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(self.name, forKey: .name)
         try container.encode(self.url, forKey: .url)
-        try container.encode(self.instances, forKey: .instances)
-    }
-    
-    public struct Instance: Codable, Hashable, Identifiable {
-        public let id: String
-        public let version: MinecraftVersion
     }
 }

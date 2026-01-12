@@ -28,26 +28,13 @@ class InstanceViewModel: ObservableObject {
     /// - Parameters:
     ///   - instance: 目标实例。
     ///   - repository: 目标实例所在的仓库。
-    public func switchInstance(to instance: MinecraftRepository.Instance, _ repository: MinecraftRepository) {
-        switchInstance(id: instance.id, version: instance.version, repository)
-    }
-    
-    /// 切换当前实例。
-    /// - Parameters:
-    ///   - id: 目标实例的 ID。
-    ///   - version: （可选）该实例的版本。
-    ///   - repository: 目标实例所在的仓库。
-    public func switchInstance(id: String, version: MinecraftVersion? = nil, _ repository: MinecraftRepository) {
+    public func switchInstance(to instance: MinecraftInstance, _ repository: MinecraftRepository) {
         guard repositories.contains(repository) else {
             err("试图切换到 \(repository.url) 仓库，但 repositories 中不存在它")
             return
         }
-        do {
-            self.currentInstance = try repository.instance(id: id, version: version)
-        } catch {
-            err("加载实例失败：\(error.localizedDescription)")
-        }
-        LauncherConfig.shared.currentInstance = id
+        self.currentInstance = instance
+        LauncherConfig.shared.currentInstance = instance.name
         if currentRepository != repository {
             switchRepository(to: repository, alsoSwitchInstance: false)
         }

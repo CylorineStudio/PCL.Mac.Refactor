@@ -23,7 +23,7 @@ struct InstanceListPage: View {
                 CardContainer {
                     MyCard("常规实例") {
                         VStack(spacing: 0) {
-                            ForEach(instances, id: \.self) { instance in
+                            ForEach(instances, id: \.name) { instance in
                                 InstanceView(instance: instance)
                                     .onTapGesture {
                                         instanceViewModel.switchInstance(to: instance, repository)
@@ -46,11 +46,11 @@ struct InstanceListPage: View {
 }
 
 private struct InstanceView: View {
-    private let id: String
+    private let name: String
     private let version: MinecraftVersion
     
-    init(instance: MinecraftRepository.Instance) {
-        self.id = instance.id
+    init(instance: MinecraftInstance) {
+        self.name = instance.name
         self.version = instance.version
     }
     
@@ -62,7 +62,7 @@ private struct InstanceView: View {
                     .scaledToFit()
                     .frame(width: 35, height: 35)
                 VStack {
-                    MyText(id)
+                    MyText(name)
                     MyText(version.id, color: .colorGray3)
                 }
                 Spacer()

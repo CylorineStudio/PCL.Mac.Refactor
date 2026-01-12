@@ -48,22 +48,7 @@ public class LauncherConfig: Codable {
             self.currentRepository = minecraftRepositories.isEmpty ? nil : 0
         }
         
-        loadInstance: if let currentRepository = self.currentRepository {
-            let repository: MinecraftRepository = self.minecraftRepositories[currentRepository]
-            guard let instances = repository.instances else { break loadInstance }
-            if let currentInstance = try container.decodeIfPresent(String.self, forKey: .currentInstance) { // 尝试从 JSON 中加载当前实例，若合法会直接跳出整个代码块
-                if instances.contains(where: { $0.id == currentInstance }) {
-                    self.currentInstance = currentInstance
-                    break loadInstance
-                } else {
-                    warn("currentRepository 中不存在 \(currentInstance)")
-                }
-            }
-            // fallback
-            if !instances.isEmpty {
-                self.currentInstance = instances.first?.id
-            }
-        }
+        self.currentInstance = try container.decodeIfPresent(String.self, forKey: .currentInstance)
     }
     
     public static func save(_ config: LauncherConfig = .shared, to url: URL = URLConstants.configURL) throws {

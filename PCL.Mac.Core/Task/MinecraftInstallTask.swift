@@ -23,7 +23,7 @@ public enum MinecraftInstallTask {
         name: String,
         version: MinecraftVersion,
         repository: MinecraftRepository,
-        completion: (() -> Void)? = nil
+        completion: ((MinecraftInstance) -> Void)? = nil
     ) -> MyTask<Model> {
         let model: Model = .init(
             name: name,
@@ -38,9 +38,14 @@ public enum MinecraftInstallTask {
             .init(2, "下载散列资源文件", downloadAssets(task:model:)),
             .init(2, "下载依赖库文件", downloadLibraries(task:model:)),
             .init(3, "__completion", display: false) { _, _ in
-                try repository.load()
+                let instance: MinecraftInstance = .init(
+                    runningDirectory: repository.versionsURL.appending(path: name),
+                    version: version,
+                    manifest: model.manifest
+                )
+                repository.instances?.append(instance)
                 await MainActor.run {
-                    completion?()
+                    completion?(instance)
                 }
             }
         )
