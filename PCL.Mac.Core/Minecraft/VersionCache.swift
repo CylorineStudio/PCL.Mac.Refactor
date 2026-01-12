@@ -19,6 +19,18 @@ public enum VersionCache {
             return
         }
         self.cache = try JSONDecoder.shared.decode(Model.self, from: try .init(contentsOf: cacheURL))
+        
+        var expireCount: Int = 0
+        let date: Date = .now
+        for (key, value) in cache!.entries {
+            if date.timeIntervalSince(value.time) > 7 * 24 * 60 * 60 { // 7 天
+                cache!.entries.removeValue(forKey: key)
+                expireCount += 1
+            }
+        }
+        if expireCount != 0 {
+            log("移除了 \(expireCount) 条过期的缓存")
+        }
     }
     
     public static func version(of instance: MinecraftInstance) -> MinecraftVersion? {
