@@ -18,9 +18,22 @@ class InstanceViewModel: ObservableObject {
         self.repositories = LauncherConfig.shared.minecraftRepositories
         if let currentRepository: Int = LauncherConfig.shared.currentRepository {
             self.currentRepository = LauncherConfig.shared.minecraftRepositories[currentRepository]
+            do {
+                try self.currentRepository!.load()
+            } catch {
+                err("加载游戏仓库失败：\(error.localizedDescription)")
+            }
         }
         if let currentInstance: String = LauncherConfig.shared.currentInstance {
-            self.currentInstance = try? currentRepository?.instance(id: currentInstance)
+            if let currentInstance = try? currentRepository?.instance(id: currentInstance) {
+                self.currentInstance = currentInstance
+            } else if let currentInstance = currentRepository?.instances?.first {
+                log("配置文件中的当前实例失效，切换到当前第一个可用的实例")
+                self.currentInstance = currentInstance
+                LauncherConfig.shared.currentInstance = currentInstance.name
+            } else {
+                warn("配置文件中的当前实例失效，且当前没有可用实例")
+            }
         }
     }
     
@@ -81,6 +94,25 @@ class InstanceViewModel: ObservableObject {
                 throw SimpleError("该目录已存在！")
             }
             addRepository(url: url)
+        }
+    }
+    
+    /// 启动游戏。
+    /// - Parameters:
+    ///   - instance: 目标游戏实例。
+    ///   - repository: 游戏仓库。
+    public func launch(_ instance: MinecraftInstance, in repository: MinecraftRepository) {
+        log("正在启动游戏 \(instance.name)")
+        Task.detached {
+            var options: LaunchOptions = .init()
+            options.runningDirectory = instance.runningDirectory
+            options.javaURL = URL(fileURLWithPath: "/usr/bin/java")
+            options.manifest = instance.manifest
+            options.repository = repository
+            options.memory = 4096
+            try options.validate()
+            let launcher: MinecraftLauncher = .init(options: options)
+            let _ = try launcher.launch()
         }
     }
 }
