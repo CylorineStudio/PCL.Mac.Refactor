@@ -36,11 +36,15 @@ public class MinecraftInstance {
     ///   - version: （可选）缓存的版本号。
     /// - Returns: 实例对象。
     public static func load(from runningDirectory: URL, version _: MinecraftVersion? = nil) throws -> MinecraftInstance {
-        log("正在加载实例 \(runningDirectory.lastPathComponent)")
         // 加载客户端清单
         let manifestURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
-        guard FileManager.default.fileExists(atPath: manifestURL.path) else { throw MinecraftError.invalidInstanceFormat }
-        let manifest: ClientManifest = try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: manifestURL))
+        guard FileManager.default.fileExists(atPath: manifestURL.path) else { throw MinecraftError.missingManifest }
+        let manifest: ClientManifest
+        do {
+            manifest = try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: manifestURL))
+        } catch {
+            throw MinecraftError.unknownManifestFormat
+        }
         // 获取版本
         let version: MinecraftVersion
         if let cachedVersion = VersionCache.version(of: manifestURL) {
@@ -48,13 +52,13 @@ public class MinecraftInstance {
         } else {
             let jarURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).jar")
             if FileManager.default.fileExists(atPath: jarURL.path),
-               try ArchiveUtils.hasEntry(url: jarURL, path: "version.json") {
-                let json: JSON = try JSON(data: ArchiveUtils.getEntry(url: jarURL, path: "version.json"))
+               try ArchiveUtils.hasEntry(url: jarURL, path: "version.json"),
+               let json: JSON = try? JSON(data: ArchiveUtils.getEntry(url: jarURL, path: "version.json")) {
                 log("成功解析 version.json")
                 version = .init(json["id"].stringValue)
                 VersionCache.add(version: version.id, for: manifestURL)
             } else {
-                warn("version.json 不存在，使用客户端清单中的 id")
+                warn("version.json 不存在或解析失败，使用客户端清单中的 id 作为版本号")
                 version = .init(manifest.id)
             }
         }

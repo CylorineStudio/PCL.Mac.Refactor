@@ -35,19 +35,7 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     /// 加载该仓库中的所有实例。
     @discardableResult
     public func load() throws -> [Instance] {
-        try createDirectories()
-        var instances: [Instance] = []
-        let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])
-        for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {
-            guard let instance: MinecraftInstance = try? MinecraftInstance.load(from: content) else {
-                continue
-            }
-            let model: Instance = .init(
-                id: instance.name,
-                version: instance.version
-            )
-            instances.append(model)
-        }
+        let instances = try getInstanceList()
         self.instances = instances
         return instances
     }
@@ -55,24 +43,11 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     /// 异步加载该仓库中的所有实例。
     @discardableResult
     public func loadAsync() async throws -> [Instance] {
-        try createDirectories()
-        var instances: [Instance] = []
-        let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])
-        for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {
-            guard let instance: MinecraftInstance = try? MinecraftInstance.load(from: content) else {
-                continue
-            }
-            let model: Instance = .init(
-                id: instance.name,
-                version: instance.version
-            )
-            instances.append(model)
-        }
-        let loadedInstances: [Instance] = instances
+        let instances: [Instance] = try getInstanceList()
         await MainActor.run {
-            self.instances = loadedInstances
+            self.instances = instances
         }
-        return loadedInstances
+        return instances
     }
     
     /// 从仓库中加载实例。
@@ -87,6 +62,29 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     /// - Returns: `MinecraftInstance` 对象。
     public func instance(_ instance: Instance) throws -> MinecraftInstance {
         return try self.instance(id: instance.id, version: instance.version)
+    }
+    
+    
+    private func getInstanceList() throws -> [Instance] {
+        try createDirectories()
+        var instances: [Instance] = []
+        let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])
+        for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {
+            let instance: MinecraftInstance
+            do {
+                log("正在加载实例 \(content.lastPathComponent)")
+                instance = try MinecraftInstance.load(from: content)
+            } catch {
+                err("加载实例失败：\(error.localizedDescription)")
+                continue
+            }
+            let model: Instance = .init(
+                id: instance.name,
+                version: instance.version
+            )
+            instances.append(model)
+        }
+        return instances
     }
     
     public static func == (lhs: MinecraftRepository, rhs: MinecraftRepository) -> Bool {

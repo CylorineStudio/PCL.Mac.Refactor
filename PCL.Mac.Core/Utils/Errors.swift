@@ -34,8 +34,16 @@ public enum TaskError: Error, Equatable {
     case unknownError
 }
 
-public enum MinecraftError: Error {
-    case invalidInstanceFormat
+public enum MinecraftError: LocalizedError {
+    case missingManifest
+    case unknownManifestFormat
+    
+    public var errorDescription: String? {
+        switch self {
+        case .missingManifest: "未找到客户端清单文件。"
+        case .unknownManifestFormat: "未知的客户端清单格式，可能是由外部安装的实例。"
+        }
+    }
 }
 
 public struct SimpleError: LocalizedError {
