@@ -33,7 +33,7 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     }
     
     /// 加载该仓库中的所有实例。
-    /// 只会在权限不足或查找失败时抛出错误。
+    /// 只会在读取目录失败时抛出错误。
     @discardableResult
     public func load() throws -> [MinecraftInstance] {
         let instances = try getInstanceList()
@@ -42,7 +42,7 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     }
     
     /// 异步加载该仓库中的所有实例。
-    /// 只会在权限不足或查找失败时抛出错误。
+    /// 只会在读取目录失败时抛出错误。
     @discardableResult
     public func loadAsync() async throws -> [MinecraftInstance] {
         let instances: [MinecraftInstance] = try getInstanceList()
