@@ -1,5 +1,5 @@
 //
-//  AppURLs.swift
+//  URLConstants.swift
 //  PCL.Mac
 //
 //  Created by 温迪 on 2025/11/8.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct AppURLs {
+public struct URLConstants {
     public static let contentsURL: URL = Bundle.main.bundleURL.appending(path: "Contents")
     public static let resourcesURL: URL = contentsURL.appending(path: "Resources")
     
@@ -18,7 +18,7 @@ public struct AppURLs {
     public static let temperatureURL: URL = applicationSupportURL.appending(path: "Temp")
     public static let authlibInjectorURL: URL = applicationSupportURL.appending(path: "authlib-injector.jar")
     
-    static func createDirectories() {
+    public static func createDirectories() {
         let fileManager: FileManager = .default
         try? fileManager.createDirectory(at: applicationSupportURL, withIntermediateDirectories: true)
         try? fileManager.createDirectory(at: logsDirectoryURL, withIntermediateDirectories: true)

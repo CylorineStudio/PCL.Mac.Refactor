@@ -33,20 +33,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-        AppURLs.createDirectories()
-        LogManager.shared.enableLogging(logsURL: AppURLs.logsDirectoryURL)
+        URLConstants.createDirectories()
+        LogManager.shared.enableLogging()
         log("App 正在启动")
         _ = LauncherConfig.shared
+        executeTask("加载版本缓存") {
+            try VersionCache.load()
+        }
         executeTask("加载字体") {
-            let fontURL: URL = AppURLs.resourcesURL.appending(path: "PCL.ttf")
+            let fontURL: URL = URLConstants.resourcesURL.appending(path: "PCL.ttf")
             var error: Unmanaged<CFError>?
             CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, &error)
             if let error = error?.takeUnretainedValue() { throw error }
         }
         executeTask("从缓存中加载版本列表") {
-            let cacheURL: URL = AppURLs.cacheURL.appending(path: "version_manifest.json")
+            let cacheURL: URL = URLConstants.cacheURL.appending(path: "version_manifest.json")
             if FileManager.default.fileExists(atPath: cacheURL.path) {
-                let cachedData: Data = try .init(contentsOf: AppURLs.cacheURL.appending(path: "version_manifest.json"))
+                let cachedData: Data = try .init(contentsOf: URLConstants.cacheURL.appending(path: "version_manifest.json"))
                 let manifest: VersionManifest = try JSONDecoder.shared.decode(VersionManifest.self, from: cachedData)
                 CoreState.versionManifest = manifest
             } else {
@@ -72,6 +75,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationWillTerminate(_ notification: Notification) {
+        executeTask("保存版本缓存") {
+            try VersionCache.save()
+        }
         executeTask("保存启动器配置") {
             try LauncherConfig.save()
         }

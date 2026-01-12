@@ -10,7 +10,7 @@ import Core
 
 public class LauncherConfig: Codable {
     public static let shared: LauncherConfig = {
-        let url: URL = AppURLs.configURL
+        let url: URL = URLConstants.configURL
         if !FileManager.default.fileExists(atPath: url.path) {
             let config: LauncherConfig = .init()
             log("配置文件不存在，正在创建")
@@ -66,7 +66,7 @@ public class LauncherConfig: Codable {
         }
     }
     
-    public static func save(_ config: LauncherConfig = .shared, to url: URL = AppURLs.configURL) throws {
+    public static func save(_ config: LauncherConfig = .shared, to url: URL = URLConstants.configURL) throws {
         let data: Data = try JSONEncoder.shared.encode(config)
         try data.write(to: url)
     }

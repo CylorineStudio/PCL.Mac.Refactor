@@ -20,7 +20,7 @@ public class LogManager {
     private let logQueue: DispatchQueue = .init(label: "PCL.Mac.Log")
     private let logger: Logger = .init()
     
-    public func enableLogging(logsURL: URL) {
+    public func enableLogging(logsURL: URL = URLConstants.logsDirectoryURL) {
         let logFileURL: URL = logsURL.appending(path: "Log1.log")
         if !FileManager.default.fileExists(atPath: logsURL.path) {
             try? FileManager.default.createDirectory(at: logsURL, withIntermediateDirectories: true)
