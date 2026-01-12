@@ -13,7 +13,9 @@ public class MinecraftInstance {
     public let runningDirectory: URL
     public let version: MinecraftVersion
     public let manifest: ClientManifest
+    
     public var name: String { runningDirectory.lastPathComponent }
+    public var manifestURL: URL { runningDirectory.appending(path: "\(name).json") }
     
     /// 根据运行目录、版本与客户端清单创建实例对象。
     /// 如果只需要从磁盘加载实例，请使用 `MinecraftInstance.load(from:)`。
