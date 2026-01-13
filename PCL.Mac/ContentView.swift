@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject private var globalViewModel: GlobalViewModel
+    @ObservedObject private var hintManager: HintManager = .shared
     @ObservedObject private var router: AppRouter = .shared
     @State private var sidebarWidth: CGFloat = AppRouter.shared.sidebar.width
     
@@ -34,12 +34,12 @@ struct ContentView: View {
         .overlay {
             VStack(alignment: .leading, spacing: 16) {
                 Spacer()
-                ForEach(globalViewModel.hints) { hint in
+                ForEach(hintManager.hints) { hint in
                     HintView(model: hint)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .animation(.easeOut(duration: 0.2), value: globalViewModel.hints)
+            .animation(.easeOut(duration: 0.2), value: hintManager.hints)
             .padding(.bottom, 100)
         }
     }

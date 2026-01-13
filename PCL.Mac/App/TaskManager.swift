@@ -16,15 +16,21 @@ public class TaskManager: ObservableObject {
     public func execute<Model>(task: MyTask<Model>) {
         tasks.append(AnyMyTask(task))
         Task {
+            var e: Error?
             do {
                 try await task.start()
             } catch {
-                // TODO: 弹出 Hint
+                e = error
             }
+            let error = e
             await MainActor.run {
                 tasks.removeAll(where: { $0.id == task.id })
+                if let error {
+                    hint("任务 \(task.name) 执行失败：\(error.localizedDescription)", type: .critical)
+                } else {
+                    hint("任务 \(task.name) 执行完成", type: .finish)
+                }
             }
-            // TODO: 弹出 Hint
         }
     }
     

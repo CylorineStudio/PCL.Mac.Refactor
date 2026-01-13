@@ -101,14 +101,17 @@ private struct VersionView: View {
         }
         .onTapGesture {
             guard let repository = viewModel.currentRepository else {
-                // TODO: Hint
                 warn("试图安装 \(version.id)，但没有设置游戏仓库")
+                hint("请先添加一个游戏目录！", type: .critical)
                 return
             }
             let id: String = version.id
             let version: MinecraftVersion = .init(version.id)
             TaskManager.shared.execute(task: MinecraftInstallTask.create(name: id, version: version, repository: repository) { instance in
                 viewModel.switchInstance(to: instance, repository)
+                if AppRouter.shared.getLast() == .tasks {
+                    AppRouter.shared.removeLast()
+                }
             })
             AppRouter.shared.append(.tasks)
         }
