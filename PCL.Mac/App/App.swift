@@ -23,5 +23,6 @@ struct PCL_MacApp: App {
                     .keyboardShortcut(",", modifiers: [.command])
                 }
             }
+        // 主视图声明被移至 AppWindow.swift:26
     }
 }

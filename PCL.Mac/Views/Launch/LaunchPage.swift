@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct LaunchPage: View {
+    @EnvironmentObject private var globalViewModel: GlobalViewModel
     private let loadingModel: MyLoadingViewModel = .init(text: "加载中")
     private let texts: [(String, String)] = [
         ("AAAAAA", "aaaaaa"), ("BBBBBB", "bbbbbb"), ("CCCCCC", "cccccc")
@@ -69,9 +70,23 @@ struct LaunchPage: View {
                         .frame(width: 120)
                     Spacer()
                 }
-                .frame(height: 32)
+                .frame(height: 36)
             }
             .cardIndex(5)
+            
+            MyCard("弹出 hint", foldable: false) {
+                HStack(spacing: 22) {
+                    MyButton("info") { globalViewModel.hint("这是一条 info 类型的 hint！", .info) }
+                        .frame(width: 120)
+                    MyButton("finish", type: .highlight) { globalViewModel.hint("这是一条 finish 类型的 hint！", .finish) }
+                        .frame(width: 120)
+                    MyButton("critical", type: .red) { globalViewModel.hint("这是一条 critical 类型的 hint！", .critical) }
+                        .frame(width: 120)
+                    Spacer()
+                }
+                .frame(height: 36)
+            }
+            .cardIndex(6)
         }
     }
 }

@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject private var globalViewModel: GlobalViewModel
     @ObservedObject private var router: AppRouter = .shared
     @State private var sidebarWidth: CGFloat = AppRouter.shared.sidebar.width
     
@@ -30,6 +31,45 @@ struct ContentView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay {
+            VStack(alignment: .leading, spacing: 16) {
+                Spacer()
+                ForEach(globalViewModel.hints) { hint in
+                    HintView(model: hint)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .padding(.bottom, 100)
+        }
+    }
+}
+
+private struct HintView: View {
+    private let model: HintModel
+    
+    init(model: HintModel) {
+        self.model = model
+    }
+    
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 5)
+                .fill(color)
+                .frame(height: 22)
+                .offset(x: -5)
+            MyText(model.text, color: .white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 4)
+        }
+        .fixedSize(horizontal: true, vertical: false)
+    }
+    
+    private var color: Color {
+        switch model.type {
+        case .info: Color(0x0A8EFC)
+        case .finish: Color(0x1DA01D)
+        case .critical: Color(0xFF2B00)
+        }
     }
 }
 
