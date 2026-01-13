@@ -39,7 +39,7 @@ struct ContentView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .animation(.spring(response: 0.2), value: globalViewModel.hints)
+            .animation(.easeOut(duration: 0.2), value: globalViewModel.hints)
             .padding(.bottom, 100)
         }
     }
