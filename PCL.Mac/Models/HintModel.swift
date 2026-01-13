@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct HintModel: Identifiable {
+struct HintModel: Identifiable, Equatable {
     public let text: String
     public let type: `Type`
     public let id: UUID = .init()

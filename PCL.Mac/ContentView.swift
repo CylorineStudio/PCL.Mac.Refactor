@@ -39,12 +39,14 @@ struct ContentView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .animation(.spring(response: 0.2), value: globalViewModel.hints)
             .padding(.bottom, 100)
         }
     }
 }
 
 private struct HintView: View {
+    @State private var appeared: Bool = false
     private let model: HintModel
     
     init(model: HintModel) {
@@ -61,7 +63,13 @@ private struct HintView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.leading, 4)
         }
+        .opacity(appeared ? 1 : 0)
+        .offset(x: appeared ? 0 : -50)
         .fixedSize(horizontal: true, vertical: false)
+        .animation(.spring(duration: 0.2, bounce: 0), value: appeared)
+        .onAppear {
+            appeared = true
+        }
     }
     
     private var color: Color {
