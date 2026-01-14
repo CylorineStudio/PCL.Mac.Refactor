@@ -46,6 +46,10 @@ public enum MinecraftError: LocalizedError {
     }
 }
 
+public enum UUIDError: Error, Equatable {
+    case invalidUUIDFormat
+}
+
 public struct SimpleError: LocalizedError {
     private let reason: String
     
