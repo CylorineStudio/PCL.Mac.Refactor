@@ -30,14 +30,16 @@ public struct PlayerProfileModel: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.name = try container.decode(String.self, forKey: .name)
         self.id = try UUIDUtils.uuidThrowing(of: container.decode(String.self, forKey: .id))
-        self.properties = try container.decode([PlayerProfileModel.Property].self, forKey: .properties)
+        self.properties = try container.decodeIfPresent([PlayerProfileModel.Property].self, forKey: .properties) ?? []
     }
     
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(self.name, forKey: .name)
         try container.encode(UUIDUtils.string(of: self.id), forKey: .id)
-        try container.encode(self.properties, forKey: .properties)
+        if !self.properties.isEmpty {
+            try container.encode(self.properties, forKey: .properties)
+        }
     }
     
     public struct Property: Codable {

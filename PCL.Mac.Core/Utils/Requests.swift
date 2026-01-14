@@ -130,7 +130,7 @@ public enum Requests {
     public static func post(
         _ url: URLConvertible,
         headers: [String: String]? = nil,
-        body: [String: String]?,
+        body: [String: Any]?,
         using encodeMethod: EncodeMethod
     ) async throws -> Response {
         return try await request(url: url, method: "POST", headers: headers, body: body, using: encodeMethod, noCache: false)
