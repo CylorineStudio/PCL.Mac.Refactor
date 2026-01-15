@@ -8,7 +8,7 @@
 import Foundation
 import Core
 
-public class LauncherConfig: Codable {
+class LauncherConfig: Codable {
     public static let shared: LauncherConfig = {
         let url: URL = URLConstants.configURL
         if !FileManager.default.fileExists(atPath: url.path) {
@@ -30,13 +30,13 @@ public class LauncherConfig: Codable {
         }
     }()
     
-    public var minecraftRepositories: [MinecraftRepository]
+    public var minecraftRepositories: [MinecraftRepository] = []
     public var currentRepository: Int?
     public var currentInstance: String?
+    public var accounts: [Account] = []
+    public var currentAccountId: UUID?
     
-    public init() {
-        self.minecraftRepositories = []
-    }
+    public init() {}
     
     public required init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -49,6 +49,24 @@ public class LauncherConfig: Codable {
         }
         
         self.currentInstance = try container.decodeIfPresent(String.self, forKey: .currentInstance)
+        self.accounts = (try container.decodeIfPresent([AccountWrapper].self, forKey: .accounts) ?? []).map(\.account)
+        if !accounts.isEmpty {
+            if let currentAccountId = try container.decodeIfPresent(UUID.self, forKey: .currentAccountId),
+               accounts.contains(where: { $0.id == currentAccountId }) {
+                self.currentAccountId = currentAccountId
+            } else {
+                self.currentAccountId = accounts[0].id
+            }
+        }
+    }
+    
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(minecraftRepositories, forKey: .minecraftRepositories)
+        try container.encode(currentRepository, forKey: .currentRepository)
+        try container.encode(currentInstance, forKey: .currentInstance)
+        try container.encode(accounts.map(AccountWrapper.init(_:)), forKey: .accounts)
+        try container.encode(currentAccountId, forKey: .currentAccountId)
     }
     
     public static func save(_ config: LauncherConfig = .shared, to url: URL = URLConstants.configURL) throws {
@@ -60,5 +78,7 @@ public class LauncherConfig: Codable {
         case minecraftRepositories
         case currentRepository
         case currentInstance
+        case accounts
+        case currentAccountId
     }
 }
