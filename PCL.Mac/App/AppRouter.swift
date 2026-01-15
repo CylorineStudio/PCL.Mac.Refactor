@@ -18,6 +18,9 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     // 下载页面的子页面
     case minecraftDownload, downloadPage2, downloadPage3
     
+    // 联机页面的子页面
+    case multiplayerSub
+    
     // 更多页面的子页面
     case about
     
@@ -54,6 +57,8 @@ class AppRouter: ObservableObject {
             InstanceListPage(repository: repository)
         case .noInstanceRepository:
             NoInstanceRepositoryPage()
+        case .multiplayerSub:
+            MultiplayerPage()
         case .about:
             AboutPage()
         default:
@@ -67,6 +72,7 @@ class AppRouter: ObservableObject {
         case .launch: LaunchSidebar()
         case .instanceList, .noInstanceRepository: InstanceListSidebar()
         case .minecraftDownload, .downloadPage2, .downloadPage3: DownloadSidebar()
+        case .multiplayer, .multiplayerSub: MultiplayerSidebar()
         case .more, .about: MoreSidebar()
         case .tasks: TasksSidebar()
         default: EmptySidebar()
@@ -107,6 +113,7 @@ class AppRouter: ObservableObject {
         // 各根页面的默认子页面
         if newRoot == .download { append(.minecraftDownload) }
         if newRoot == .more { append(.about) }
+        if newRoot == .multiplayer { append(.multiplayerSub) }
     }
     
     func append(_ route: AppRoute) {
