@@ -16,5 +16,9 @@ class AccountManager: ObservableObject {
         accounts.append(OfflineAccount(name: name, uuid: uuid ?? UUIDUtils.uuid(ofOfflinePlayer: name)))
     }
     
+    public func addMicrosoft(from response: MicrosoftAuthService.MinecraftAuthResponse) {
+        accounts.append(MicrosoftAccount(profile: response.profile, accessToken: response.accessToken, refreshToken: response.refreshToken))
+    }
+    
     private init() {}
 }
