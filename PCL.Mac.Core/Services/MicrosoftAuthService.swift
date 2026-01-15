@@ -62,7 +62,7 @@ public class MicrosoftAuthService {
     }
     
     /// 完成后续登录步骤。
-    /// - Returns: 包含玩家档案（不包含属性）、Minecraft 令牌和 OAuth 刷新令牌的结构体。
+    /// - Returns: 包含玩家档案、Minecraft 令牌和 OAuth 刷新令牌的结构体。
     public func authenticate() async throws -> MinecraftAuthResponse {
         guard let oAuthToken, let refreshToken else {
             throw Error.internalError
@@ -192,13 +192,12 @@ public class MicrosoftAuthService {
     }
     
     private func getMinecraftProfile(with token: String) async throws -> PlayerProfileModel? {
-        let response = try await Requests.get(
+        let json: JSON = try await Requests.get(
             "https://api.minecraftservices.com/minecraft/profile",
             headers: [
                 "Authorization": "Bearer \(token)"
             ]
-        )
-        let json: JSON = try response.json()
+        ).json()
         if let error = json["error"].string {
             if error == "NOT_FOUND" {
                 return nil
@@ -207,11 +206,9 @@ public class MicrosoftAuthService {
                 throw Error.apiError(description: json["errorMessage"].stringValue)
             }
         }
-        do {
-            return try JSONDecoder.shared.decode(PlayerProfileModel.self, from: response.data)
-        } catch {
-            err("解析 PlayerProfile 失败：\(String(data: response.data, encoding: .utf8) ?? "（解码失败）")")
-            throw Error.internalError
-        }
+        // 该接口返回的 JSON 不是标准档案格式，需要根据 UUID 再获取一次
+        let id: String = json["id"].stringValue
+        let data: Data = try await Requests.get("https://sessionserver.mojang.com/session/minecraft/profile/\(id)").data
+        return try JSONDecoder.shared.decode(PlayerProfileModel.self, from: data)
     }
 }
