@@ -8,24 +8,29 @@
 import Foundation
 import AppKit
 import Core
+import SwiftScaffolding
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: AppWindow!
     
-    private func executeTask(_ name: String, _ start: @escaping () throws -> Void) {
+    private func executeTask(_ name: String, silent: Bool = false, _ start: @escaping () throws -> Void) {
         do {
             try start()
-            log("\(name)成功")
+            if !silent {
+                log("\(name)成功")
+            }
         } catch {
             err("\(name)失败：\(error.localizedDescription)")
         }
     }
     
-    private func executeAsyncTask(_ name: String, _ start: @escaping () async throws -> Void) {
+    private func executeAsyncTask(_ name: String, silent: Bool = false, _ start: @escaping () async throws -> Void) {
         Task {
             do {
                 try await start()
-                log("\(name)成功")
+                if !silent {
+                    log("\(name)成功")
+                }
             } catch {
                 err("\(name)失败：\(error.localizedDescription)")
             }
@@ -35,6 +40,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         URLConstants.createDirectories()
         LogManager.shared.enableLogging()
+        executeTask("开启 SwiftScaffolding 日志", silent: true) {
+            try SwiftScaffolding.Logger.enableLogging(url: URLConstants.logsDirectoryURL.appending(path: "swift-scaffolding.log"))
+        }
         log("App 正在启动")
         _ = LauncherConfig.shared
         executeTask("加载版本缓存") {

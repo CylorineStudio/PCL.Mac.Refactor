@@ -28,4 +28,8 @@ public enum FileUtils {
         let digest: Insecure.SHA1.Digest = hasher.finalize()
         return digest.map { String(format: "%02x", $0) }.joined()
     }
+    
+    public static func isExecutable(at url: URL) -> Bool {
+        return Architecture.architecture(of: url) != .unknown
+    }
 }

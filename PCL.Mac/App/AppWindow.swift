@@ -29,6 +29,7 @@ class AppWindow: NSWindow {
                 .environmentObject(InstanceViewModel())
                 .environmentObject(MinecraftDownloadPageViewModel())
                 .environmentObject(InstanceListViewModel())
+                .environmentObject(MultiplayerViewModel())
         )
         
         self.setFrameAutosaveName("AppWindow")

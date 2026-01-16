@@ -29,6 +29,19 @@ struct TasksPage: View {
                         taskManager.execute(task: task)
                     }
                     .frame(width: 100)
+                    MyButton("下载 EasyTier") {
+                        Task {
+                            do {
+                                let task = try await EasyTierManager.createEasyTierDownloadTask()
+                                await MainActor.run {
+                                    taskManager.execute(task: task)
+                                }
+                            } catch {
+                                err(error.localizedDescription)
+                            }
+                        }
+                    }
+                    .frame(width: 100)
                     Spacer()
                 }
                 .frame(height: 40)
