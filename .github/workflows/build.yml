@@ -1,17 +1,11 @@
-name: CI
+name: Build App
 
 on:
   workflow_dispatch:
   push:
     paths:
       - '.github/workflows/**'
-      - 'PCL.Mac/**'
-      - 'PCL.Mac.Core/**'
-      - 'PCL.Mac.xcodeproj/**'
-      - 'Resources/**'
-  pull_request:
-    paths:
-      - '.github/workflows/**'
+      - 'Configs/**'
       - 'PCL.Mac/**'
       - 'PCL.Mac.Core/**'
       - 'PCL.Mac.xcodeproj/**'
@@ -23,18 +17,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
-      - name: Get short SHA
-        if: github.event_name == 'push'
-        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+      - name: Set version
+        run: echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> $GITHUB_ENV
 
       - name: Build app
         run: |
+          echo "Build number: $BUILD_NUMBER"
           xcodebuild \
-          -project PCL.Mac.xcodeproj -scheme PCL.Mac -configuration Release \
-          ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
-          CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO \
-          -archivePath build archive
+            -project PCL.Mac.xcodeproj -scheme PCL.Mac -configuration Debug \
+            CURRENT_PROJECT_VERSION=$BUILD_NUMBER \
+            -archivePath build archive
 
       - name: Prepare app artifact directory
         run: |
@@ -45,15 +40,13 @@ jobs:
           mv build.xcarchive/dSYMs/Core.framework.dSYM ./PCL.Mac-dSYMs/Core.framework.dSYM
 
       - name: Upload app artifact
-        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
-          name: PCL.Mac.Refactor-${{ env.SHORT_SHA }}
+          name: PCL.Mac.Refactor-${{ env.BUILD_NUMBER }}
           path: ./PCL.Mac-artifact
       
       - name: Upload dSYMs artifact
-        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
-          name: PCL.Mac.Refactor-${{ env.SHORT_SHA }}-dSYMs
+          name: PCL.Mac.Refactor-${{ env.BUILD_NUMBER }}-dSYMs
           path: ./PCL.Mac-dSYMs

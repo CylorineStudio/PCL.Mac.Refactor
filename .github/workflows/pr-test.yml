@@ -1,0 +1,37 @@
+name: PR Test
+
+on:
+  pull_request:
+    paths:
+      - 'Configs/**'
+      - '.github/workflows/**'
+      - 'PCL.Mac/**'
+      - 'PCL.Mac.Core/**'
+      - 'PCL.Mac.xcodeproj/**'
+      - 'Resources/**'
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build app
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          if [ -z "$PR_NUMBER" ]; then PR_NUMBER=0; fi
+          BUILD_NUMBER=$(printf "%d%05d" "$PR_NUMBER" "$(git rev-list --count HEAD)")
+
+          xcodebuild \
+          -project PCL.Mac.xcodeproj -scheme PCL.Mac -configuration Debug \
+            CURRENT_PROJECT_VERSION=$BUILD_NUMBER \
+            -archivePath build archive
+
+      - name: Check build artifacts
+        run: |
+          file build.xcarchive/Products/Applications/PCL.Mac.app
+          file build.xcarchive/dSYMs/PCL.Mac.app.dSYM
+          file build.xcarchive/dSYMs/Core.framework.dSYM
