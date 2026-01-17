@@ -35,9 +35,6 @@ jobs:
         run: |
           mkdir "PCL.Mac-artifact"
           mv build.xcarchive/Products/Applications/PCL.Mac.app "./PCL.Mac-artifact/PCL.Mac.app"
-          mkdir "PCL.Mac-dSYMs"
-          mv build.xcarchive/dSYMs/PCL.Mac.app.dSYM ./PCL.Mac-dSYMs/PCL.Mac.app.dSYM
-          mv build.xcarchive/dSYMs/Core.framework.dSYM ./PCL.Mac-dSYMs/Core.framework.dSYM
 
       - name: Upload app artifact
         uses: actions/upload-artifact@v4

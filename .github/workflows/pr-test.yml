@@ -33,5 +33,3 @@ jobs:
       - name: Check build artifacts
         run: |
           file build.xcarchive/Products/Applications/PCL.Mac.app
-          file build.xcarchive/dSYMs/PCL.Mac.app.dSYM
-          file build.xcarchive/dSYMs/Core.framework.dSYM
