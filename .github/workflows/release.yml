@@ -1,0 +1,53 @@
+name: Build and release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get version
+        run: |
+          echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> $GITHUB_ENV
+          VERSION_NUMBER=$(grep '^MARKETING_VERSION' Configs/Base.xcconfig | cut -d '=' -f2 | xargs)
+          echo "VERSION_NUMBER=$VERSION_NUMBER" >> $GITHUB_ENV
+          echo "TAG_NAME=v$VERSION_NUMBER" >> $GITHUB_ENV
+          
+          echo "版本号：\t$VERSION_NUMBER"
+          echo "构建号：\t$BUILD_NUMBER"
+          echo "标签名：\t$TAG_NAME"
+
+      - name: Build app
+        run: |
+          xcodebuild \
+            -project PCL.Mac.xcodeproj -scheme PCL.Mac -configuration Release \
+            CURRENT_PROJECT_VERSION=$BUILD_NUMBER \
+            -archivePath build archive
+
+      - name: Prepare release assets
+        run: |
+          mv build.xcarchive/Products/Applications/PCL.Mac.app ./PCL.Mac.app
+          zip -r "PCL.Mac-${{ env.TAG_NAME }}.zip" ./PCL.Mac.app/*
+          mv build.xcarchive/dSYMs/PCL.Mac.app.dSYM ./dSYMs/PCL.Mac.app.dSYM
+          mv build.xcarchive/dSYMs/Core.framework.dSYM ./dSYMs/Core.framework.dSYM
+          zip -r "PCL.Mac-${{ env.TAG_NAME }}-dSYMs.zip" ./dSYMs/*
+      
+      - name: Create release
+        run: |
+          gh release create $TAG_NAME
+            "PCL.Mac-${{ env.TAG_NAME }}.zip"
+            "PCL.Mac-${{ env.TAG_NAME }}-dSYMs.zip"
+            --title $VERSION_NUMBER
+            --generate-notes
+            --draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

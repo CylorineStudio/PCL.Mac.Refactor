@@ -40,10 +40,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         URLConstants.createDirectories()
         LogManager.shared.enableLogging()
+        log("正在启动 PCL.Mac.Refactor \(Metadata.appVersion)")
         executeTask("开启 SwiftScaffolding 日志", silent: true) {
             try SwiftScaffolding.Logger.enableLogging(url: URLConstants.logsDirectoryURL.appending(path: "swift-scaffolding.log"))
         }
-        log("App 正在启动")
         _ = LauncherConfig.shared
         executeTask("加载版本缓存") {
             try VersionCache.load()

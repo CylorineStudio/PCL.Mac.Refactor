@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Core
 
 struct AboutPage: View {
     var body: some View {
@@ -25,7 +26,7 @@ struct AboutPage: View {
                                 .init("GitHub", URL(string: "https://github.com/CeciliaStudio")!),
                                 .init("CeciliaStudio", URL(string: "https://ceciliastudio.top")!))
                     
-                    ProfileView("PCL.Mac", "PCL.Mac.Refactor", "当前版本：0.1.1",
+                    ProfileView("PCL.Mac", "PCL.Mac.Refactor", "当前版本：\(Metadata.appVersion)",
                                 .init("GitHub", URL(string: "https://github.com/CeciliaStudio/PCL.Mac.Refactor")!),
                                 .init("CeciliaStudio", URL(string: "https://ceciliastudio.top/projects/PCL.Mac.Refactor")!))
                 }

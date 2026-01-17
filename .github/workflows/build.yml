@@ -1,0 +1,43 @@
+name: Build App
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/**'
+      - 'Configs/**'
+      - 'PCL.Mac/**'
+      - 'PCL.Mac.Core/**'
+      - 'PCL.Mac.xcodeproj/**'
+      - 'Resources/**'
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set version
+        run: echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> $GITHUB_ENV
+
+      - name: Build app
+        run: |
+          echo "Build number: $BUILD_NUMBER"
+          xcodebuild \
+            -project PCL.Mac.xcodeproj -scheme PCL.Mac -configuration Debug \
+            CURRENT_PROJECT_VERSION=$BUILD_NUMBER \
+            -archivePath build archive
+
+      - name: Prepare app artifact directory
+        run: |
+          mkdir "PCL.Mac-artifact"
+          mv build.xcarchive/Products/Applications/PCL.Mac.app "./PCL.Mac-artifact/PCL.Mac.app"
+
+      - name: Upload app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PCL.Mac.Refactor-${{ env.BUILD_NUMBER }}
+          path: ./PCL.Mac-artifact
