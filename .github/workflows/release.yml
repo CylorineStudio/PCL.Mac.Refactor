@@ -3,6 +3,9 @@ name: Build and release
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-26
@@ -46,3 +49,5 @@ jobs:
             --title $VERSION_NUMBER
             --generate-notes
             --draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

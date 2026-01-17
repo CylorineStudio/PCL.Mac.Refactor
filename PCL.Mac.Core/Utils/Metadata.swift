@@ -8,13 +8,9 @@
 import Foundation
 
 public enum Metadata {
-    public static let appVersion: String = {
-        return value(forKey: "CFBundleShortVersionString")
-    }()
+    public static let appVersion: String = { value(forKey: "CFBundleShortVersionString") }()
     
-    public static let debugMode: Bool = {
-        return boolValue(forKey: "DebugMode")
-    }()
+    public static let debugMode: Bool = { boolValue(forKey: "DebugMode") }()
     
     private static func value(forKey key: String) -> String {
         guard let value = Bundle.main.object(forInfoDictionaryKey: key) as? String else {
