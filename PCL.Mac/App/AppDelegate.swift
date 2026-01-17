@@ -35,7 +35,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         URLConstants.createDirectories()
         LogManager.shared.enableLogging()
-        log("App 正在启动")
+        log("正在启动 PCL.Mac.Refactor \(Metadata.appVersion)")
         _ = LauncherConfig.shared
         executeTask("加载版本缓存") {
             try VersionCache.load()

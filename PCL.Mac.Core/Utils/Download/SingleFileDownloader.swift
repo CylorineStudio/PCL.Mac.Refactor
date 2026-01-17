@@ -42,7 +42,7 @@ public enum SingleFileDownloader {
         var request: URLRequest = .init(url: url)
         request.httpMethod = "GET"
         request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-        request.setValue("PCL-Mac/0.0.1", forHTTPHeaderField: "User-Agent")
+        request.setValue("PCL-Mac/\(Metadata.appVersion)", forHTTPHeaderField: "User-Agent")
         
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             let task: URLSessionDownloadTask = session.downloadTask(with: request)
