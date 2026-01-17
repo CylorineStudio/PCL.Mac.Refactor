@@ -41,9 +41,3 @@ jobs:
         with:
           name: PCL.Mac.Refactor-${{ env.BUILD_NUMBER }}
           path: ./PCL.Mac-artifact
-      
-      - name: Upload dSYMs artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: PCL.Mac.Refactor-${{ env.BUILD_NUMBER }}-dSYMs
-          path: ./PCL.Mac-dSYMs
