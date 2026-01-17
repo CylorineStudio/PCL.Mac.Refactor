@@ -86,6 +86,11 @@
 			path = PCL.Mac;
 			sourceTree = "<group>";
 		};
+		ECE3EC022F1B8DB200754684 /* Configs */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Configs;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -128,6 +133,7 @@
 		ECC26BBA2EBEDD67002B7E3E = {
 			isa = PBXGroup;
 			children = (
+				ECE3EC022F1B8DB200754684 /* Configs */,
 				EC9969932EBEE6A20094E524 /* Resources */,
 				ECC26BC52EBEDD67002B7E3E /* PCL.Mac */,
 				EC996B3D2EBEE80F0094E524 /* PCL.Mac.Core */,
@@ -226,6 +232,7 @@
 			fileSystemSynchronizedGroups = (
 				EC9969932EBEE6A20094E524 /* Resources */,
 				ECC26BC52EBEDD67002B7E3E /* PCL.Mac */,
+				ECE3EC022F1B8DB200754684 /* Configs */,
 			);
 			name = PCL.Mac;
 			packageProductDependencies = (
@@ -584,13 +591,14 @@
 		};
 		ECC26BD02EBEDD67002B7E3E /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = ECE3EC022F1B8DB200754684 /* Configs */;
+			baseConfigurationReferenceRelativePath = Debug.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = PCL.Mac/PCL_Mac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -604,7 +612,6 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "org.ceciliastudio.PCL-Mac";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -615,13 +622,14 @@
 		};
 		ECC26BD12EBEDD67002B7E3E /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = ECE3EC022F1B8DB200754684 /* Configs */;
+			baseConfigurationReferenceRelativePath = Release.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = PCL.Mac/PCL_Mac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -635,7 +643,6 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "org.ceciliastudio.PCL-Mac";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
