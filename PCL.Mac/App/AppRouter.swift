@@ -119,6 +119,5 @@ class AppRouter: ObservableObject {
         }
     }
     
-    private init() {
-    }
+    private init() {}
 }
