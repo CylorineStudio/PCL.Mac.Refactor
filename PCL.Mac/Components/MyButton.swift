@@ -12,14 +12,16 @@ struct MyButton: View {
     @State private var isPressed: Bool = false
     private let label: String
     private let subLabel: String?
+    private let textPadding: EdgeInsets
     private let type: `Type`
     private let action: () -> Void
     
     private var color: Color { hovered ? type.hoverColor : type.color }
     
-    init(_ label: String, subLabel: String? = nil, type: `Type` = .normal, _ action: @escaping () -> Void) {
+    init(_ label: String, subLabel: String? = nil, textPadding: EdgeInsets = .init(), type: `Type` = .normal, _ action: @escaping () -> Void) {
         self.label = label
         self.subLabel = subLabel
+        self.textPadding = textPadding
         self.type = type
         self.action = action
     }
@@ -35,6 +37,7 @@ struct MyButton: View {
                 .brightness(hovered ? 0.2 : 0)
             VStack(spacing: 4) {
                 MyText(label, color: color)
+                    .padding(textPadding)
                 if let subLabel {
                     MyText(subLabel, size: 12, color: .colorGray3)
                 }

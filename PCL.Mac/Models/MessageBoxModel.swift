@@ -11,6 +11,7 @@ struct MessageBoxModel {
     public let title: String
     public let body: Body
     public let level: Level
+    public let buttons: [Button]
     
     public enum Body {
         case text(text: String)
@@ -18,5 +19,11 @@ struct MessageBoxModel {
     
     public enum Level {
         case info, error
+    }
+    
+    public struct Button {
+        public let id: Int
+        public let label: String
+        public let type: MyButton.`Type`
     }
 }

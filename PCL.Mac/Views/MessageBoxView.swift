@@ -29,6 +29,14 @@ struct MessageBoxView: View {
                 content
                     .frame(minHeight: 1)
                     .padding(.leading, 7)
+                    .padding(.bottom, 17)
+                HStack(spacing: 12) {
+                    Spacer(minLength: 0)
+                    ForEach(model.buttons, id: \.id) { button in
+                        MyButton(button.label, textPadding: .init(top: 7, leading: 12, bottom: 7, trailing: 12), type: button.type) {}
+                            .fixedSize()
+                    }
+                }
             }
             .padding(22)
         }
@@ -52,6 +60,17 @@ struct MessageBoxView: View {
 }
 
 #Preview {
-    MessageBoxView(model: .init(title: "测试", body: .text(text: "test"), level: .info))
-        .padding()
+    MessageBoxView(
+        model: .init(
+            title: "测试",
+            body: .text(text: "test"),
+            level: .info,
+            buttons: [
+                .init(id: 0, label: "高亮", type: .highlight),
+                .init(id: 1, label: "普通", type: .normal),
+                .init(id: 2, label: "千万别点", type: .red)
+            ]
+        )
+    )
+    .padding()
 }
