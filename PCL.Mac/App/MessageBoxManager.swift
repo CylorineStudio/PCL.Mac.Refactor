@@ -9,9 +9,9 @@ import Foundation
 
 class MessageBoxManager: ObservableObject {
     public static let shared: MessageBoxManager = .init()
-    @Published public private(set) var currentMessageBox: MessageBox?
+    @Published public private(set) var currentMessageBox: MessageBoxModel?
     
-    public func showText(title: String, body: String, level: MessageBox.Level = .info) {
+    public func showText(title: String, body: String, level: MessageBoxModel.Level = .info) {
         currentMessageBox = .init(title: title, body: .text(text: body), level: level)
     }
     
