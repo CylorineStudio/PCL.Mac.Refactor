@@ -33,6 +33,16 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay {
+            if let messageBox = messageBoxManager.currentMessageBox {
+                ZStack {
+                    Rectangle()
+                        .fill(messageBox.level == .error ? Color(0xFF0000).opacity(0.5) : .black.opacity(0.35))
+                    MessageBoxView(model: messageBox)
+                        .shadow(color: .color1.opacity(0.8), radius: 20)
+                }
+            }
+        }
+        .overlay {
             VStack(alignment: .leading, spacing: 16) {
                 Spacer()
                 ForEach(hintManager.hints) { hint in
@@ -42,16 +52,6 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .animation(.easeOut(duration: 0.2), value: hintManager.hints)
             .padding(.bottom, 100)
-        }
-        .overlay {
-            if let messageBox = messageBoxManager.currentMessageBox {
-                ZStack {
-                    Rectangle()
-                        .fill(messageBox.level == .error ? Color(0xFF0000).opacity(0.5) : .black.opacity(0.35))
-                    MessageBoxView(model: messageBox)
-                        .shadow(color: .color1.opacity(0.8), radius: 20)
-                }
-            }
         }
     }
 }
