@@ -53,10 +53,20 @@ struct LaunchPage: View {
             .cardIndex(2)
             
             MyCard("", titled: false) {
-                MyButton(".tasks") {
-                    AppRouter.shared.append(.tasks)
+                HStack {
+                    MyButton(".tasks") {
+                        AppRouter.shared.append(.tasks)
+                    }
+                    .frame(width: 80)
+                    
+                    MyButton("弹窗") {
+                        Task {
+                            await MessageBoxManager.shared.showText(title: "测试", content: "Hello, world!", buttons: .init(id: 1, label: "确认", type: .highlight))
+                        }
+                    }
+                    .frame(width: 80)
                 }
-                .frame(width: 80, height: 40)
+                .frame(height: 40)
             }
             .cardIndex(3)
             

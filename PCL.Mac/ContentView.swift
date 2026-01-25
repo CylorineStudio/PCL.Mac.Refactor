@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject private var hintManager: HintManager = .shared
     @ObservedObject private var router: AppRouter = .shared
+    @ObservedObject private var messageBoxManager: MessageBoxManager = .shared
     @State private var sidebarWidth: CGFloat = AppRouter.shared.sidebar.width
     
     var body: some View {
@@ -41,6 +42,15 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .animation(.easeOut(duration: 0.2), value: hintManager.hints)
             .padding(.bottom, 100)
+        }
+        .overlay {
+            if let messageBox = messageBoxManager.currentMessageBox {
+                ZStack {
+                    Rectangle()
+                        .fill(.black.opacity(0.4))
+                    MessageBoxView(model: messageBox)
+                }
+            }
         }
     }
 }

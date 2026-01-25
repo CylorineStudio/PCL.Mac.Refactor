@@ -9,11 +9,11 @@ import Foundation
 
 struct MessageBoxModel {
     public let title: String
-    public let body: Body
+    public let content: Content
     public let level: Level
     public let buttons: [Button]
     
-    public enum Body {
+    public enum Content {
         case text(text: String)
     }
     
@@ -25,5 +25,16 @@ struct MessageBoxModel {
         public let id: Int
         public let label: String
         public let type: MyButton.`Type`
+        public let onClick: (() -> Void)?
+        
+        /// 创建一个弹窗按钮。
+        /// - Parameters:
+        ///   - onClick: 点击回调，有值时被点击后不会关闭弹窗。
+        public init(id: Int, label: String, type: MyButton.`Type`, onClick: (() -> Void)? = nil) {
+            self.id = id
+            self.label = label
+            self.type = type
+            self.onClick = onClick
+        }
     }
 }

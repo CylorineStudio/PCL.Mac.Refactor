@@ -33,8 +33,10 @@ struct MessageBoxView: View {
                 HStack(spacing: 12) {
                     Spacer(minLength: 0)
                     ForEach(model.buttons, id: \.id) { button in
-                        MyButton(button.label, textPadding: .init(top: 7, leading: 12, bottom: 7, trailing: 12), type: button.type) {}
-                            .fixedSize()
+                        MyButton(button.label, textPadding: .init(top: 7, leading: 12, bottom: 7, trailing: 12), type: button.type) {
+                            MessageBoxManager.shared.onButtonTap(button)
+                        }
+                        .fixedSize()
                     }
                 }
             }
@@ -52,7 +54,7 @@ struct MessageBoxView: View {
     }
     
     private var content: some View {
-        switch model.body {
+        switch model.content {
         case .text(let text):
             MyText(text)
         }
@@ -63,7 +65,7 @@ struct MessageBoxView: View {
     MessageBoxView(
         model: .init(
             title: "测试",
-            body: .text(text: "test"),
+            content: .text(text: "test"),
             level: .info,
             buttons: [
                 .init(id: 0, label: "高亮", type: .highlight),
