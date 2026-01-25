@@ -11,7 +11,7 @@ import Core
 class MessageBoxManager: ObservableObject {
     public static let shared: MessageBoxManager = .init()
     @Published public private(set) var currentMessageBox: MessageBoxModel?
-    private let defaultButton: MessageBoxModel.Button = .init(id: 0, label: "确认", type: .normal)
+    private let defaultButton: MessageBoxModel.Button = .init(id: 0, label: "确定", type: .normal)
     private let semaphore: AsyncSemaphore = .init(value: 1)
     private var continuation: CheckedContinuation<MessageBoxResult, Never>?
     

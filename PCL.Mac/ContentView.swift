@@ -47,8 +47,9 @@ struct ContentView: View {
             if let messageBox = messageBoxManager.currentMessageBox {
                 ZStack {
                     Rectangle()
-                        .fill(.black.opacity(0.4))
+                        .fill(messageBox.level == .error ? Color(0xFF0000).opacity(0.5) : .black.opacity(0.35))
                     MessageBoxView(model: messageBox)
+                        .shadow(color: .color1.opacity(0.8), radius: 20)
                 }
             }
         }
