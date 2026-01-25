@@ -61,7 +61,25 @@ struct LaunchPage: View {
                     
                     MyButton("弹窗") {
                         Task {
-                            await MessageBoxManager.shared.showText(title: "测试", content: "Hello, world!", buttons: .init(id: 1, label: "确认", type: .highlight))
+                            await MessageBoxManager.shared.showText(
+                                title: "测试",
+                                content: "Hello, world!",
+                                .init(id: 0, label: "hint", type: .normal) {
+                                    hint("awa!", type: .finish)
+                                },
+                                .init(id: 1, label: "确认", type: .highlight),
+                            )
+                        }
+                    }
+                    .frame(width: 80)
+                    
+                    MyButton("错误弹窗", type: .red) {
+                        Task {
+                            await MessageBoxManager.shared.showText(
+                                title: "Minecraft 出现错误",
+                                content: "如果要寻求帮助，请把错误报告文件发给对方，而不是发送这个窗口的照片或者截图。",
+                                level: .error,
+                            )
                         }
                     }
                     .frame(width: 80)

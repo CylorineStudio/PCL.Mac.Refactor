@@ -11,6 +11,7 @@ import Core
 class MessageBoxManager: ObservableObject {
     public static let shared: MessageBoxManager = .init()
     @Published public private(set) var currentMessageBox: MessageBoxModel?
+    private let defaultButton: MessageBoxModel.Button = .init(id: 0, label: "确认", type: .normal)
     private let semaphore: AsyncSemaphore = .init(value: 1)
     private var continuation: CheckedContinuation<MessageBoxResult, Never>?
     
@@ -21,7 +22,8 @@ class MessageBoxManager: ObservableObject {
     ///   - level: 提示框等级，控制了提示框的颜色。
     ///   - buttons: 按钮列表。
     /// - Returns: 被点击的按钮的 `id`。
-    public func showText(title: String, content: String, level: MessageBoxModel.Level = .info, buttons: MessageBoxModel.Button...) async -> Int {
+    public func showText(title: String, content: String, level: MessageBoxModel.Level = .info, _ buttons: MessageBoxModel.Button...) async -> Int {
+        let buttons: [MessageBoxModel.Button] = buttons.isEmpty ? [defaultButton] : buttons
         let result: MessageBoxResult = await show(title: title, content: .text(text: content), level: level, buttons: buttons)
         if case .button(let id) = result {
             return id
