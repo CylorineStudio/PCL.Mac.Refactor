@@ -32,16 +32,7 @@ struct ContentView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay {
-            if let messageBox = messageBoxManager.currentMessageBox {
-                ZStack {
-                    Rectangle()
-                        .fill(messageBox.level == .error ? Color(0xFF0000).opacity(0.5) : .black.opacity(0.35))
-                    MessageBoxView(model: messageBox)
-                        .shadow(color: .color1.opacity(0.8), radius: 20)
-                }
-            }
-        }
+        .overlay { MessageBoxOverlay() }
         .overlay {
             VStack(alignment: .leading, spacing: 16) {
                 Spacer()
@@ -108,6 +99,62 @@ private struct HintView: View {
             path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
             path.closeSubpath()
             return path
+        }
+    }
+}
+
+private struct MessageBoxOverlay: View {
+    @ObservedObject var messageBoxManager: MessageBoxManager = .shared
+    @State private var messageBox: MessageBoxModel?
+    
+    @State private var opacity: CGFloat = 0
+    @State private var rotation: CGFloat = 4
+    @State private var offsetY: CGFloat = 40
+    
+    @State private var animationHideWorkItem: DispatchWorkItem?
+    
+    var body: some View {
+        Group {
+            if let messageBox {
+                ZStack {
+                    Rectangle()
+                        .fill(messageBox.level == .error ? Color(0xFF0000).opacity(0.5) : .black.opacity(0.35))
+                    MessageBoxView(model: messageBox)
+                        .shadow(color: .color1.opacity(0.8), radius: 20)
+                        .rotationEffect(.degrees(rotation))
+                        .offset(y: offsetY)
+                }
+                .opacity(opacity)
+            }
+        }
+        .onChange(of: messageBoxManager.currentMessageBox) { newValue in
+            if newValue != nil { // 移入
+                animationHideWorkItem?.cancel()
+                messageBox = newValue
+                withAnimation(.spring(duration: 0.3, bounce: 0.3)) {
+                    offsetY = 0
+                }
+                withAnimation(.easeOut(duration: 0.3)) {
+                    opacity = 1
+                    rotation = 0
+                }
+            } else { // 移出
+                let workItem: DispatchWorkItem = .init {
+                    self.messageBox = nil
+                    self.rotation = 4
+                    self.offsetY = 40
+                }
+                animationHideWorkItem = workItem
+                let duration: CGFloat = 0.15
+                DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: workItem)
+                withAnimation(.easeOut(duration: duration)) {
+                    opacity = 0
+                    offsetY = 60
+                }
+                withAnimation(.easeIn(duration: duration)) {
+                    rotation = 6
+                }
+            }
         }
     }
 }

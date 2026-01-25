@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct MessageBoxModel {
+struct MessageBoxModel: Equatable, Identifiable {
+    public let id: UUID = .init()
     public let title: String
     public let content: Content
     public let level: Level
@@ -19,6 +20,10 @@ struct MessageBoxModel {
     
     public enum Level {
         case info, error
+    }
+    
+    public static func == (lhs: MessageBoxModel, rhs: MessageBoxModel) -> Bool {
+        return lhs.id == rhs.id
     }
     
     public struct Button {
