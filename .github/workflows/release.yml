@@ -37,6 +37,7 @@ jobs:
         run: |
           mv build.xcarchive/Products/Applications/PCL.Mac.app ./PCL.Mac.app
           zip -r "PCL.Mac-${{ env.TAG_NAME }}.zip" ./PCL.Mac.app/*
+          mkdir dSYMs
           mv build.xcarchive/dSYMs/PCL.Mac.app.dSYM ./dSYMs/PCL.Mac.app.dSYM
           mv build.xcarchive/dSYMs/Core.framework.dSYM ./dSYMs/Core.framework.dSYM
           zip -r "PCL.Mac-${{ env.TAG_NAME }}-dSYMs.zip" ./dSYMs/*
