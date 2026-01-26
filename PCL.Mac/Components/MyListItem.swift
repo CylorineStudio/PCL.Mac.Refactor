@@ -36,10 +36,13 @@ struct MyListItem<Content: View>: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: model.imageSize, height: model.imageSize)
+                                .foregroundStyle(Color.color1)
                         }
                         VStack(alignment: .leading) {
                             MyText(model.name)
-                            MyText(model.description, color: .colorGray3)
+                            if let description = model.description {
+                                MyText(description, color: .colorGray3)
+                            }
                         }
                     }
                     Spacer()

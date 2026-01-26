@@ -24,7 +24,8 @@ public class MicrosoftAuthService {
         let json = try await post(
             "https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode",
             [
-                "client_id": clientID
+                "client_id": clientID,
+                "scope": "XboxLive.signin offline_access"
             ],
             encodeMethod: .urlEncoded
         )
@@ -54,8 +55,9 @@ public class MicrosoftAuthService {
             ],
             encodeMethod: .urlEncoded
         )
-        if let accessToken = json["accessToken"].string {
+        if let accessToken = json["access_token"].string, let refreshToken = json["refresh_token"].string {
             self.oAuthToken = accessToken
+            self.refreshToken = refreshToken
             return true
         }
         return false
@@ -65,6 +67,7 @@ public class MicrosoftAuthService {
     /// - Returns: 包含玩家档案、Minecraft 令牌和 OAuth 刷新令牌的结构体。
     public func authenticate() async throws -> MinecraftAuthResponse {
         guard let oAuthToken, let refreshToken else {
+            err("OAuth access token 或 refresh token 未设置")
             throw Error.internalError
         }
         let xboxLiveAuthResponse: XboxLiveAuthResponse = try await authenticateXBL(with: oAuthToken)

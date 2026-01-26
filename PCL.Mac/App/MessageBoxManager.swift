@@ -77,6 +77,21 @@ class MessageBoxManager: ObservableObject {
         return nil
     }
     
+    /// 关闭当前模态框。
+    /// - Parameter result: 附带的结果。
+    public func complete(with result: MessageBoxResult) {
+        DispatchQueue.main.async {
+            self.continuation?.resume(returning: result)
+            self.continuation = nil
+            self.currentMessageBox = nil
+        }
+        let workItem: DispatchWorkItem = .init {
+            self.shouldWait = false
+        }
+        self.clearWaitStateWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: workItem)
+    }
+    
     public func onButtonTap(_ button: MessageBoxModel.Button) {
         log("按钮 \(button.label) 被点击")
         if let onClick = button.onClick {
@@ -92,19 +107,6 @@ class MessageBoxManager: ObservableObject {
     
     public func onInputFinished(text: String?) {
         complete(with: .input(text: text))
-    }
-    
-    private func complete(with result: MessageBoxResult) {
-        DispatchQueue.main.async {
-            self.continuation?.resume(returning: result)
-            self.continuation = nil
-            self.currentMessageBox = nil
-        }
-        let workItem: DispatchWorkItem = .init {
-            self.shouldWait = false
-        }
-        self.clearWaitStateWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: workItem)
     }
     
     private func show(

@@ -5,7 +5,7 @@
 //  Created by 温迪 on 2026/1/15.
 //
 
-import Foundation
+import SwiftUI
 import Combine
 import Core
 import SwiftyJSON
@@ -31,6 +31,33 @@ class AccountViewModel: ObservableObject {
     public init() {
         self.accounts = LauncherConfig.shared.accounts
         self.currentAccountId = LauncherConfig.shared.currentAccountId
+    }
+    
+    /// 请求用户添加账号。
+    public func requestAddAccount(completion: @escaping () -> Void) {
+        Task {
+            log("开始请求添加账号")
+            guard let idx: Int = await MessageBoxManager.shared.showList(
+                title: "选择账号类型",
+                items: [
+                    .init(image: .init(named: "IconMicrosoftAccount"), imageSize: 32, name: "正版账号", description: nil),
+                    .init(image: .init(named: "IconOfflineAccount"), imageSize: 32, name: "离线账号", description: nil)
+                ]
+            ) else {
+                log("用户取消了添加")
+                return
+            }
+            if idx == 0 {
+                log("用户选择了添加正版账号")
+                await requestAddMicrosoftAccount()
+            } else {
+                log("用户选择了添加离线账号")
+                await requestAddOfflineAccount()
+            }
+            await MainActor.run {
+                completion()
+            }
+        }
     }
     
     /// 检查待添加的离线账号的属性是否合法。
@@ -120,6 +147,86 @@ class AccountViewModel: ObservableObject {
         } catch {
             err("获取皮肤数据失败：\(error.localizedDescription)")
             return defaultSkin
+        }
+    }
+    
+    private func requestAddMicrosoftAccount() async {
+        let service: MicrosoftAuthService = .init()
+        let code: MicrosoftAuthService.AuthorizationCode
+        log("开始进行微软登录")
+        do {
+            code = try await service.start()
+            log("获取设备码成功")
+        } catch {
+            err("添加正版账号失败：获取设备码失败：\(error.localizedDescription)")
+            hint("添加正版账号失败：获取设备码失败：\(error.localizedDescription)", type: .critical)
+            return
+        }
+        
+        let authTask = Task {
+            do {
+                guard let pollCount = service.pollCount,
+                      let pollInterval = service.pollInterval else {
+                    err("pollCount 或 pollInterval 未被设置")
+                    throw MicrosoftAuthService.Error.internalError
+                }
+                for i in 0..<pollCount {
+                    try Task.checkCancellation()
+                    log("第 \(i + 1)/\(pollCount) 次轮询")
+                    try await Task.sleep(seconds: Double(pollInterval))
+                    if try await service.poll() {
+                        log("用户完成了授权")
+                        break
+                    }
+                    if i == pollCount - 1 {
+                        throw SimpleError("授权超时。")
+                    }
+                }
+                hint("授权成功！正在完成后续登录步骤……")
+                let response = try await service.authenticate()
+                let account: MicrosoftAccount = .init(profile: response.profile, accessToken: response.accessToken, refreshToken: response.refreshToken)
+                log("添加正版账号成功")
+                hint("账号添加成功！", type: .finish)
+                await MainActor.run {
+                    accounts.append(account)
+                    switchAccount(to: account)
+                }
+            } catch {
+                err("添加正版账号失败：\(error.localizedDescription)")
+                hint("登录失败：\(error.localizedDescription)", type: .critical)
+            }
+            await MainActor.run {
+                MessageBoxManager.shared.complete(with: .button(id: 0))
+            }
+        }
+        
+        if await MessageBoxManager.shared.showText(
+            title: "添加正版账号",
+            content: "请打开 \(code.verificationURL)，然后输入 \(code.code)，随后根据提示完成后续授权步骤。\n点击下方按钮可以一键复制并跳转！",
+            .init(id: 0, label: "复制并跳转", type: .highlight) {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(code.code, forType: .string)
+                NSWorkspace.shared.open(code.verificationURL)
+            },
+            .init(id: 1, label: "取消", type: .red)
+        ) == 1 {
+            log("用户取消了授权")
+            authTask.cancel()
+        }
+    }
+    
+    private func requestAddOfflineAccount() async {
+        guard let playerName: String = await MessageBoxManager.shared.showInput(title: "玩家名") else {
+            log("用户取消了添加")
+            return
+        }
+        await MainActor.run {
+            do {
+                try addOfflineAccount(name: playerName, uuid: nil)
+            } catch {
+                err("添加离线账号失败：\(error.localizedDescription)")
+                hint("添加离线账号失败：\(error.localizedDescription)", type: .critical)
+            }
         }
     }
 }

@@ -12,22 +12,24 @@ struct PlayerAvatar: View {
     @StateObject private var viewModel: AccountViewModel = .init()
     @State private var skinImage: CIImage?
     private let account: Account
+    private let length: CGFloat
     
-    init(_ account: Account) {
+    init(_ account: Account, length: CGFloat = 58) {
         self.account = account
+        self.length = length
     }
     
     var body: some View {
         ZStack {
             if let skinImage {
                 SkinLayerView(image: skinImage, startX: 8, startY: 16)
-                    .frame(width: 8 * 5.4)
-                    .shadow(color: Color.black.opacity(0.2), radius: 1)
+                    .frame(width: length / 10 * 9)
                 SkinLayerView(image: skinImage, startX: 40, startY: 16)
-                    .frame(width: 7.99 * 6.1)
+                    .frame(width: length)
             }
         }
-        .frame(width: 58, height: 58)
+        .shadow(radius: 2)
+        .frame(width: length, height: length)
         .task {
             let skinData: Data = await viewModel.skinData(for: account)
             guard let image: CIImage = .init(data: skinData) else {

@@ -12,15 +12,34 @@ struct LaunchSidebar: Sidebar {
     @EnvironmentObject private var instanceViewModel: InstanceViewModel
     @ObservedObject private var router: AppRouter = .shared
     @StateObject private var accountViewModel: AccountViewModel = .init()
+    @State private var editingAccount: Bool = false
     
     let width: CGFloat = 285
     
     var body: some View {
         VStack(spacing: 11) {
             Spacer()
-            if let account = accountViewModel.currentAccount {
-                PlayerAvatar(account)
-                MyText(account.profile.name)
+            if editingAccount {
+                VStack {
+                    accountList
+                    HStack {
+                        MyButton("添加账号") {
+                            accountViewModel.requestAddAccount { editingAccount = false }
+                        }
+                        .frame(width: 80)
+                    }
+                    .frame(height: 30)
+                }
+            } else if let account = accountViewModel.currentAccount {
+                MyListItem {
+                    VStack {
+                        PlayerAvatar(account)
+                        MyText(account.profile.name)
+                    }
+                }
+                .onTapGesture {
+                    editingAccount = true
+                }
             }
             Spacer()
             Group {
@@ -53,5 +72,26 @@ struct LaunchSidebar: Sidebar {
             .frame(height: 32)
         }
         .padding(21)
+        .onAppear {
+            if accountViewModel.currentAccount == nil { editingAccount = true }
+        }
+    }
+    
+    private var accountList: some View {
+        VStack(spacing: 0) {
+            ForEach(0..<accountViewModel.accounts.count, id: \.self) { idx in
+                let account: Account = accountViewModel.accounts[idx]
+                MyListItem {
+                    HStack {
+                        PlayerAvatar(account, length: 36)
+                        VStack(alignment: .leading) {
+                            MyText(account.profile.name)
+                            MyText(account.type().localized, color: .colorGray3)
+                        }
+                        Spacer()
+                    }
+                }
+            }
+        }
     }
 }

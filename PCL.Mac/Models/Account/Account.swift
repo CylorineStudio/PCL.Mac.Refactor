@@ -78,20 +78,20 @@ class MicrosoftAccount: Account {
 class AccountWrapper: Codable {
     public enum AccountType: String, Codable {
         case offline, microsoft
+        
+        public var localized: String {
+            switch self {
+            case .offline: "离线账号"
+            case .microsoft: "正版账号"
+            }
+        }
     }
     
     public let type: AccountType
     public let account: Account
     
     public init(_ account: Account) {
-        switch account {
-        case is OfflineAccount:
-            self.type = .offline
-        case is MicrosoftAccount:
-            self.type = .microsoft
-        default:
-            fatalError() // unreachable
-        }
+        self.type = account.type()
         self.account = account
     }
     
@@ -115,5 +115,18 @@ class AccountWrapper: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(type, forKey: .type)
         try container.encode(account, forKey: .account)
+    }
+}
+
+extension Account {
+    func type() -> AccountWrapper.AccountType {
+        switch self {
+        case is OfflineAccount:
+            .offline
+        case is MicrosoftAccount:
+            .microsoft
+        default:
+            fatalError() // unreachable
+        }
     }
 }
