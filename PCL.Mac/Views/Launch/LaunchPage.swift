@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LaunchPage: View {
-    private let loadingModel: MyLoadingViewModel = .init(text: "加载中")
+    @StateObject private var loadingModel: MyLoadingViewModel = .init(text: "加载中")
     private let listItems: [ListItem] = [
         .init(name: "name1", description: "desc1"),
         .init(name: "name2", description: "desc2"),

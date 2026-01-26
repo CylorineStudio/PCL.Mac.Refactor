@@ -11,7 +11,7 @@ import SwiftyJSON
 
 struct MinecraftDownloadPage: View {
     @EnvironmentObject private var viewModel: MinecraftDownloadPageViewModel
-    private let loadingModel: MyLoadingViewModel = .init(text: "加载中")
+    @StateObject private var loadingModel: MyLoadingViewModel = .init(text: "加载中")
     
     var body: some View {
         CardContainer {
