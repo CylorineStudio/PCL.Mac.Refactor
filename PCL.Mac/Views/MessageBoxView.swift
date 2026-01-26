@@ -79,16 +79,20 @@ struct MessageBoxView: View {
         case .text(_):
             MessageBoxManager.shared.onButtonTap(button)
         case .list(_):
-            if button.id == 1000 { // 取消
+            if button.id == MessageBoxManager.cancelButtonID { // 取消
                 MessageBoxManager.shared.onListSelect(index: nil)
-            } else if button.id == 1001 { // 确定
+            } else if button.id == MessageBoxManager.okButtonID { // 确定
                 MessageBoxManager.shared.onListSelect(index: selectedItemIndex)
+            } else {
+                MessageBoxManager.shared.onButtonTap(button)
             }
         case .input(_, _):
-            if button.id == 1000 { // 取消
+            if button.id == MessageBoxManager.cancelButtonID { // 取消
                 MessageBoxManager.shared.onInputFinished(text: nil)
-            } else if button.id == 1001 { // 确定
+            } else if button.id == MessageBoxManager.okButtonID { // 确定
                 MessageBoxManager.shared.onInputFinished(text: inputText)
+            } else {
+                MessageBoxManager.shared.onButtonTap(button)
             }
         }
     }

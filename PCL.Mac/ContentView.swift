@@ -10,7 +10,6 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject private var hintManager: HintManager = .shared
     @ObservedObject private var router: AppRouter = .shared
-    @ObservedObject private var messageBoxManager: MessageBoxManager = .shared
     @State private var sidebarWidth: CGFloat = AppRouter.shared.sidebar.width
     
     var body: some View {

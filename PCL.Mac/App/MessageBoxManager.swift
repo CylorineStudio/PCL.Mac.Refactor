@@ -10,6 +10,8 @@ import Core
 
 class MessageBoxManager: ObservableObject {
     public static let shared: MessageBoxManager = .init()
+    public static let cancelButtonID: Int = 1000
+    public static let okButtonID: Int = 1001
     @Published public private(set) var currentMessageBox: MessageBoxModel?
     private let defaultButton: MessageBoxModel.Button = .init(id: 0, label: "确定", type: .normal)
     private let semaphore: AsyncSemaphore = .init(value: 1)
@@ -46,7 +48,7 @@ class MessageBoxManager: ObservableObject {
             title: title,
             content: .list(items: items),
             level: .info,
-            buttons: [.init(id: 1000, label: "取消", type: .normal), .init(id: 1001, label: "确定", type: .highlight)]
+            buttons: [.init(id: MessageBoxManager.cancelButtonID, label: "取消", type: .normal), .init(id: MessageBoxManager.okButtonID, label: "确定", type: .highlight)]
         )
         if case .listSelection(let index) = result {
             return index
@@ -66,7 +68,7 @@ class MessageBoxManager: ObservableObject {
             title: title,
             content: .input(initialContent: initialContent, placeholder: placeholder),
             level: .info,
-            buttons: [.init(id: 1000, label: "取消", type: .normal), .init(id: 1001, label: "确定", type: .highlight)]
+            buttons: [.init(id: MessageBoxManager.cancelButtonID, label: "取消", type: .normal), .init(id: MessageBoxManager.okButtonID, label: "确定", type: .highlight)]
         )
         if case .input(let text) = result {
             return text
