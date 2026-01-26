@@ -55,9 +55,9 @@ struct LaunchPage: View {
                     MyButton("弹窗") {
                         Task {
                             _ = await MessageBoxManager.shared.showText(
-                                title: "测试",
+                                title: "普通弹窗",
                                 content: "Hello, world!",
-                                .init(id: 0, label: "hint", type: .normal) {
+                                .init(id: 0, label: "hint（点击这个按钮不会关闭弹窗！）", type: .normal) {
                                     hint("awa!", type: .finish)
                                 },
                                 .init(id: 1, label: "确认", type: .highlight),
