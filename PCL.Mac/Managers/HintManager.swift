@@ -33,5 +33,7 @@ class HintManager: ObservableObject {
 ///   - type: 提示类型，默认为 `info`（蓝色）。
 ///   - time: 提示显示时长。
 func hint(_ text: String, type: HintModel.`Type` = .info, time: Double = 2.0) {
-    HintManager.shared.hint(text, type: type, time: time)
+    DispatchQueue.main.async {
+        HintManager.shared.hint(text, type: type, time: time)
+    }
 }

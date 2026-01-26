@@ -4,5 +4,10 @@
 <dict>
 	<key>DebugMode</key>
 	<string>$(DEBUG_MODE)</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

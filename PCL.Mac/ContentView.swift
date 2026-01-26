@@ -31,6 +31,7 @@ struct ContentView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay { MessageBoxOverlay() }
         .overlay {
             VStack(alignment: .leading, spacing: 16) {
                 Spacer()
@@ -54,14 +55,13 @@ private struct HintView: View {
     }
     
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 5)
+        ZStack(alignment: .leading) {
+            RightRoundedRectangle(cornerRadius: 5)
                 .fill(color)
                 .frame(height: 22)
-                .offset(x: -5)
             MyText(model.text, color: .white)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 4)
+                .padding(.horizontal, 4)
         }
         .opacity(appeared ? 1 : 0)
         .offset(x: appeared ? 0 : -50)
@@ -77,6 +77,62 @@ private struct HintView: View {
         case .info: Color(0x0A8EFC)
         case .finish: Color(0x1DA01D)
         case .critical: Color(0xFF2B00)
+        }
+    }
+}
+
+private struct MessageBoxOverlay: View {
+    @ObservedObject var messageBoxManager: MessageBoxManager = .shared
+    @State private var messageBox: MessageBoxModel?
+    
+    @State private var opacity: CGFloat = 0
+    @State private var rotation: CGFloat = 4
+    @State private var offsetY: CGFloat = 40
+    
+    @State private var animationHideWorkItem: DispatchWorkItem?
+    
+    var body: some View {
+        Group {
+            if let messageBox {
+                ZStack {
+                    Rectangle()
+                        .fill(messageBox.level == .error ? Color(0xFF0000).opacity(0.5) : .black.opacity(0.35))
+                    MessageBoxView(model: messageBox)
+                        .shadow(color: .color1.opacity(0.8), radius: 20)
+                        .rotationEffect(.degrees(rotation))
+                        .offset(y: offsetY)
+                }
+                .opacity(opacity)
+            }
+        }
+        .onChange(of: messageBoxManager.currentMessageBox) { newValue in
+            if newValue != nil { // 移入
+                animationHideWorkItem?.cancel()
+                messageBox = newValue
+                withAnimation(.spring(duration: 0.3, bounce: 0.3)) {
+                    offsetY = 0
+                }
+                withAnimation(.easeOut(duration: 0.3)) {
+                    opacity = 1
+                    rotation = 0
+                }
+            } else { // 移出
+                let workItem: DispatchWorkItem = .init {
+                    self.messageBox = nil
+                    self.rotation = 4
+                    self.offsetY = 40
+                }
+                animationHideWorkItem = workItem
+                let duration: CGFloat = 0.15
+                DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: workItem)
+                withAnimation(.easeOut(duration: duration)) {
+                    opacity = 0
+                    offsetY = 60
+                }
+                withAnimation(.easeIn(duration: duration)) {
+                    rotation = 6
+                }
+            }
         }
     }
 }

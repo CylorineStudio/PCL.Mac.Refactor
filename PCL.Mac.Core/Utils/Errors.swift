@@ -40,10 +40,16 @@ public enum MinecraftError: LocalizedError {
     
     public var errorDescription: String? {
         switch self {
-        case .missingManifest: "未找到客户端清单文件。"
-        case .unknownManifestFormat: "未知的客户端清单格式，可能是由外部安装的实例。"
+        case .missingManifest:
+            "未找到客户端清单文件。"
+        case .unknownManifestFormat:
+            "未知的客户端清单格式，可能是由外部安装的实例。"
         }
     }
+}
+
+public enum UUIDError: Error, Equatable {
+    case invalidUUIDFormat
 }
 
 public struct SimpleError: LocalizedError {
