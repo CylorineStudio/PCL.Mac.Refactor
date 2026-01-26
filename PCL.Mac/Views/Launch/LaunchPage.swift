@@ -9,8 +9,10 @@ import SwiftUI
 
 struct LaunchPage: View {
     private let loadingModel: MyLoadingViewModel = .init(text: "加载中")
-    private let texts: [(String, String)] = [
-        ("AAAAAA", "aaaaaa"), ("BBBBBB", "bbbbbb"), ("CCCCCC", "cccccc")
+    private let listItems: [ListItem] = [
+        .init(name: "name1", description: "desc1"),
+        .init(name: "name2", description: "desc2"),
+        .init(name: "name3", description: "desc3")
     ]
     
     var body: some View {
@@ -30,16 +32,7 @@ struct LaunchPage: View {
                         MyButton("红色按钮", subLabel: "但是两行文本", type: .red) {}
                     }
                     .frame(height: 60)
-                    VStack(spacing: 0) {
-                        ForEach(texts, id: \.0) { text in
-                            MyListItem {
-                                VStack(alignment: .leading) {
-                                    MyText(text.0)
-                                    MyText(text.1)
-                                }
-                            }
-                        }
-                    }
+                    MyList(items: listItems)
                 }
             }
             MyCard("不可折叠的卡片", foldable: false) {
@@ -53,10 +46,47 @@ struct LaunchPage: View {
             .cardIndex(2)
             
             MyCard("", titled: false) {
-                MyButton(".tasks") {
-                    AppRouter.shared.append(.tasks)
+                HStack {
+                    MyButton(".tasks") {
+                        AppRouter.shared.append(.tasks)
+                    }
+                    .frame(width: 80)
+                    
+                    MyButton("弹窗") {
+                        Task {
+                            _ = await MessageBoxManager.shared.showText(
+                                title: "普通弹窗",
+                                content: "Hello, world!",
+                                .init(id: 0, label: "hint（点击这个按钮不会关闭弹窗！）", type: .normal) {
+                                    hint("awa!", type: .finish)
+                                },
+                                .init(id: 1, label: "确认", type: .highlight),
+                            )
+                            
+                            let index: Int? = await MessageBoxManager.shared.showList(title: "列表选择", items: listItems)
+                            let text: String? = await MessageBoxManager.shared.showInput(title: "文本输入", initialContent: "111", placeholder: "请输入文本")
+                            if let index {
+                                hint("你选择的是：\(listItems[index].name)", type: .finish)
+                            }
+                            if let text {
+                                hint("你输入的是：\(text)", type: .finish)
+                            }
+                        }
+                    }
+                    .frame(width: 80)
+                    
+                    MyButton("错误弹窗", type: .red) {
+                        Task {
+                            await MessageBoxManager.shared.showText(
+                                title: "Minecraft 出现错误",
+                                content: "如果要寻求帮助，请把错误报告文件发给对方，而不是发送这个窗口的照片或者截图。",
+                                level: .error,
+                            )
+                        }
+                    }
+                    .frame(width: 80)
                 }
-                .frame(width: 80, height: 40)
+                .frame(height: 40)
             }
             .cardIndex(3)
             

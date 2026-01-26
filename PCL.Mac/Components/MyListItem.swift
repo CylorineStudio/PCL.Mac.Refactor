@@ -20,6 +20,34 @@ struct MyListItem<Content: View>: View {
         self.init({ _ in content() })
     }
     
+    init(_ model: ListItem, selected: Bool = false) where Content == AnyView {
+        self.init {
+            AnyView(
+                HStack(spacing: 0) {
+                    if selected {
+                        RightRoundedRectangle(cornerRadius: 2)
+                            .fill(Color.color3)
+                            .frame(width: 3, height: 20)
+                            .offset(x: -4)
+                    }
+                    HStack {
+                        if let image = model.image {
+                            Image(nsImage: image)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: model.imageSize, height: model.imageSize)
+                        }
+                        VStack(alignment: .leading) {
+                            MyText(model.name)
+                            MyText(model.description, color: .colorGray3)
+                        }
+                    }
+                    Spacer()
+                }
+            )
+        }
+    }
+    
     var body: some View {
         content(hovered)
             .frame(maxWidth: .infinity)
@@ -44,15 +72,7 @@ struct MyListItem<Content: View>: View {
 }
 
 #Preview {
-    MyListItem {
-        HStack {
-            VStack {
-                MyText("aaa")
-                MyText("aaa")
-            }
-            Spacer()
-        }
-    }
+    MyListItem(.init(name: "Test", description: "lorem ipsum dolor sit amet consectetur"))
     .frame(width: 400, height: 50)
     .padding()
     .background(.white)

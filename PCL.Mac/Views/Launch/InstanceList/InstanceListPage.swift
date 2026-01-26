@@ -55,18 +55,6 @@ private struct InstanceView: View {
     }
     
     var body: some View {
-        MyListItem {
-            HStack {
-                Image("GrassBlock")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 35, height: 35)
-                VStack {
-                    MyText(name)
-                    MyText(version.id, color: .colorGray3)
-                }
-                Spacer()
-            }
-        }
+        MyListItem(.init(image: .init(named: "GrassBlock"), name: name, description: version.id))
     }
 }
