@@ -44,11 +44,11 @@ jobs:
       
       - name: Create release
         run: |
-          gh release create $TAG_NAME
-            "PCL.Mac-${{ env.TAG_NAME }}.zip"
-            "PCL.Mac-${{ env.TAG_NAME }}-dSYMs.zip"
-            --title $VERSION_NUMBER
-            --generate-notes
+          gh release create $TAG_NAME \
+            "PCL.Mac-${{ env.TAG_NAME }}.zip" \
+            "PCL.Mac-${{ env.TAG_NAME }}-dSYMs.zip" \
+            --title $VERSION_NUMBER \
+            --generate-notes \
             --draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
