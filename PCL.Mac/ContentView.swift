@@ -62,7 +62,7 @@ private struct HintView: View {
                 .frame(height: 22)
             MyText(model.text, color: .white)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 4)
+                .padding(.horizontal, 4)
         }
         .opacity(appeared ? 1 : 0)
         .offset(x: appeared ? 0 : -50)
@@ -78,27 +78,6 @@ private struct HintView: View {
         case .info: Color(0x0A8EFC)
         case .finish: Color(0x1DA01D)
         case .critical: Color(0xFF2B00)
-        }
-    }
-    
-    private struct RightRoundedRectangle: Shape {
-        let cornerRadius: CGFloat
-        
-        func path(in rect: CGRect) -> Path {
-            let r: CGFloat = min(cornerRadius, rect.height / 2)
-            var path: Path = .init()
-            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
-            path.addArc(center: CGPoint(x: rect.maxX - r, y: rect.minY + r),
-                        radius: r,
-                        startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - r))
-            path.addArc(center: CGPoint(x: rect.maxX - r, y: rect.maxY - r),
-                        radius: r,
-                        startAngle: .degrees(0), endAngle: .degrees(90), clockwise: false)
-            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-            path.closeSubpath()
-            return path
         }
     }
 }

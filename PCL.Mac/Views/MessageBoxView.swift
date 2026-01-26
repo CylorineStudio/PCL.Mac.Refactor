@@ -36,7 +36,7 @@ struct MessageBoxView: View {
                     Spacer(minLength: 0)
                     ForEach(model.buttons, id: \.id) { button in
                         MyButton(button.label, textPadding: .init(top: 7, leading: 12, bottom: 7, trailing: 12), type: button.type) {
-                            MessageBoxManager.shared.onButtonTap(button)
+                            onButtonTap(button)
                         }
                         .fixedSize()
                     }
@@ -61,20 +61,34 @@ struct MessageBoxView: View {
     }
     
     private var content: some View {
-        // WIP
         Group {
             switch model.content {
             case .text(let text):
                 MyText(text)
             case .list(let items):
-                VStack(spacing: 0) {
-                    ForEach(0..<items.count) { index in
-                        let item = items[index]
-                        
-                    }
-                }
-            case .input(let initialContent, let placeholder):
-                EmptyView()
+                MyList(items: items, onSelect: { self.selectedItemIndex = $0 })
+            case .input(_, let placeholder):
+                // TODO: MyTextField
+                TextField(placeholder ?? "", text: $inputText)
+            }
+        }
+    }
+    
+    private func onButtonTap(_ button: MessageBoxModel.Button) {
+        switch model.content {
+        case .text(_):
+            MessageBoxManager.shared.onButtonTap(button)
+        case .list(_):
+            if button.id == 1000 { // 取消
+                MessageBoxManager.shared.onListSelect(index: nil)
+            } else if button.id == 1001 { // 确定
+                MessageBoxManager.shared.onListSelect(index: selectedItemIndex)
+            }
+        case .input(_, _):
+            if button.id == 1000 { // 取消
+                MessageBoxManager.shared.onInputFinished(text: nil)
+            } else if button.id == 1001 { // 确定
+                MessageBoxManager.shared.onInputFinished(text: inputText)
             }
         }
     }

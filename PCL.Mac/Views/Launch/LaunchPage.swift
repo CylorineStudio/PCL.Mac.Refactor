@@ -54,7 +54,7 @@ struct LaunchPage: View {
                     
                     MyButton("弹窗") {
                         Task {
-                            await MessageBoxManager.shared.showText(
+                            _ = await MessageBoxManager.shared.showText(
                                 title: "测试",
                                 content: "Hello, world!",
                                 .init(id: 0, label: "hint", type: .normal) {
@@ -62,6 +62,15 @@ struct LaunchPage: View {
                                 },
                                 .init(id: 1, label: "确认", type: .highlight),
                             )
+                            
+                            let index: Int? = await MessageBoxManager.shared.showList(title: "列表选择", items: listItems)
+                            let text: String? = await MessageBoxManager.shared.showInput(title: "文本输入", initialContent: "111", placeholder: "请输入文本")
+                            if let index {
+                                hint("你选择的是：\(listItems[index].name)", type: .finish)
+                            }
+                            if let text {
+                                hint("你输入的是：\(text)", type: .finish)
+                            }
                         }
                     }
                     .frame(width: 80)
