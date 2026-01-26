@@ -12,32 +12,22 @@ struct LaunchSidebar: Sidebar {
     @EnvironmentObject private var instanceViewModel: InstanceViewModel
     @ObservedObject private var router: AppRouter = .shared
     @StateObject private var accountViewModel: AccountViewModel = .init()
-    @State private var editingAccount: Bool = false
+    @State private var showingAccountEditor: Bool = false
+    @State private var accountEditAppeared: Bool = false
     
     let width: CGFloat = 285
     
     var body: some View {
         VStack {
             Spacer()
-            if editingAccount {
-                VStack {
-                    accountList
-                        .padding(.horizontal, 8)
-                    HStack {
-                        MyButton("添加账号") {
-                            accountViewModel.requestAddAccount { editingAccount = false }
-                        }
-                        .frame(width: 80)
-                        
-                        if accountViewModel.currentAccount != nil {
-                            MyButton("返回") {
-                                editingAccount = false
-                            }
-                            .frame(width: 50)
-                        }
+            if showingAccountEditor {
+                accountEditorView
+                    .opacity(accountEditAppeared ? 1 : 0)
+                    .scaleEffect(accountEditAppeared ? 1 : 0.95)
+                    .animation(.spring(response: 0.2), value: accountEditAppeared)
+                    .onAppear {
+                        accountEditAppeared = true
                     }
-                    .frame(height: 30)
-                }
             } else if let account = accountViewModel.currentAccount {
                 MyListItem {
                     VStack(spacing: 15) {
@@ -47,7 +37,7 @@ struct LaunchSidebar: Sidebar {
                 }
                 .fixedSize()
                 .onTapGesture {
-                    editingAccount = true
+                    showingAccountEditor = true
                 }
             }
             Spacer()
@@ -83,8 +73,36 @@ struct LaunchSidebar: Sidebar {
             }
             .padding(21)
             .onAppear {
-                if accountViewModel.currentAccount == nil { editingAccount = true }
+                if accountViewModel.currentAccount == nil { showingAccountEditor = true }
             }
+        }
+    }
+    
+    private func hideAccountEditor() {
+        accountEditAppeared = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            showingAccountEditor = false
+        }
+    }
+    
+    private var accountEditorView: some View {
+        VStack {
+            accountList
+                .padding(.horizontal, 8)
+            HStack {
+                MyButton("添加账号") {
+                    accountViewModel.requestAddAccount(completion: hideAccountEditor)
+                }
+                .frame(width: 80)
+                
+                if accountViewModel.currentAccount != nil {
+                    MyButton("返回") {
+                        hideAccountEditor()
+                    }
+                    .frame(width: 50)
+                }
+            }
+            .frame(height: 30)
         }
     }
     
