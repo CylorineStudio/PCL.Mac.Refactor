@@ -27,7 +27,7 @@ struct MyListItem<Content: View>: View {
                     if selected {
                         RightRoundedRectangle(cornerRadius: 2)
                             .fill(Color.color3)
-                            .frame(width: 3, height: 20)
+                            .frame(width: 4, height: 20)
                             .offset(x: -4)
                     }
                     HStack {
