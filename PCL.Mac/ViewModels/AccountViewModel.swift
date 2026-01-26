@@ -34,7 +34,7 @@ class AccountViewModel: ObservableObject {
     }
     
     /// 请求用户添加账号。
-    public func requestAddAccount(completion: @escaping () -> Void) {
+    public func requestAddAccount() {
         Task {
             log("开始请求添加账号")
             guard let idx: Int = await MessageBoxManager.shared.showList(
@@ -53,9 +53,6 @@ class AccountViewModel: ObservableObject {
             } else {
                 log("用户选择了添加离线账号")
                 await requestAddOfflineAccount()
-            }
-            await MainActor.run {
-                completion()
             }
         }
     }
@@ -126,6 +123,15 @@ class AccountViewModel: ObservableObject {
     /// 切换当前账号。
     public func switchAccount(to account: Account) {
         currentAccountId = account.id
+    }
+    
+    /// 移出账号。
+    /// - Parameter account: 要移除的账号。
+    public func remove(account: Account) {
+        accounts.removeAll(where: { $0.id == account.id })
+        if currentAccount == nil, let firstAccount = accounts.first {
+            switchAccount(to: firstAccount)
+        }
     }
     
     /// 获取账号皮肤数据。

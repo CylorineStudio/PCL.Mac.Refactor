@@ -91,7 +91,7 @@ struct LaunchSidebar: Sidebar {
                 .padding(.horizontal, 8)
             HStack {
                 MyButton("添加账号") {
-                    accountViewModel.requestAddAccount(completion: hideAccountEditor)
+                    accountViewModel.requestAddAccount()
                 }
                 .frame(width: 80)
                 
@@ -109,7 +109,7 @@ struct LaunchSidebar: Sidebar {
     private var accountList: some View {
         VStack(spacing: 0) {
             ForEach(accountViewModel.accounts, id: \.id) { account in
-                MyListItem {
+                MyListItem { hovered in
                     HStack {
                         if account.id == accountViewModel.currentAccount?.id {
                             RightRoundedRectangle(cornerRadius: 4)
@@ -126,6 +126,19 @@ struct LaunchSidebar: Sidebar {
                             MyText(account.type().localized, color: .colorGray3)
                         }
                         Spacer()
+                        if hovered {
+                            Image(systemName: "trash")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 12)
+                                .foregroundStyle(Color.color3)
+                                .padding(.trailing, 8)
+                                .contentShape(.rect)
+                                .onTapGesture {
+                                    accountViewModel.remove(account: account)
+                                    hint("移除成功！", type: .finish)
+                                }
+                        }
                     }
                 }
                 .onTapGesture {
