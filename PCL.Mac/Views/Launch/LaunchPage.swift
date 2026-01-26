@@ -9,8 +9,10 @@ import SwiftUI
 
 struct LaunchPage: View {
     private let loadingModel: MyLoadingViewModel = .init(text: "加载中")
-    private let texts: [(String, String)] = [
-        ("AAAAAA", "aaaaaa"), ("BBBBBB", "bbbbbb"), ("CCCCCC", "cccccc")
+    private let listItems: [ListItem] = [
+        .init(name: "name1", description: "desc1"),
+        .init(name: "name2", description: "desc2"),
+        .init(name: "name3", description: "desc3")
     ]
     
     var body: some View {
@@ -30,16 +32,7 @@ struct LaunchPage: View {
                         MyButton("红色按钮", subLabel: "但是两行文本", type: .red) {}
                     }
                     .frame(height: 60)
-                    VStack(spacing: 0) {
-                        ForEach(texts, id: \.0) { text in
-                            MyListItem {
-                                VStack(alignment: .leading) {
-                                    MyText(text.0)
-                                    MyText(text.1)
-                                }
-                            }
-                        }
-                    }
+                    MyList(items: listItems)
                 }
             }
             MyCard("不可折叠的卡片", foldable: false) {

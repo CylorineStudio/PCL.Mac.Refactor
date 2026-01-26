@@ -86,19 +86,7 @@ private struct VersionView: View {
     }
     
     var body: some View {
-        MyListItem {
-            HStack {
-                Image(version.type.icon)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 35, height: 35)
-                VStack(alignment: .leading) {
-                    MyText(version.id)
-                    MyText(prefix + Self.dateFormatter.string(from: version.releaseTime))
-                }
-                Spacer()
-            }
-        }
+        MyListItem(.init(image: .init(named: version.type.icon), name: version.id, description: prefix + Self.dateFormatter.string(from: version.releaseTime)))
         .onTapGesture {
             guard let repository = viewModel.currentRepository else {
                 warn("试图安装 \(version.id)，但没有设置游戏仓库")

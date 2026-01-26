@@ -5,7 +5,7 @@
 //  Created by 温迪 on 2026/1/20.
 //
 
-import Foundation
+import SwiftUI
 
 struct MessageBoxModel: Equatable, Identifiable {
     public let id: UUID = .init()
@@ -16,6 +16,8 @@ struct MessageBoxModel: Equatable, Identifiable {
     
     public enum Content {
         case text(text: String)
+        case list(items: [ListItem])
+        case input(initialContent: String?, placeholder: String?)
     }
     
     public enum Level {

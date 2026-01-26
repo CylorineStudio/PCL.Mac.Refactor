@@ -9,6 +9,8 @@ import SwiftUI
 
 struct MessageBoxView: View {
     private let model: MessageBoxModel
+    @State private var selectedItemIndex: Int?
+    @State private var inputText: String = ""
     
     init(model: MessageBoxModel) {
         self.model = model
@@ -44,6 +46,11 @@ struct MessageBoxView: View {
         }
         .frame(minWidth: 400)
         .fixedSize(horizontal: true, vertical: true)
+        .onAppear {
+            if case .input(let initialContent, _) = model.content, let initialContent {
+                inputText = initialContent
+            }
+        }
     }
     
     private var foregroundColor: Color {
@@ -54,9 +61,21 @@ struct MessageBoxView: View {
     }
     
     private var content: some View {
-        switch model.content {
-        case .text(let text):
-            MyText(text)
+        // WIP
+        Group {
+            switch model.content {
+            case .text(let text):
+                MyText(text)
+            case .list(let items):
+                VStack(spacing: 0) {
+                    ForEach(0..<items.count) { index in
+                        let item = items[index]
+                        
+                    }
+                }
+            case .input(let initialContent, let placeholder):
+                EmptyView()
+            }
         }
     }
 }
