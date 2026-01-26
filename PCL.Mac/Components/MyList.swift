@@ -25,21 +25,11 @@ struct MyList: View {
     var body: some View {
         VStack(spacing: 0) {
             ForEach(0..<items.count, id: \.self) { index in
-                HStack(spacing: 0) {
-                    if selected == index {
-                        RightRoundedRectangle(cornerRadius: 2)
-                            .fill(Color.color3)
-                            .frame(width: 3, height: 20)
-                    } else {
-                        Spacer()
-                            .frame(width: 3)
+                MyListItem(items[index], selected: selected == index)
+                    .onTapGesture {
+                        selected = index
+                        onSelect?(index)
                     }
-                    MyListItem(items[index])
-                        .onTapGesture {
-                            selected = index
-                            onSelect?(index)
-                        }
-                }
             }
         }
         .animation(.easeOut(duration: 0.2), value: selected)

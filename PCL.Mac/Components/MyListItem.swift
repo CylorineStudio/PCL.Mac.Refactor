@@ -20,19 +20,27 @@ struct MyListItem<Content: View>: View {
         self.init({ _ in content() })
     }
     
-    init(_ model: ListItem) where Content == AnyView {
+    init(_ model: ListItem, selected: Bool = false) where Content == AnyView {
         self.init {
             AnyView(
-                HStack {
-                    if let image = model.image {
-                        Image(nsImage: image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: model.imageSize, height: model.imageSize)
+                HStack(spacing: 0) {
+                    if selected {
+                        RightRoundedRectangle(cornerRadius: 2)
+                            .fill(Color.color3)
+                            .frame(width: 3, height: 20)
+                            .offset(x: -4)
                     }
-                    VStack(alignment: .leading) {
-                        MyText(model.name)
-                        MyText(model.description, color: .colorGray3)
+                    HStack {
+                        if let image = model.image {
+                            Image(nsImage: image)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: model.imageSize, height: model.imageSize)
+                        }
+                        VStack(alignment: .leading) {
+                            MyText(model.name)
+                            MyText(model.description, color: .colorGray3)
+                        }
                     }
                     Spacer()
                 }
