@@ -52,20 +52,6 @@ public enum UUIDError: Error, Equatable {
     case invalidUUIDFormat
 }
 
-public enum AccountError: LocalizedError {
-    case invalidUUID
-    case nameExists
-    
-    public var errorDescription: String? {
-        switch self {
-        case .invalidUUID:
-            "错误的 UUID 格式。"
-        case .nameExists:
-            ""
-        }
-    }
-}
-
 public struct SimpleError: LocalizedError {
     private let reason: String
     

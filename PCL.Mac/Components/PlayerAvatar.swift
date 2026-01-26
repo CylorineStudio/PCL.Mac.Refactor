@@ -55,7 +55,7 @@ private struct SkinLayerView: View {
             self.image = nil
             return
         }
-        self.image = NSImage(cgImage: cgImage, size: image.extent.size)
+        self.image = NSImage(cgImage: cgImage, size: cropped.extent.size)
     }
     
     var body: some View {

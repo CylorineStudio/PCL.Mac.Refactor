@@ -66,8 +66,12 @@ class AccountViewModel: ObservableObject {
     /// - Parameter account: 要移除的账号。
     public func remove(account: Account) {
         accounts.removeAll(where: { $0.id == account.id })
-        if currentAccount == nil, let firstAccount = accounts.first {
-            switchAccount(to: firstAccount)
+        if currentAccount == nil {
+            if let firstAccount = accounts.first {
+                switchAccount(to: firstAccount)
+            } else {
+                currentAccountId = nil
+            }
         }
     }
     
