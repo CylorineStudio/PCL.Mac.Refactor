@@ -106,7 +106,7 @@ class MultiplayerViewModel: ObservableObject {
     public func leave() {
         heartbeatTask?.cancel()
         heartbeatTask = nil
-        try? client?.stop()
+        client?.stop()
         client = nil
         state = .ready
         log("退出房间成功")
@@ -138,8 +138,10 @@ class MultiplayerViewModel: ObservableObject {
                     await showError(title: "错误", body: "无法继续联机：EasyTier 发生崩溃。")
                 }
                 await MainActor.run {
-                    stopHost()
-                    leave()
+                    state = .ready
+                    // 此时客户端/服务端已经完成了清理，可以直接丢弃引用
+                    client = nil
+                    server = nil
                 }
             }
         default: return
