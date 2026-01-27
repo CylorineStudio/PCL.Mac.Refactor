@@ -24,12 +24,14 @@ struct MyCard<Content: View>: View {
     private let title: String
     private let foldable: Bool
     private let titled: Bool
+    private let limitHeight: Bool
     private let content: () -> Content
     
-    init(_ title: String, foldable: Bool = true, titled: Bool = true, @ViewBuilder _ content: @escaping () -> Content) {
+    init(_ title: String, foldable: Bool = true, titled: Bool = true, limitHeight: Bool = true, @ViewBuilder _ content: @escaping () -> Content) {
         self.title = title
         self.foldable = foldable && titled
         self.titled = titled
+        self.limitHeight = limitHeight
         self.content = content
     }
     
@@ -93,7 +95,8 @@ struct MyCard<Content: View>: View {
                         }
                 }
             }
-            .frame(height: internalContentHeight, alignment: .top)
+            .frame(height: limitHeight ? internalContentHeight : nil, alignment: .top)
+            .frame(maxHeight: limitHeight ? nil : .infinity)
             .clipped()
             .opacity(showContent ? 1 : 0)
         }

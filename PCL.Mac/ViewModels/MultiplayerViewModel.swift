@@ -8,9 +8,12 @@
 import Foundation
 import SwiftScaffolding
 import Core
+import Combine
 
 class MultiplayerViewModel: ObservableObject {
     @Published public var state: State = .ready
+    @Published public private(set) var room: Room?
+    
     private var server: ScaffoldingServer?
     private var client: ScaffoldingClient?
     private var heartbeatTask: Task<Void, Swift.Error>?
@@ -32,10 +35,11 @@ class MultiplayerViewModel: ObservableObject {
                 }
                 await switchState(to: .creatingRoom)
                 let code: String = RoomCode.generate()
+                let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Steve"
                 let server: ScaffoldingServer = .init(
                     easyTier: EasyTierManager.shared.easyTier,
                     roomCode: code,
-                    playerName: "Test",
+                    playerName: playerName,
                     vendor: vendor,
                     serverPort: serverPort
                 )
@@ -45,7 +49,8 @@ class MultiplayerViewModel: ObservableObject {
                     try server.createRoom(terminationHandler: handleEasyTierExit(_:))
                     await MainActor.run {
                         self.server = server
-                        self.state = .hostReady(roomCode: server.roomCode)
+                        state = .hostReady
+                        room = room
                     }
                     log("启动联机中心成功，房间码：\(server.roomCode)")
                 } catch {
@@ -63,6 +68,7 @@ class MultiplayerViewModel: ObservableObject {
     
     /// 关闭联机中心。
     public func stopHost() {
+        room = nil
         server?.stop()
         server = nil
         state = .ready
@@ -73,9 +79,10 @@ class MultiplayerViewModel: ObservableObject {
     /// - Parameters:
     ///   - roomCode: 房间码。
     ///   - playerName: 房客玩家名。
-    public func join(roomCode: String, playerName: String) {
+    public func join(roomCode: String) {
         Task {
             do {
+                let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Steve"
                 let client: ScaffoldingClient = .init(
                     easyTier: EasyTierManager.shared.easyTier,
                     playerName: playerName,
@@ -84,14 +91,32 @@ class MultiplayerViewModel: ObservableObject {
                 )
                 await switchState(to: .joiningRoom)
                 try await client.connect(terminationHandler: handleEasyTierExit(_:))
-                self.heartbeatTask = Task {
-                    while true {
+                self.heartbeatTask = Task { [weak client] in
+                    while !Task.isCancelled {
                         try await Task.sleep(seconds: 5)
-                        try await client.heartbeat()
+                        guard let client else { return }
+                        do {
+                            try await client.heartbeat()
+                        } catch {
+                            if let error = error as? ConnectionError, error == .cancelled {
+                                _ = await MessageBoxManager.shared.showText(
+                                    title: "连接中断",
+                                    content: "房间连接中断，可能是由于房间被关闭或网络不稳定"
+                                )
+                            } else {
+                                await showError(title: "发生未知错误", body: "同步数据失败：\(error.localizedDescription)")
+                            }
+                            leave()
+                            break
+                        }
                     }
                 }
                 self.client = client
-                await switchState(to: .memberReady(address: "127.0.0.1:\(client.room.serverPort)"))
+                await MainActor.run {
+                    state = .memberReady
+                    room = client.room
+                }
+                await switchState(to: .memberReady)
             } catch {
                 err("加入房间失败：\(error.localizedDescription)")
                 await showError(title: "加入房间失败", body: error.localizedDescription)
@@ -106,10 +131,15 @@ class MultiplayerViewModel: ObservableObject {
     public func leave() {
         heartbeatTask?.cancel()
         heartbeatTask = nil
+        room = nil
         client?.stop()
         client = nil
         state = .ready
         log("退出房间成功")
+    }
+    
+    public func roomCode() -> String? {
+        return server?.roomCode
     }
     
     private func showError(title: String, body: String) async {
@@ -127,32 +157,30 @@ class MultiplayerViewModel: ObservableObject {
     }
     
     private func handleEasyTierExit(_ process: Process) {
-        switch state {
-        case .hostReady(_), .memberReady(_):
-            Task {
-                if [128 + SIGTERM, 128 + SIGKILL].contains(process.terminationStatus) {
-                    log("用户手动退出了 EasyTier 进程")
-                    await showError(title: "错误", body: "无法继续联机：EasyTier 进程被杀死。")
-                } else {
-                    err("EasyTier 进程意外退出")
-                    await showError(title: "错误", body: "无法继续联机：EasyTier 发生崩溃。")
-                }
-                await MainActor.run {
-                    state = .ready
-                    // 此时客户端/服务端已经完成了清理，可以直接丢弃引用
-                    client = nil
-                    server = nil
-                }
+        guard state == .hostReady || state == .memberReady else {
+            return
+        }
+        Task {
+            if [128 + SIGTERM, 128 + SIGKILL].contains(process.terminationStatus) {
+                log("用户手动退出了 EasyTier 进程")
+                await showError(title: "错误", body: "无法继续联机：EasyTier 进程被杀死。")
+            } else {
+                err("EasyTier 进程意外退出")
+                await showError(title: "错误", body: "无法继续联机：EasyTier 发生崩溃。")
             }
-        default: return
+            await MainActor.run {
+                state = .ready
+                // 此时客户端/服务端已经完成了清理，可以直接丢弃引用
+                client = nil
+                server = nil
+            }
         }
     }
     
     public enum State: Equatable {
         case ready
-        
-        case searchingMinecraft, creatingRoom, hostReady(roomCode: String)
-        case joiningRoom, memberReady(address: String)
+        case creatingRoom, hostReady
+        case joiningRoom, memberReady
     }
     
     public enum Error: LocalizedError {
