@@ -9,6 +9,7 @@ import Foundation
 import SwiftScaffolding
 import Core
 import Combine
+import AppKit
 
 class MultiplayerViewModel: ObservableObject {
     @MainActor @Published public var state: State = .ready
@@ -17,7 +18,7 @@ class MultiplayerViewModel: ObservableObject {
     private var server: ScaffoldingServer?
     private var client: ScaffoldingClient?
     private var heartbeatTask: Task<Void, Swift.Error>?
-    private let vendor: String = "PCL.Mac \(Metadata.appVersion), SwiftScaffolding DEV, EasyTier v2.5.0"
+    private let vendor: String = "PCL.Mac \(Metadata.appVersion), SwiftScaffolding 0.0.2, EasyTier v2.5.0"
     
     /// 创建并启动一个 Scaffolding 联机中心。
     /// - Parameter serverPort: Minecraft 服务器的端口。
@@ -56,6 +57,8 @@ class MultiplayerViewModel: ObservableObject {
                         self.server = server
                         self.state = .hostReady
                         self.room = server.room
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(server.roomCode, forType: .string)
                     }
                     log("启动联机中心成功，房间码：\(server.roomCode)")
                 } catch {
@@ -116,7 +119,10 @@ class MultiplayerViewModel: ObservableObject {
                     self.client = client
                     self.state = .memberReady
                     self.room = client.room
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString("127.0.0.1:\(client.room.serverPort)", forType: .string)
                 }
+                log("加入房间成功，本地端口：\(client.room.serverPort)")
             } catch {
                 err("加入房间失败：\(error.localizedDescription)")
                 await self.showErrorAsync(title: "加入房间失败", body: error.localizedDescription)
