@@ -93,16 +93,15 @@ struct MultiplayerPage: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 HStack(alignment: .top, spacing: 20) {
-                    PlayerListView(room: room)
-                    MyCard("", titled: false, limitHeight: false) {
+                    MyCard("操作", titled: false, limitHeight: false) {
                         VStack(spacing: 0) {
                             if viewModel.state == .hostReady, let roomCode = viewModel.roomCode() {
-                                ActionView("复制房间码") {
+                                ActionView("IconCopy", "复制房间码") {
                                     NSPasteboard.general.clearContents()
                                     NSPasteboard.general.setString(roomCode, forType: .string)
                                     hint("复制成功！", type: .finish)
                                 }
-                                ActionView("关闭房间", color: .red) {
+                                ActionView("IconExit", "关闭房间", color: .red) {
                                     Task {
                                         if room.members.count > 1 {
                                             if await MessageBoxManager.shared.showText(
@@ -117,21 +116,23 @@ struct MultiplayerPage: View {
                                     }
                                 }
                             } else {
-                                ActionView("复制地址") {
+                                ActionView("IconCopy", "复制地址") {
                                     NSPasteboard.general.clearContents()
                                     NSPasteboard.general.setString("127.0.0.1:\(room.serverPort)", forType: .string)
                                     hint("复制成功！", type: .finish)
                                 }
-                                ActionView("退出房间", color: .red) {
+                                ActionView("IconExit", "退出房间", color: .red) {
                                     viewModel.leave()
                                 }
                             }
                             Spacer()
                         }
+                        .fixedSize(horizontal: true, vertical: false)
                         .frame(maxHeight: .infinity)
                     }
-                    .frame(width: 120)
-                    .frame(maxHeight: .infinity)
+                    .fixedSize(horizontal: true, vertical: false)
+                    PlayerListView(room: room)
+                        .frame(maxHeight: .infinity)
                 }
             }
         }
@@ -157,13 +158,13 @@ private struct PlayerListView: View {
 }
 
 private struct ActionView: View {
-//    private let imageName: String
+    private let imageName: String
     private let text: String
     private let color: Color
     private let onClick: () -> Void
     
-    init(_ text: String, color: Color = .color1, onClick: @escaping () -> Void) {
-//        self.imageName = imageName
+    init(_ imageName: String, _ text: String, color: Color = .color1, onClick: @escaping () -> Void) {
+        self.imageName = imageName
         self.text = text
         self.color = color
         self.onClick = onClick
@@ -171,16 +172,18 @@ private struct ActionView: View {
     
     var body: some View {
         MyListItem {
-            HStack {
-//                Image(imageName)
-//                    .resizable()
-//                    .scaledToFit()
-//                    .frame(width: 16, height: 16)
+            HStack(spacing: 7) {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 16)
+                    .foregroundStyle(color)
                 MyText(text, color: color)
                 Spacer(minLength: 0)
             }
             .padding(2)
         }
+        .frame(height: 27)
         .onTapGesture(perform: onClick)
     }
 }
