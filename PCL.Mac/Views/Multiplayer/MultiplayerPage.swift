@@ -39,7 +39,22 @@ struct MultiplayerPage: View {
                         if EasyTierManager.shared.hintInstall() {
                             return
                         }
-                        viewModel.startHost(serverPort: 25565)
+                        Task {
+                            guard await MessageBoxManager.shared.showText(
+                                title: "开启房间",
+                                content: "请按照以下步骤操作：\n   1. 进入世界，按下 ESC\n    2. 点击 “对局域网开放” > “创建局域网世界”\n    3. 回到启动器，点击 “确定” 并输入聊天栏中的端口号",
+                                .init(id: 0, label: "取消", type: .normal),
+                                .init(id: 1, label: "确定", type: .highlight)
+                            ) == 1 else { return }
+                            guard let rawPort: String = await MessageBoxManager.shared.showInput(title: "输入端口号") else {
+                                return
+                            }
+                            guard let port: UInt16 = .init(rawPort), await Scaffolding.checkMinecraftServer(on: port, timeout: 1) else {
+                                hint("无效的端口号！", type: .critical)
+                                return
+                            }
+                            viewModel.startHost(serverPort: port)
+                        }
                     }
                 MyListItem(.init(image: .init(named: "IconAdd"), imageSize: 28, name: "加入房间", description: "输入房主提供的邀请码，加入游戏世界"))
                     .onTapGesture {
@@ -89,15 +104,16 @@ struct MultiplayerPage: View {
                                 }
                                 ActionView("关闭房间", color: .red) {
                                     Task {
-                                        if await MessageBoxManager.shared.showText(
-                                            title: "警告",
-                                            content: "你确定要关闭房间吗？\n这会让除了你以外的所有玩家退出游戏！",
-                                            level: .error,
-                                            .init(id: 1, label: "是", type: .red),
-                                            .init(id: 0, label: "否", type: .normal)
-                                        ) == 1 {
-                                            viewModel.stopHost()
+                                        if room.members.count > 1 {
+                                            if await MessageBoxManager.shared.showText(
+                                                title: "警告",
+                                                content: "你确定要关闭房间吗？\n这会让除了你以外的所有玩家退出游戏！",
+                                                level: .error,
+                                                .init(id: 1, label: "是", type: .red),
+                                                .init(id: 0, label: "否", type: .normal)
+                                            ) != 1 { return }
                                         }
+                                        viewModel.stopHost()
                                     }
                                 }
                             } else {
