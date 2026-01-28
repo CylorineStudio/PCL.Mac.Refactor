@@ -47,7 +47,7 @@ class EasyTierManager {
     
     /// 判断是否已经安装 EasyTier。
     public func isInstalled() -> Bool {
-        return checkSingle(type: .cli) && checkSingle(type: .core)
+        return autoreleasepool { checkSingle(type: .cli) && checkSingle(type: .core) }
     }
     
     /// 如果没有安装 EasyTier，提示用户安装。

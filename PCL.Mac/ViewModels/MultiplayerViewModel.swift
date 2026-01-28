@@ -11,8 +11,8 @@ import Core
 import Combine
 
 class MultiplayerViewModel: ObservableObject {
-    @Published public var state: State = .ready
-    @Published public private(set) var room: Room?
+    @MainActor @Published public var state: State = .ready
+    @MainActor @Published public private(set) var room: Room?
     
     private var server: ScaffoldingServer?
     private var client: ScaffoldingClient?
@@ -22,51 +22,59 @@ class MultiplayerViewModel: ObservableObject {
     /// 创建并启动一个 Scaffolding 联机中心。
     /// - Parameter serverPort: Minecraft 服务器的端口。
     /// - Returns: 房间邀请码。
+    @MainActor
     public func startHost(serverPort: UInt16) {
-        Task {
-            do {
-                guard state == .ready else {
-                    err("启动联机中心失败：错误的状态：\(state)")
-                    throw Error.invalidState
-                }
-                guard server == nil else {
-                    err("启动联机中心失败：似乎已有一个联机中心正在运行")
-                    throw Error.invalidState
-                }
-                await switchState(to: .creatingRoom)
-                let code: String = RoomCode.generate()
-                let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Steve"
-                let server: ScaffoldingServer = .init(
-                    easyTier: EasyTierManager.shared.easyTier,
-                    roomCode: code,
-                    playerName: playerName,
-                    vendor: vendor,
-                    serverPort: serverPort
-                )
-                
+        do {
+            guard state == .ready else {
+                err("启动联机中心失败：错误的状态：\(state)")
+                throw Error.invalidState
+            }
+            guard server == nil else {
+                err("启动联机中心失败：似乎已有一个联机中心正在运行")
+                throw Error.invalidState
+            }
+            state = .creatingRoom
+            let code: String = RoomCode.generate()
+            let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Steve"
+            let server: ScaffoldingServer = .init(
+                easyTier: EasyTierManager.shared.easyTier,
+                roomCode: code,
+                playerName: playerName,
+                vendor: vendor,
+                serverPort: serverPort
+            )
+            Task.detached {
                 do {
                     try await server.startListener()
-                    try server.createRoom(terminationHandler: handleEasyTierExit(_:))
+                    try server.createRoom(terminationHandler: { [weak self] process in
+                        guard let self else { return }
+                        Task { @MainActor in
+                            self.handleEasyTierExit(process)
+                        }
+                    })
                     await MainActor.run {
                         self.server = server
-                        state = .hostReady
-                        room = room
+                        self.state = .hostReady
+                        self.room = server.room
                     }
                     log("启动联机中心成功，房间码：\(server.roomCode)")
                 } catch {
-                    throw Error.startServerFailed(message: error.localizedDescription)
-                }
-            } catch {
-                err("启动联机中心失败：\(error.localizedDescription)")
-                await showError(title: "启动联机中心失败", body: error.localizedDescription)
-                await MainActor.run {
-                    stopHost()
+                    err("启动联机中心失败：\(error.localizedDescription)")
+                    await self.showErrorAsync(title: "启动联机中心失败", body: error.localizedDescription)
+                    await MainActor.run {
+                        self.stopHost()
+                    }
                 }
             }
+        } catch {
+            err("启动联机中心失败：\(error.localizedDescription)")
+            showError(title: "启动联机中心失败", body: error.localizedDescription)
+            stopHost()
         }
     }
     
     /// 关闭联机中心。
+    @MainActor
     public func stopHost() {
         room = nil
         server?.stop()
@@ -79,55 +87,46 @@ class MultiplayerViewModel: ObservableObject {
     /// - Parameters:
     ///   - roomCode: 房间码。
     ///   - playerName: 房客玩家名。
+    @MainActor
     public func join(roomCode: String) {
-        Task {
+        let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Steve"
+        let client: ScaffoldingClient = .init(
+            easyTier: EasyTierManager.shared.easyTier,
+            playerName: playerName,
+            vendor: vendor,
+            roomCode: roomCode
+        )
+        state = .joiningRoom
+        Task.detached {
             do {
-                let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Steve"
-                let client: ScaffoldingClient = .init(
-                    easyTier: EasyTierManager.shared.easyTier,
-                    playerName: playerName,
-                    vendor: vendor,
-                    roomCode: roomCode
-                )
-                await switchState(to: .joiningRoom)
-                try await client.connect(terminationHandler: handleEasyTierExit(_:))
+                try await client.connect(terminationHandler: { [weak self] process in
+                    guard let self else { return }
+                    Task { @MainActor in
+                        self.handleEasyTierExit(process)
+                    }
+                })
+                
                 self.heartbeatTask = Task { [weak client] in
                     while !Task.isCancelled {
-                        try await Task.sleep(seconds: 5)
                         guard let client else { return }
-                        do {
-                            try await client.heartbeat()
-                        } catch {
-                            if let error = error as? ConnectionError, error == .cancelled {
-                                _ = await MessageBoxManager.shared.showText(
-                                    title: "连接中断",
-                                    content: "房间连接中断，可能是由于房间被关闭或网络不稳定"
-                                )
-                            } else {
-                                await showError(title: "发生未知错误", body: "同步数据失败：\(error.localizedDescription)")
-                            }
-                            leave()
-                            break
-                        }
+                        try await self.heartbeat(client)
                     }
                 }
-                self.client = client
                 await MainActor.run {
-                    state = .memberReady
-                    room = client.room
+                    self.client = client
+                    self.state = .memberReady
+                    self.room = client.room
                 }
-                await switchState(to: .memberReady)
             } catch {
                 err("加入房间失败：\(error.localizedDescription)")
-                await showError(title: "加入房间失败", body: error.localizedDescription)
-                await MainActor.run {
-                    leave()
-                }
+                await self.showErrorAsync(title: "加入房间失败", body: error.localizedDescription)
+                await self.leave()
             }
         }
     }
     
     /// 退出房间。
+    @MainActor
     public func leave() {
         heartbeatTask?.cancel()
         heartbeatTask = nil
@@ -142,10 +141,17 @@ class MultiplayerViewModel: ObservableObject {
         return server?.roomCode
     }
     
-    private func showError(title: String, body: String) async {
+    @MainActor
+    private func showError(title: String, body: String) {
+        Task {
+            await showErrorAsync(title: title, body: body)
+        }
+    }
+    
+    private func showErrorAsync(title: String, body: String) async {
         _ = await MessageBoxManager.shared.showText(
             title: title,
-            content: body + "\n若要反馈此问题，请向对方发送完整日志，而不是发送此页面的图片。",
+            content: body + "\n若要反馈此问题，请向对方发送完整日志，而不是发送关于此页面的图片。",
             level: .error
         )
     }
@@ -156,24 +162,41 @@ class MultiplayerViewModel: ObservableObject {
         }
     }
     
+    @MainActor
     private func handleEasyTierExit(_ process: Process) {
         guard state == .hostReady || state == .memberReady else {
             return
         }
-        Task {
-            if [128 + SIGTERM, 128 + SIGKILL].contains(process.terminationStatus) {
-                log("用户手动退出了 EasyTier 进程")
-                await showError(title: "错误", body: "无法继续联机：EasyTier 进程被杀死。")
+        if [128 + SIGTERM, 128 + SIGKILL].contains(process.terminationStatus) {
+            log("用户手动退出了 EasyTier 进程")
+            showError(title: "错误", body: "无法继续联机：EasyTier 进程被杀死。")
+        } else {
+            err("EasyTier 进程意外退出")
+            showError(title: "错误", body: "无法继续联机：EasyTier 发生崩溃。")
+        }
+        state = .ready
+        // 此时客户端/服务端已经完成了清理，可以直接丢弃引用
+        client = nil
+        server = nil
+    }
+    
+    private func heartbeat(_ client: ScaffoldingClient) async throws {
+        try await Task.sleep(seconds: 5)
+        do {
+            try Task.checkCancellation()
+            try await client.heartbeat()
+        } catch is CancellationError {
+        } catch {
+            log("发送心跳包失败：\(error.localizedDescription)")
+            if let error = error as? ConnectionError, error == .cancelled {
+                _ = await MessageBoxManager.shared.showText(
+                    title: "连接中断",
+                    content: "房间连接中断，可能是由于房间被关闭或网络不稳定"
+                )
             } else {
-                err("EasyTier 进程意外退出")
-                await showError(title: "错误", body: "无法继续联机：EasyTier 发生崩溃。")
+                await showError(title: "发生未知错误", body: "同步数据失败：\(error.localizedDescription)")
             }
-            await MainActor.run {
-                state = .ready
-                // 此时客户端/服务端已经完成了清理，可以直接丢弃引用
-                client = nil
-                server = nil
-            }
+            await leave()
         }
     }
     

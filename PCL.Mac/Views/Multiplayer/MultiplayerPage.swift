@@ -17,7 +17,8 @@ struct MultiplayerPage: View {
             switch viewModel.state {
             case .ready: readyBody
             case .creatingRoom, .joiningRoom:
-                MyLoading(viewModel: loadingViewModel)
+                EmptyView()
+//                MyLoading(viewModel: loadingViewModel)
             case .hostReady, .memberReady:
                 multiplayerReadyView
             }
