@@ -94,6 +94,11 @@ class EasyTierManager {
             },
             .init(1, "__completion", display: false) { task, _ in
                 EasyTierManager.shared.isEasyTierInstalled = true
+                if AppRouter.shared.getLast() == .tasks {
+                    await MainActor.run {
+                        AppRouter.shared.removeLast()
+                    }
+                }
             }
         )
     }
