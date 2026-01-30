@@ -64,4 +64,12 @@ public enum Architecture: String {
         default: return .unknown
         }
     }
+    
+    public static func systemArchitecture() -> Architecture {
+        #if arch(arm64)
+        return .arm64
+        #elseif arch(x86_64)
+        return .x64
+        #endif
+    }
 }

@@ -24,18 +24,33 @@ class EasyTierManager {
     private var isEasyTierInstalled: Bool?
     
     private init() {
-        self.downloadItems = [
-            .cli: .init(
-                url: URL(string: "https://gitee.com/yizhimcqiu/easytier-mirror/releases/download/v2.5.0/easytier-cli-macos-aarch64")!,
-                destination: cliURL,
-                sha1: "6fced91a4aeb4c9d1776704a6d00438331408056"
-            ),
-            .core: .init(
-                url: URL(string: "https://gitee.com/yizhimcqiu/easytier-mirror/releases/download/v2.5.0/easytier-core-macos-aarch64")!,
-                destination: coreURL,
-                sha1: "bcc229e65d2652e538efd59ea88e21a7e6ff2375"
-            )
-        ]
+        if Architecture.systemArchitecture() == .arm64 {
+            self.downloadItems = [
+                .cli: .init(
+                    url: URL(string: "https://gitee.com/yizhimcqiu/easytier-mirror/releases/download/v2.5.0/easytier-cli-macos-aarch64")!,
+                    destination: cliURL,
+                    sha1: "6fced91a4aeb4c9d1776704a6d00438331408056"
+                ),
+                .core: .init(
+                    url: URL(string: "https://gitee.com/yizhimcqiu/easytier-mirror/releases/download/v2.5.0/easytier-core-macos-aarch64")!,
+                    destination: coreURL,
+                    sha1: "bcc229e65d2652e538efd59ea88e21a7e6ff2375"
+                )
+            ]
+        } else {
+            self.downloadItems = [
+                .cli: .init(
+                    url: URL(string: "https://gitee.com/yizhimcqiu/easytier-mirror/releases/download/v2.5.0/easytier-cli-macos-x86_64")!,
+                    destination: cliURL,
+                    sha1: "4dd10266baa8b70b64a953da78632e2d0d581ca9"
+                ),
+                .core: .init(
+                    url: URL(string: "https://gitee.com/yizhimcqiu/easytier-mirror/releases/download/v2.5.0/easytier-core-macos-x86_64")!,
+                    destination: coreURL,
+                    sha1: "3185b21c0f3085e313d89fa32a32b7c1013ff1de"
+                )
+            ]
+        }
         
         self.easyTier = .init(
             coreURL: coreURL,
