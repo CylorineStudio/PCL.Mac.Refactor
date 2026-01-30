@@ -96,13 +96,12 @@ class MultiplayerViewModel: ObservableObject {
         let client: ScaffoldingClient = .init(
             easyTier: EasyTierManager.shared.easyTier,
             playerName: playerName,
-            vendor: vendor,
-            roomCode: roomCode
+            vendor: vendor
         )
         state = .joiningRoom
         Task.detached {
             do {
-                try await client.connect(terminationHandler: { [weak self] process in
+                try await client.connect(to: roomCode, terminationHandler: { [weak self] process in
                     guard let self else { return }
                     Task { @MainActor in
                         self.handleEasyTierExit(process)

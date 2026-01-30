@@ -166,7 +166,7 @@ private struct PlayerListView: View {
     
     var body: some View {
         MyCard("玩家列表", foldable: false, limitHeight: false) {
-            VStack(spacing: 0) {
+            LazyVStack(spacing: 0) {
                 ForEach(room.members, id: \.machineId) { member in
                     MyListItem(.init(name: member.name, description: "[\(member.kind.localizedName)] \(member.vendor)"))
                 }
