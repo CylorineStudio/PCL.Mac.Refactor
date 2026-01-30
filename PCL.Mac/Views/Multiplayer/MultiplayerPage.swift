@@ -195,6 +195,7 @@ private struct PlayerListView: View {
                 ForEach(room.members, id: \.machineId) { member in
                     MyListItem(.init(name: member.name, description: "[\(member.kind.localizedName)] \(member.vendor)"))
                 }
+                Spacer(minLength: 0)
             }
         }
     }

@@ -10,6 +10,7 @@ import SwiftScaffolding
 import Core
 import Combine
 import AppKit
+import CryptoKit
 
 class MultiplayerViewModel: ObservableObject {
     @MainActor @Published public var state: State = .ready
@@ -45,6 +46,7 @@ class MultiplayerViewModel: ObservableObject {
                 vendor: vendor,
                 serverPort: serverPort
             )
+            registerCustomProtocols(to: server)
             Task.detached {
                 do {
                     try await server.startListener()
@@ -64,7 +66,7 @@ class MultiplayerViewModel: ObservableObject {
                     self.serverCheckTask = Task.detached {
                         while !Task.isCancelled {
                             try await Task.sleep(seconds: 5)
-                            guard await Scaffolding.checkMinecraftServer(on: serverPort, timeout: 1) else {
+                            guard await Scaffolding.checkMinecraftServer(on: serverPort, timeout: 5) else {
                                 log("局域网世界验活失败")
                                 await self.stopHost()
                                 _ = await MessageBoxManager.shared.showText(title: "房间已关闭", content: "局域网世界已关闭，房间已自动关闭。")
@@ -215,6 +217,47 @@ class MultiplayerViewModel: ObservableObject {
             log("发送心跳包失败：\(error.localizedDescription)")
             await showError(title: "发生未知错误", body: "同步数据失败：\(error.localizedDescription)")
             await leave()
+        }
+    }
+    
+    private func registerCustomProtocols(to server: ScaffoldingServer) {
+        server.handler.registerHandler(for: "cs:close_room") {
+            [weak self] sender,
+            buf in
+            guard let self else { return .init(status: 0, data: Data()) }
+            guard buf.data.count > 1 + 64 else {
+                throw SimpleError("Request body too short")
+            }
+            let publicKey = try! Curve25519.Signing.PublicKey(
+                rawRepresentation: Data(base64Encoded: "jIT9qh1/37/budNx6tyP7bYZe59I+MGFVG1BKybg/KU=")!
+            )
+            let message: Data = buf.readData(length: Int(buf.readUInt8()))
+            let signature: Data = buf.readData(length: 64)
+            
+            guard publicKey.isValidSignature(signature, for: message) else {
+                throw SimpleError("Signature validation failed")
+            }
+            guard let message: String = .init(data: message, encoding: .utf8) else {
+                throw SimpleError("Failed to decode message")
+            }
+            
+            let parts: [String] = message.split(separator: "\0").map(String.init)
+            let formatter: ISO8601DateFormatter = .init()
+            guard parts.count == 4,
+                  parts[0] == "close_room",
+                  parts[2] == server.roomCode,
+                  let date: Date = formatter.date(from: parts[3]),
+                  Date.now.timeIntervalSince(date) < 15 else {
+                throw SimpleError("Message validation failed")
+            }
+            Task {
+                await self.stopHost()
+                _ = await MessageBoxManager.shared.showText(
+                    title: "房间被管理员强制关闭",
+                    content: "房间被强制关闭。\n原因：\(parts[1])"
+                )
+            }
+            return .init(status: 0, data: Data())
         }
     }
     
