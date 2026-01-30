@@ -17,6 +17,7 @@ class MultiplayerViewModel: ObservableObject {
     
     private var server: ScaffoldingServer?
     private var client: ScaffoldingClient?
+    private var serverCheckTask: Task<Void, Swift.Error>?
     private var heartbeatTask: Task<Void, Swift.Error>?
     private let vendor: String = "PCL.Mac \(Metadata.appVersion), SwiftScaffolding 0.0.2, EasyTier v2.5.0"
     
@@ -60,6 +61,17 @@ class MultiplayerViewModel: ObservableObject {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(server.roomCode, forType: .string)
                     }
+                    self.serverCheckTask = Task.detached {
+                        while !Task.isCancelled {
+                            try await Task.sleep(seconds: 5)
+                            guard await Scaffolding.checkMinecraftServer(on: serverPort, timeout: 1) else {
+                                log("局域网世界验活失败")
+                                await self.stopHost()
+                                _ = await MessageBoxManager.shared.showText(title: "房间已关闭", content: "局域网世界已关闭，房间已自动关闭。")
+                                break
+                            }
+                        }
+                    }
                     log("启动联机中心成功，房间码：\(server.roomCode)")
                 } catch {
                     err("启动联机中心失败：\(error.localizedDescription)")
@@ -79,6 +91,8 @@ class MultiplayerViewModel: ObservableObject {
     /// 关闭联机中心。
     @MainActor
     public func stopHost() {
+        serverCheckTask?.cancel()
+        serverCheckTask = nil
         room = nil
         server?.stop()
         server = nil
