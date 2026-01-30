@@ -21,6 +21,8 @@ class EasyTierManager {
     
     private let downloadItems: [ComponentType: DownloadItem]
     
+    private var isEasyTierInstalled: Bool?
+    
     private init() {
         self.downloadItems = [
             .cli: .init(
@@ -47,27 +49,30 @@ class EasyTierManager {
     
     /// 判断是否已经安装 EasyTier。
     public func isInstalled() -> Bool {
-        return autoreleasepool { checkSingle(type: .cli) && checkSingle(type: .core) }
+        if let isEasyTierInstalled {
+            return isEasyTierInstalled
+        }
+        let installed: Bool = autoreleasepool { checkSingle(type: .cli) && checkSingle(type: .core) }
+        isEasyTierInstalled = installed
+        return installed
     }
     
     /// 如果没有安装 EasyTier，提示用户安装。
     /// - Returns: 是否未安装 EasyTier。
-    public func hintInstall() -> Bool {
+    public func hintInstall() async -> Bool {
         if isInstalled() { return false }
         log("用户未安装 EasyTier")
-        Task {
-            if await MessageBoxManager.shared.showText(
-                title: "错误",
-                content: "你需要安装 EasyTier 才能使用这个功能！",
-                level: .error,
-                .init(id: 1, label: "安装", type: .highlight),
-                .init(id: 0, label: "取消", type: .normal)
-            ) == 1 {
-                let task: MyTask = makeInstallTask()
-                await MainActor.run {
-                    TaskManager.shared.execute(task: task)
-                    AppRouter.shared.append(.tasks)
-                }
+        if await MessageBoxManager.shared.showText(
+            title: "错误",
+            content: "你需要安装 EasyTier 才能使用这个功能！",
+            level: .error,
+            .init(id: 1, label: "安装", type: .highlight),
+            .init(id: 0, label: "取消", type: .normal)
+        ) == 1 {
+            let task: MyTask = makeInstallTask()
+            await MainActor.run {
+                TaskManager.shared.execute(task: task)
+                AppRouter.shared.append(.tasks)
             }
         }
         return true
@@ -86,6 +91,9 @@ class EasyTierManager {
             .init(0, "下载 easytier-core") { task, _ in
                 try await SingleFileDownloader.download(coreDownloadItem, replaceMethod: .skip, progressHandler: task.setProgress(_:))
                 try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: coreDownloadItem.destination.path)
+            },
+            .init(1, "__completion", display: false) { task, _ in
+                EasyTierManager.shared.isEasyTierInstalled = true
             }
         )
     }

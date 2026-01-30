@@ -12,16 +12,25 @@ import Core
 struct MultiplayerPage: View {
     @EnvironmentObject private var viewModel: MultiplayerViewModel
     @StateObject private var loadingViewModel: MyLoadingViewModel = .init(text: "创建房间中")
+    @State private var isEasyTierInstalled: Bool = true
     
     var body: some View {
         CardContainer {
             switch viewModel.state {
-            case .ready: readyBody
+            case .ready:
+                if isEasyTierInstalled {
+                    readyBody
+                } else {
+                    installEasyTierBody
+                }
             case .creatingRoom, .joiningRoom:
                 MyLoading(viewModel: loadingViewModel)
             case .hostReady, .memberReady:
                 multiplayerReadyView
             }
+        }
+        .onAppear {
+            isEasyTierInstalled = EasyTierManager.shared.isInstalled()
         }
         .onChange(of: viewModel.state) { newValue in
             if newValue == .creatingRoom {
@@ -32,15 +41,31 @@ struct MultiplayerPage: View {
         }
     }
     
+    private var installEasyTierBody: some View {
+        MyCard("安装 EasyTier", foldable: false) {
+            MyListItem(.init(image: .init(named: "DownloadPageIcon"), imageSize: 28, name: "安装 EasyTier", description: "联机功能使用 EasyTier 实现，所以你需要先安装 EasyTier 才能进行联机！"))
+                .onTapGesture {
+                    Task {
+                        try await checkDisclaimer()
+                        let task: MyTask = EasyTierManager.shared.makeInstallTask()
+                        await MainActor.run {
+                            TaskManager.shared.execute(task: task)
+                            AppRouter.shared.append(.tasks)
+                        }
+                    }
+                }
+        }
+    }
+    
     private var readyBody: some View {
         MyCard("开始联机", foldable: false) {
             VStack(spacing: 0) {
                 MyListItem(.init(image: .init(named: "MultiplayerPageIcon"), imageSize: 28, name: "创建房间", description: "创建房间并生成邀请码，与好友一起畅玩"))
                     .onTapGesture {
-                        if EasyTierManager.shared.hintInstall() {
-                            return
-                        }
                         Task {
+                            if await EasyTierManager.shared.hintInstall() {
+                                return
+                            }
                             try await checkDisclaimer()
                             guard await MessageBoxManager.shared.showText(
                                 title: "开启房间",
@@ -60,10 +85,10 @@ struct MultiplayerPage: View {
                     }
                 MyListItem(.init(image: .init(named: "IconAdd"), imageSize: 28, name: "加入房间", description: "输入房主提供的邀请码，加入游戏世界"))
                     .onTapGesture {
-                        if EasyTierManager.shared.hintInstall() {
-                            return
-                        }
                         Task {
+                            if await EasyTierManager.shared.hintInstall() {
+                                return
+                            }
                             try await checkDisclaimer()
                             if let roomCode: String = await MessageBoxManager.shared.showInput(title: "输入房间码", placeholder: "U/XXXX-XXXX-XXXX-XXXX") {
                                 if RoomCode.isValid(code: roomCode) {
@@ -96,7 +121,7 @@ struct MultiplayerPage: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 HStack(alignment: .top, spacing: 20) {
-                    MyCard("操作", titled: false, limitHeight: false) {
+                    MyCard("操作", foldable: false, limitHeight: false) {
                         VStack(spacing: 0) {
                             if viewModel.state == .hostReady, let roomCode = viewModel.roomCode() {
                                 ActionView("IconCopy", "复制房间码") {
