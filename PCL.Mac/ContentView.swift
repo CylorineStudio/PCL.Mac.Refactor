@@ -27,7 +27,7 @@ struct ContentView: View {
                     }
                 router.content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(.green)
+                    .background(Color(0xC0DEF5))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
