@@ -41,7 +41,8 @@ public enum MinecraftInstallTask {
                 let instance: MinecraftInstance = .init(
                     runningDirectory: repository.versionsURL.appending(path: name),
                     version: version,
-                    manifest: model.manifest
+                    manifest: model.manifest,
+                    config: .init()
                 )
                 repository.instances?.append(instance)
                 await MainActor.run {
