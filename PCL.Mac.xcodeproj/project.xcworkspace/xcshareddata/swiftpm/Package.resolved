@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/CeciliaStudio/SwiftScaffolding",
       "state" : {
-        "revision" : "6742d209634397f043def7de9a13cf9284630b01",
-        "version" : "0.1.0"
+        "revision" : "b4a7924992802ff988dd8c7c4c3b480da6b4d726",
+        "version" : "0.1.1"
       }
     },
     {
