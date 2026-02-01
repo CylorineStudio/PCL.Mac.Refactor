@@ -46,11 +46,18 @@ public class MinecraftInstance {
         saveConfig()
     }
     
-    /// 搜索 Java 并更换为最佳结果。
-    ///
-    /// - Returns: 若找到了可用的 Java，返回 `true`，否则返回 `false`。
+    /// 重新搜索并设置最适合的 Java。
+    /// - Parameter research: 是否重新构建 Java 列表。
+    /// - Returns: 一个布尔值，表示是否找到了可用的 Java。
     @discardableResult
-    public func selectJava() -> Bool {
+    public func selectJava(research: Bool = false) -> Bool {
+        if research {
+            do {
+                try JavaManager.shared.research()
+            } catch {
+                err("重新搜索 Java 失败：\(error.localizedDescription)")
+            }
+        }
         func getScore(of runtime: JavaRuntime) -> Int {
             var score: Int = 0
             if runtime.architecture == .systemArchitecture() { score += 3 }
@@ -60,20 +67,15 @@ public class MinecraftInstance {
             return score
         }
         
-        do {
-            if let runtime: JavaRuntime = try JavaSearcher.search()
-                .filter({ $0.versionNumber >= manifest.javaVersion.majorVersion })
-                .sorted(by: { getScore(of: $0) > getScore(of: $1) })
-                .first {
-                setJava(url: runtime.executableURL)
-                return true
-            }
-            warn("未找到 \(version) 可用的 Java")
-            return false
-        } catch {
-            err("查找 Java 失败：\(error.localizedDescription)")
-            return false
+        if let runtime: JavaRuntime = JavaManager.shared.javaRuntimes
+            .filter({ $0.versionNumber >= manifest.javaVersion.majorVersion })
+            .sorted(by: { getScore(of: $0) > getScore(of: $1) })
+            .first {
+            setJava(url: runtime.executableURL)
+            return true
         }
+        warn("未找到 \(version) 可用的 Java")
+        return false
     }
     
     private func saveConfig() {
