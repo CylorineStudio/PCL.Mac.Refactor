@@ -98,19 +98,39 @@ class InstanceViewModel: ObservableObject {
     }
     
     /// 启动游戏。
+    /// 
     /// - Parameters:
     ///   - instance: 目标游戏实例。
+    ///   - account: 使用的账号。
     ///   - repository: 游戏仓库。
-    public func launch(_ instance: MinecraftInstance, in repository: MinecraftRepository) {
+    public func launch(_ instance: MinecraftInstance, _ account: Account, in repository: MinecraftRepository) {
         log("正在启动游戏 \(instance.name)")
         Task.detached {
             var options: LaunchOptions = .init()
+            options.account = account
             options.runningDirectory = instance.runningDirectory
-            options.javaURL = URL(fileURLWithPath: "/usr/bin/java")
+            // TODO:
+            // options.javaURL = URL(fileURLWithPath: "/usr/bin/java")
             options.manifest = instance.manifest
             options.repository = repository
             options.memory = 4096
             try options.validate()
+            
+            let entries: [LaunchPrecheck.Entry] = LaunchPrecheck.check(for: instance, with: options, hasMicrosoftAccount: true)
+            for entry in entries {
+                switch entry {
+                case .javaVersionTooLow(let min):
+                    _ = await MessageBoxManager.shared.showText(
+                        title: "Java 版本过低",
+                        content: "你正在使用 Java <placeholder> 启动游戏，但这个版本需要 \(min)！",
+                        level: .error
+                    )
+                    return
+                case .noMicrosoftAccount:
+                    break // TODO: 正版购买弹窗
+                }
+            }
+            
             let launcher: MinecraftLauncher = .init(options: options)
             let _ = try launcher.launch()
         }

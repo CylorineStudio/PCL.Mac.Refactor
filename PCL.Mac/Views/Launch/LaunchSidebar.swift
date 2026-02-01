@@ -46,7 +46,11 @@ struct LaunchSidebar: Sidebar {
                     if let instance = instanceViewModel.currentInstance,
                        let repository = instanceViewModel.currentRepository {
                         MyButton("启动游戏", subLabel: instance.name, type: .highlight) {
-                            instanceViewModel.launch(instance, in: repository)
+                            if let account: Account = accountViewModel.currentAccount {
+                                instanceViewModel.launch(instance, account, in: repository)
+                            } else {
+                                hint("你还没有添加账号！", type: .critical)
+                            }
                         }
                     } else {
                         MyButton("下载游戏", subLabel: "未找到可用的游戏实例", type: .normal) {
@@ -123,7 +127,7 @@ struct LaunchSidebar: Sidebar {
                         PlayerAvatar(account, length: 36)
                         VStack(alignment: .leading) {
                             MyText(account.profile.name)
-                            MyText(account.type().localized, color: .colorGray3)
+                            MyText(account.type.localized, color: .colorGray3)
                         }
                         Spacer()
                         if hovered {

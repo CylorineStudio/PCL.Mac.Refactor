@@ -39,7 +39,7 @@ public class MinecraftLauncher {
     public func launch(_ completion: ((Process) -> Void)? = nil) throws -> Int32 {
         values["classpath"] = buildClasspath()
         let process: Process = .init()
-        process.executableURL = options.javaURL!
+        process.executableURL = options.javaRuntime.executableURL
         process.currentDirectoryURL = runningDirectory
         var arguments: [String] = []
         arguments.append(contentsOf: manifest.jvmArguments.flatMap { $0.rules.allSatisfy { $0.test() } ? $0.value : [] })

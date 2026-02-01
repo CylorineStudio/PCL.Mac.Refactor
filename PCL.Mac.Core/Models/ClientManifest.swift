@@ -15,13 +15,14 @@ public class ClientManifest: Decodable {
     public let assetIndex: AssetIndex
     public let downloads: Downloads
     public let id: String
+    public let javaVersion: JavaVersion
     public let libraries: [Library]
     public let logging: Logging
     public let mainClass: String
     public let type: String
     
     private enum CodingKeys: String, CodingKey {
-        case arguments, assetIndex, downloads, id, libraries, logging, mainClass, type
+        case arguments, assetIndex, downloads, id, javaVersion, libraries, logging, mainClass, type
     }
     
     private enum ArgumentsCodingKeys: String, CodingKey {
@@ -36,6 +37,7 @@ public class ClientManifest: Decodable {
         self.assetIndex = try container.decode(AssetIndex.self, forKey: .assetIndex)
         self.downloads = try container.decode(Downloads.self, forKey: .downloads)
         self.id = try container.decode(String.self, forKey: .id)
+        self.javaVersion = try container.decode(JavaVersion.self, forKey: .javaVersion)
         self.libraries = try container.decode([Library].self, forKey: .libraries)
         self.logging = try container.decode(Logging.self, forKey: .logging)
         self.mainClass = try container.decode(String.self, forKey: .mainClass)
@@ -199,6 +201,11 @@ public class ClientManifest: Decodable {
             if hasFeaturesLimit { return !allow } // TODO
             return allow
         }
+    }
+    
+    public class JavaVersion: Decodable {
+        public let component: String
+        public let majorVersion: Int
     }
     
     /// 获取所有可用的普通依赖库。

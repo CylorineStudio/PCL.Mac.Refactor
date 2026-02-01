@@ -90,7 +90,7 @@ struct MultiplayerPage: View {
                                 return
                             }
                             try await checkDisclaimer()
-                            if let type: AccountWrapper.AccountType = AccountViewModel().currentAccount?.type(),
+                            if let type: AccountType = AccountViewModel().currentAccount?.type,
                                type == .offline {
                                 guard await MessageBoxManager.shared.showText(
                                     title: "警告",
