@@ -19,7 +19,7 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     case minecraftDownload, downloadPage2, downloadPage3
     
     // 联机页面的子页面
-    case multiplayerSub
+    case multiplayerSub, multiplayerSettings
     
     // 更多页面的子页面
     case about
@@ -59,6 +59,8 @@ class AppRouter: ObservableObject {
             NoInstanceRepositoryPage()
         case .multiplayerSub:
             MultiplayerPage()
+        case .multiplayerSettings:
+            MultiplayerSettingsPage()
         case .about:
             AboutPage()
         default:
@@ -72,7 +74,7 @@ class AppRouter: ObservableObject {
         case .launch: LaunchSidebar()
         case .instanceList, .noInstanceRepository: InstanceListSidebar()
         case .minecraftDownload, .downloadPage2, .downloadPage3: DownloadSidebar()
-        case .multiplayer, .multiplayerSub: MultiplayerSidebar()
+        case .multiplayer, .multiplayerSub, .multiplayerSettings: MultiplayerSidebar()
         case .more, .about: MoreSidebar()
         case .tasks: TasksSidebar()
         default: EmptySidebar()

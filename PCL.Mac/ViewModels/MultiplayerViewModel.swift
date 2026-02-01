@@ -20,7 +20,7 @@ class MultiplayerViewModel: ObservableObject {
     private var client: ScaffoldingClient?
     private var serverCheckTask: Task<Void, Swift.Error>?
     private var heartbeatTask: Task<Void, Swift.Error>?
-    private let vendor: String = "PCL.Mac \(Metadata.appVersion), SwiftScaffolding 0.1.0, EasyTier v2.5.0"
+    private let vendor: String = "PCL.Mac \(Metadata.appVersion), SwiftScaffolding 0.1.1, EasyTier v2.5.0"
     
     /// 创建并启动一个 Scaffolding 联机中心。
     /// - Parameter serverPort: Minecraft 服务器的端口。

@@ -83,7 +83,7 @@ struct MultiplayerPage: View {
                             viewModel.startHost(serverPort: port)
                         }
                     }
-                MyListItem(.init(image: .init(named: "IconAdd"), imageSize: 28, name: "加入房间", description: "通过房主分享的的房间码，加入游戏世界！"))
+                MyListItem(.init(image: .init(named: "IconAdd"), imageSize: 28, name: "加入房间", description: "通过房主分享的房间码，加入游戏世界！"))
                     .onTapGesture {
                         Task {
                             if await EasyTierManager.shared.hintInstall() {

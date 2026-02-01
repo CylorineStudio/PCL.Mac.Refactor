@@ -63,8 +63,8 @@ class EasyTierManager {
     }
     
     /// 判断是否已经安装 EasyTier。
-    public func isInstalled() -> Bool {
-        if let isEasyTierInstalled {
+    public func isInstalled(refresh: Bool = false) -> Bool {
+        if let isEasyTierInstalled, !refresh {
             return isEasyTierInstalled
         }
         let installed: Bool = autoreleasepool { checkSingle(type: .cli) && checkSingle(type: .core) }
@@ -91,6 +91,23 @@ class EasyTierManager {
             }
         }
         return true
+    }
+    
+    /// 删除 EasyTier。
+    public func delete() {
+        if !isInstalled() {
+            hint("你还没有安装 EasyTier！", type: .critical)
+            return
+        }
+        do {
+            for url in downloadItems.values.map(\.destination) {
+                try FileManager.default.removeItem(at: url)
+            }
+            hint("删除成功！", type: .finish)
+        } catch {
+            hint("删除 EasyTier 失败：\(error.localizedDescription)", type: .critical)
+        }
+        _ = isInstalled(refresh: true)
     }
     
     /// 创建一个安装任务。
