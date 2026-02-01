@@ -90,6 +90,17 @@ struct MultiplayerPage: View {
                                 return
                             }
                             try await checkDisclaimer()
+                            if let type: AccountWrapper.AccountType = AccountViewModel().currentAccount?.type(),
+                               type == .offline {
+                                guard await MessageBoxManager.shared.showText(
+                                    title: "警告",
+                                    content: "你正在使用离线账号，可能会导致无法加入游戏！\n如果房主安装了 LAN Server Properties 等模组，可以忽略此警告。\n如果你拥有正版账号，请返回主页面并切换为正版账号。\n\n如果出现了“无效会话”等错误，请不要反馈给他人！",
+                                    level: .error,
+                                    .init(id: 0, label: "取消", type: .normal),
+                                    .init(id: 1, label: "继续", type: .red)
+                                ) == 1 else { return }
+                            }
+                            
                             if let roomCode: String = await MessageBoxManager.shared.showInput(title: "输入房间码", placeholder: "U/XXXX-XXXX-XXXX-XXXX") {
                                 if RoomCode.isValid(code: roomCode) {
                                     viewModel.join(roomCode: roomCode)
