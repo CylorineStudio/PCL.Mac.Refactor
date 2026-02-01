@@ -60,7 +60,7 @@ struct MultiplayerPage: View {
     private var readyBody: some View {
         MyCard("开始联机", foldable: false) {
             VStack(spacing: 0) {
-                MyListItem(.init(image: .init(named: "MultiplayerPageIcon"), imageSize: 28, name: "创建房间", description: "创建房间并生成邀请码，与好友一起畅玩"))
+                MyListItem(.init(image: .init(named: "MultiplayerPageIcon"), imageSize: 28, name: "创建房间", description: "使用局域网世界创建房间，并邀请好友加入！"))
                     .onTapGesture {
                         Task {
                             if await EasyTierManager.shared.hintInstall() {
@@ -83,7 +83,7 @@ struct MultiplayerPage: View {
                             viewModel.startHost(serverPort: port)
                         }
                     }
-                MyListItem(.init(image: .init(named: "IconAdd"), imageSize: 28, name: "加入房间", description: "输入房主提供的邀请码，加入游戏世界"))
+                MyListItem(.init(image: .init(named: "IconAdd"), imageSize: 28, name: "加入房间", description: "通过房主分享的的房间码，加入游戏世界！"))
                     .onTapGesture {
                         Task {
                             if await EasyTierManager.shared.hintInstall() {
