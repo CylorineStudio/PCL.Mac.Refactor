@@ -8,8 +8,6 @@
 import SwiftUI
 
 protocol Sidebar: View {
-    init()
-    
     var width: CGFloat { get }
 }
 

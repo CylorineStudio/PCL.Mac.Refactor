@@ -67,9 +67,9 @@ struct LaunchSidebar: Sidebar {
                             router.append(.noInstanceRepository)
                         }
                     }
-                    if let _ = instanceViewModel.currentInstance {
+                    if let instance = instanceViewModel.currentInstance {
                         MyButton("实例设置") {
-                            router.append(.instanceSettings)
+                            router.append(.instanceSettings(id: instance.name))
                         }
                     }
                 }

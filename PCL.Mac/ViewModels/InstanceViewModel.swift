@@ -37,6 +37,19 @@ class InstanceViewModel: ObservableObject {
         }
     }
     
+    /// 在当前仓库中加载实例。
+    ///
+    /// - Parameter id: 实例 ID。
+    public func loadInstance(_ id: String) throws -> MinecraftInstance {
+        guard let currentRepository else {
+            throw SimpleError("未设置当前仓库。")
+        }
+        if let currentInstance, id == currentInstance.name {
+            return currentInstance
+        }
+        return try currentRepository.instance(id: id)
+    }
+    
     /// 切换当前实例。
     /// - Parameters:
     ///   - instance: 目标实例。
@@ -106,16 +119,24 @@ class InstanceViewModel: ObservableObject {
     public func launch(_ instance: MinecraftInstance, _ account: Account, in repository: MinecraftRepository) {
         log("正在启动游戏 \(instance.name)")
         Task.detached {
+            guard let javaRuntime: JavaRuntime = instance.javaRuntime() else {
+                _ = await MessageBoxManager.shared.showText(
+                    title: "启动失败",
+                    content: "你还没有设置 Java！", // TODO:
+                    level: .error
+                )
+                return
+            }
+            
             var options: LaunchOptions = .init()
             options.account = account
             options.runningDirectory = instance.runningDirectory
-            // TODO:
-            // options.javaURL = URL(fileURLWithPath: "/usr/bin/java")
+            options.javaRuntime = javaRuntime
             options.manifest = instance.manifest
             options.repository = repository
             options.memory = 4096
-            try options.validate()
             
+            try options.validate()
             let entries: [LaunchPrecheck.Entry] = LaunchPrecheck.check(for: instance, with: options, hasMicrosoftAccount: true)
             for entry in entries {
                 switch entry {

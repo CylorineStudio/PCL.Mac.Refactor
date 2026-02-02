@@ -25,13 +25,15 @@ struct MyCard<Content: View>: View {
     private let foldable: Bool
     private let titled: Bool
     private let limitHeight: Bool
+    private let padding: CGFloat
     private let content: () -> Content
     
-    init(_ title: String, foldable: Bool = true, titled: Bool = true, limitHeight: Bool = true, @ViewBuilder _ content: @escaping () -> Content) {
+    init(_ title: String, foldable: Bool = true, titled: Bool = true, limitHeight: Bool = true, padding: CGFloat = 18, @ViewBuilder _ content: @escaping () -> Content) {
         self.title = title
         self.foldable = foldable && titled
         self.titled = titled
         self.limitHeight = limitHeight
+        self.padding = padding
         self.content = content
     }
     
@@ -54,7 +56,7 @@ struct MyCard<Content: View>: View {
             .foregroundStyle(appearFinished && hovered ? Color.color2 : .color1)
             .frame(height: titled ? 12 : 0)
             .frame(maxWidth: .infinity)
-            .padding(12)
+            .padding(titled ? 12 : padding / 2)
             .contentShape(Rectangle())
             .onTapGesture {
                 guard foldable else { return }
@@ -82,7 +84,7 @@ struct MyCard<Content: View>: View {
             VStack {
                 content()
             }
-            .padding(EdgeInsets(top: 0, leading: 18, bottom: 18, trailing: 18))
+            .padding(EdgeInsets(top: 0, leading: padding, bottom: padding, trailing: padding))
             .background {
                 GeometryReader { proxy in
                     Color.clear

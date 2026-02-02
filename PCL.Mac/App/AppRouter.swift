@@ -13,7 +13,10 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     case launch, download, multiplayer, settings, more, tasks
     
     // 启动页面的子页面
-    case instanceList(MinecraftRepository), noInstanceRepository, instanceSettings
+    case instanceList(MinecraftRepository), noInstanceRepository, instanceSettings(id: String)
+    
+    // 实例设置页面的子页面
+    case instanceConfig(id: String)
     
     // 下载页面的子页面
     case minecraftDownload, downloadPage2, downloadPage3
@@ -63,6 +66,8 @@ class AppRouter: ObservableObject {
             MultiplayerSettingsPage()
         case .about:
             AboutPage()
+        case .instanceConfig(let id):
+            InstanceConfigPage(id: id)
         default:
             Spacer()
         }
@@ -73,6 +78,7 @@ class AppRouter: ObservableObject {
         switch getLast() {
         case .launch: LaunchSidebar()
         case .instanceList, .noInstanceRepository: InstanceListSidebar()
+        case .instanceSettings(let id), .instanceConfig(let id): InstanceSettingsSidebar(id: id)
         case .minecraftDownload, .downloadPage2, .downloadPage3: DownloadSidebar()
         case .multiplayer, .multiplayerSub, .multiplayerSettings: MultiplayerSidebar()
         case .more, .about: MoreSidebar()
@@ -85,9 +91,8 @@ class AppRouter: ObservableObject {
     var isSubPage: Bool {
         switch getLast() {
         case .tasks: return true
-        case .instanceList(_): return true
-        case .noInstanceRepository: return true
-        case .instanceSettings: return true
+        case .instanceList, .noInstanceRepository: return true
+        case .instanceSettings, .instanceConfig: return true
         default: return false
         }
     }
@@ -97,7 +102,7 @@ class AppRouter: ObservableObject {
         switch getLast() {
         case .tasks: "任务列表"
         case .instanceList, .noInstanceRepository: "实例列表"
-        case .instanceSettings: "实例设置"
+        case .instanceSettings(let id), .instanceConfig(let id): "实例设置 - \(id)"
         default: "错误：当前页面没有标题，请报告此问题！"
         }
     }
@@ -120,11 +125,13 @@ class AppRouter: ObservableObject {
     
     func append(_ route: AppRoute) {
         path.append(route)
+        if case .instanceSettings(let id) = route { append(.instanceConfig(id: id)) }
     }
     
     func removeLast() {
         if path.count > 1 {
             path.removeLast()
+            if case .instanceSettings = getLast() { removeLast() }
         }
     }
     

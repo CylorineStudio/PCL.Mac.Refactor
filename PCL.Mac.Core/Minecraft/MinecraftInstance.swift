@@ -41,7 +41,7 @@ public class MinecraftInstance {
     }
     
     /// 设置实例使用的 Java 并保存。
-    public func setJava(url: URL) {
+    public func setJava(url: URL?) {
         config.javaURL = url
         saveConfig()
     }
@@ -76,6 +76,20 @@ public class MinecraftInstance {
         }
         warn("未找到 \(version) 可用的 Java")
         return false
+    }
+    
+    /// 获取实例使用的 `JavaRuntime` 对象。
+    public func javaRuntime() -> JavaRuntime? {
+        guard let javaURL = config.javaURL else {
+            return nil
+        }
+        do {
+            return try JavaSearcher.load(from: javaURL)
+        } catch {
+            err("加载 Java 失败")
+            setJava(url: nil)
+            return nil
+        }
     }
     
     private func saveConfig() {
