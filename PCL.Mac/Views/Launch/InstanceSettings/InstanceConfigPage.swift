@@ -24,6 +24,7 @@ struct InstanceConfigPage: View {
                 MyCard("", titled: false, padding: 10) {
                     MyListItem(.init(image: .init(named: "GrassBlock"), name: instance.name, description: instance.version.id))
                 }
+                jvmCard(instance)
             } else {
                 MyLoading(viewModel: loadingVM)
             }
@@ -40,5 +41,32 @@ struct InstanceConfigPage: View {
                 }
             }
         }
+    }
+    
+    @ViewBuilder
+    private func jvmCard(_ instance: MinecraftInstance) -> some View {
+        MyCard("JVM 设置", foldable: false) {
+            VStack {
+                configLine(label: "内存分配") {
+                    MyTextField(initial: instance.config.jvmHeapSize, parse: { .init($0) }) { value in
+                        instance.setJVMHeapSize(value)
+                    }
+                    MyText("MB")
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func configLine(label: String,  @ViewBuilder body: () -> some View) -> some View {
+        HStack(spacing: 20) {
+            MyText(label)
+                .frame(width: 120, alignment: .leading)
+            HStack {
+                body()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 6)
     }
 }
