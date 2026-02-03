@@ -53,7 +53,7 @@ struct MyTextField: View {
                 }
             RoundedRectangle(cornerRadius: 3)
                 .stroke(foregroundColor, lineWidth: 1.5)
-                .padding(.top, 0.5)
+                .padding(.top, 1.5)
             if text.isEmpty {
                 Text(placeholder)
                     .foregroundStyle(Color.colorGray3)
