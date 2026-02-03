@@ -19,22 +19,6 @@ body:
   id: description
   attributes:
     label: "问题描述"
-    placeholder: "描述你遇到的问题。"
+    placeholder: "描述你遇到的问题，并包含复现步骤、系统版本等信息来帮助诊断问题。"
   validations:
     required: true
-- type: textarea
-  id: steps
-  attributes:
-    label: "复现方式"
-    placeholder: |
-      1. xxx
-      2. xxx
-  validations:
-    required: true
-- type: textarea
-  id: system
-  attributes:
-    label: "系统信息"
-    placeholder: |
-      macOS xx.x
-      Apple Silicon / Intel
