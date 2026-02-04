@@ -19,15 +19,14 @@ public class MinecraftLauncher {
         self.runningDirectory = options.runningDirectory
         self.librariesURL = options.repository.librariesURL
         self.options = options
-        // test only
         self.values = [
-            "auth_player_name": "Test",
+            "auth_player_name": options.profile.name,
             "version_name": manifest.id,
             "game_directory": runningDirectory.path,
             "assets_root": librariesURL.deletingLastPathComponent().appending(path: "assets").path,
             "assets_index_name": manifest.assetIndex.id,
-            "auth_uuid": "00000000000000000000000000000000",
-            "auth_access_token": "00000000000000000000000000000000",
+            "auth_uuid": UUIDUtils.string(of: options.profile.id, withHyphens: false),
+            "auth_access_token": options.accessToken,
             "user_type": "msa",
             "version_type": "PCL.Mac",
             "user_properties": "\"{}\""

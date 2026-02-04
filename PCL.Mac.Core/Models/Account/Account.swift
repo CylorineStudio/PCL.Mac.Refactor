@@ -8,9 +8,9 @@
 import Foundation
 
 public protocol Account: Codable {
-    var profile: PlayerProfileModel { get }
+    var profile: PlayerProfile { get }
     var id: UUID { get }
-    func accessToken() throws -> String
+    func accessToken() -> String
     func refresh() async throws
     func shouldRefresh() -> Bool
 }

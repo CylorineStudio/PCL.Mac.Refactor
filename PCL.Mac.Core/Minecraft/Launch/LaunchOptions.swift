@@ -8,7 +8,8 @@
 import Foundation
 
 public struct LaunchOptions {
-    public var account: Account!
+    public var profile: PlayerProfile!
+    public var accessToken: String!
     public var javaRuntime: JavaRuntime!
     public var runningDirectory: URL!
     public var manifest: ClientManifest!
@@ -16,7 +17,7 @@ public struct LaunchOptions {
     public var memory: Int = 4096
     
     public func validate() throws {
-        if account == nil { throw LaunchError.missingAccount }
+        if profile == nil || accessToken == nil { throw LaunchError.missingAccount }
         if javaRuntime == nil { throw LaunchError.missingJava }
         if runningDirectory == nil { throw LaunchError.missingRunningDirectory }
         if manifest == nil { throw LaunchError.missingManifest }

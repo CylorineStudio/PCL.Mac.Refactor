@@ -16,7 +16,7 @@ public enum LaunchPrecheck {
     ) -> [Entry] {
         var entries: [Entry] = []
         entries += checkJava(instance: instance, currentJava: options.javaRuntime)
-        entries += checkAccount(options.account, hasMicrosoftAccount: hasMicrosoftAccount)
+        entries += checkAccount(options.profile, hasMicrosoftAccount: hasMicrosoftAccount)
         return entries
     }
     
@@ -31,7 +31,7 @@ public enum LaunchPrecheck {
         return entries
     }
     
-    private static func checkAccount(_ account: Account, hasMicrosoftAccount: Bool) -> [Entry] {
+    private static func checkAccount(_ profile: PlayerProfile, hasMicrosoftAccount: Bool) -> [Entry] {
         var entries: [Entry] = []
         if !hasMicrosoftAccount {
             entries.append(.noMicrosoftAccount)

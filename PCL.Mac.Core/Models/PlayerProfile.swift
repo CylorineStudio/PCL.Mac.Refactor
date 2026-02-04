@@ -1,5 +1,5 @@
 //
-//  PlayerProfileModel.swift
+//  PlayerProfile.swift
 //  PCL.Mac
 //
 //  Created by 温迪 on 2026/1/14.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct PlayerProfileModel: Codable {
+public struct PlayerProfile: Codable {
     public let name: String
     public let id: UUID
     public let properties: [Property]
@@ -30,7 +30,7 @@ public struct PlayerProfileModel: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.name = try container.decode(String.self, forKey: .name)
         self.id = try UUIDUtils.uuidThrowing(of: container.decode(String.self, forKey: .id))
-        self.properties = try container.decodeIfPresent([PlayerProfileModel.Property].self, forKey: .properties) ?? []
+        self.properties = try container.decodeIfPresent([PlayerProfile.Property].self, forKey: .properties) ?? []
     }
     
     public func encode(to encoder: any Encoder) throws {

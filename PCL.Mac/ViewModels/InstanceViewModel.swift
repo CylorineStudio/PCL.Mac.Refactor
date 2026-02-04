@@ -128,8 +128,27 @@ class InstanceViewModel: ObservableObject {
                 return
             }
             
+            if account.shouldRefresh() {
+                do {
+                    try await account.refresh()
+                    log("刷新 accessToken 成功")
+                } catch {
+                    err("刷新 accessToken 失败")
+                    if await MessageBoxManager.shared.showText(
+                        title: "刷新访问令牌失败",
+                        content: "在刷新访问令牌时发生错误：\(error.localizedDescription)\n\n如果继续启动，可能会导致无法加入部分需要正版验证的服务器！\n是否继续启动？\n\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。",
+                        level: .error,
+                        .init(id: 0, label: "取消", type: .normal),
+                        .init(id: 1, label: "继续", type: .red)
+                    ) == 0 {
+                        return
+                    }
+                }
+            }
+            
             var options: LaunchOptions = .init()
-            options.account = account
+            options.profile = account.profile
+            options.accessToken = account.accessToken()
             options.runningDirectory = instance.runningDirectory
             options.javaRuntime = javaRuntime
             options.manifest = instance.manifest

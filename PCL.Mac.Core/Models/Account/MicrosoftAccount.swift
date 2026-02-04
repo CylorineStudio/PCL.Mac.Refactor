@@ -8,7 +8,7 @@
 import Foundation
 
 public class MicrosoftAccount: Account {
-    public private(set) var profile: PlayerProfileModel
+    public private(set) var profile: PlayerProfile
     private var _accessToken: String
     private var refreshToken: String
     private var lastRefresh: Date
@@ -22,7 +22,7 @@ public class MicrosoftAccount: Account {
         case id
     }
     
-    public init(profile: PlayerProfileModel, accessToken: String, refreshToken: String) {
+    public init(profile: PlayerProfile, accessToken: String, refreshToken: String) {
         self.profile = profile
         self._accessToken = accessToken
         self.refreshToken = refreshToken
@@ -30,7 +30,7 @@ public class MicrosoftAccount: Account {
         self.id = .init()
     }
     
-    public func accessToken() throws -> String {
+    public func accessToken() -> String {
         _accessToken
     }
     

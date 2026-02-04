@@ -44,7 +44,7 @@ struct MessageBoxView: View {
             }
             .padding(22)
         }
-        .frame(minWidth: 400)
+        .frame(minWidth: 400, maxWidth: 800)
         .fixedSize(horizontal: true, vertical: true)
         .onAppear {
             if case .input(let initialContent, _) = model.content, let initialContent {

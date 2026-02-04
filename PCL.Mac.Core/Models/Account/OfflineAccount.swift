@@ -8,7 +8,7 @@
 import Foundation
 
 public class OfflineAccount: Account {
-    public let profile: PlayerProfileModel
+    public let profile: PlayerProfile
     public let id: UUID
     
     public init(name: String, uuid: UUID) {
@@ -16,7 +16,7 @@ public class OfflineAccount: Account {
         self.id = .init()
     }
     
-    public func accessToken() throws -> String {
+    public func accessToken() -> String {
         return UUIDUtils.string(of: .init(), withHyphens: false) // 随机 UUID
     }
     

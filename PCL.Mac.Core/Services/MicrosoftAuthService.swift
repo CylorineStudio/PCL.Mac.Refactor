@@ -73,7 +73,7 @@ public class MicrosoftAuthService {
         let xboxLiveAuthResponse: XboxLiveAuthResponse = try await authenticateXBL(with: oAuthToken)
         let xstsAuthResponse: XboxLiveAuthResponse = try await authorizeXSTS(with: xboxLiveAuthResponse.token)
         let minecraftToken: String = try await loginMinecraft(with: xstsAuthResponse)
-        guard let profile: PlayerProfileModel = try await getMinecraftProfile(with: minecraftToken) else {
+        guard let profile: PlayerProfile = try await getMinecraftProfile(with: minecraftToken) else {
             throw Error.notPurchased
         }
         return .init(profile: profile, accessToken: minecraftToken, refreshToken: refreshToken)
@@ -90,7 +90,8 @@ public class MicrosoftAuthService {
                 "refresh_token": token,
                 "grant_type": "refresh_token",
                 "scope": "XboxLive.signin offline_access"
-            ]
+            ],
+            encodeMethod: .urlEncoded
         )
         guard let oAuthToken = json["access_token"].string,
               let refreshToken = json["refresh_token"].string else {
@@ -100,7 +101,7 @@ public class MicrosoftAuthService {
         let xboxLiveAuthResponse: XboxLiveAuthResponse = try await authenticateXBL(with: oAuthToken)
         let xstsAuthResponse: XboxLiveAuthResponse = try await authorizeXSTS(with: xboxLiveAuthResponse.token)
         let minecraftToken: String = try await loginMinecraft(with: xstsAuthResponse)
-        guard let profile: PlayerProfileModel = try await getMinecraftProfile(with: minecraftToken) else {
+        guard let profile: PlayerProfile = try await getMinecraftProfile(with: minecraftToken) else {
             throw Error.notPurchased
         }
         return .init(profile: profile, accessToken: minecraftToken, refreshToken: refreshToken)
@@ -112,7 +113,7 @@ public class MicrosoftAuthService {
     }
     
     public struct MinecraftAuthResponse {
-        public let profile: PlayerProfileModel
+        public let profile: PlayerProfile
         public let accessToken: String
         public let refreshToken: String
     }
@@ -194,7 +195,7 @@ public class MicrosoftAuthService {
         return json["access_token"].stringValue
     }
     
-    private func getMinecraftProfile(with token: String) async throws -> PlayerProfileModel? {
+    private func getMinecraftProfile(with token: String) async throws -> PlayerProfile? {
         let json: JSON = try await Requests.get(
             "https://api.minecraftservices.com/minecraft/profile",
             headers: [
@@ -212,6 +213,6 @@ public class MicrosoftAuthService {
         // 该接口返回的 JSON 不是标准档案格式，需要根据 UUID 再获取一次
         let id: String = json["id"].stringValue
         let data: Data = try await Requests.get("https://sessionserver.mojang.com/session/minecraft/profile/\(id)").data
-        return try JSONDecoder.shared.decode(PlayerProfileModel.self, from: data)
+        return try JSONDecoder.shared.decode(PlayerProfile.self, from: data)
     }
 }
