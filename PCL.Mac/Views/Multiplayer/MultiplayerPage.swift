@@ -110,6 +110,10 @@ struct MultiplayerPage: View {
                             }
                         }
                     }
+                MyListItem(.init(image: .init(named: "IconAbout"), imageSize: 28, name: "帮助文档", description: "点击这里打开多人联机教程！"))
+                    .onTapGesture {
+                        NSWorkspace.shared.open(URL(string: "https://ceciliastudio.top/helps/PCL.Mac#联机")!)
+                    }
             }
         }
     }
