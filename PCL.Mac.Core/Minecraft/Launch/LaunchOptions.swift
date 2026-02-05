@@ -15,6 +15,7 @@ public struct LaunchOptions {
     public var manifest: ClientManifest!
     public var repository: MinecraftRepository!
     public var memory: Int = 4096
+    public var demo: Bool = false
     
     public func validate() throws {
         if profile == nil || accessToken == nil { throw LaunchError.missingAccount }

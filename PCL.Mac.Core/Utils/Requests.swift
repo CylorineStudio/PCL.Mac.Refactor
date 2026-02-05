@@ -80,7 +80,7 @@ public enum Requests {
         var request: URLRequest = .init(url: url)
         request.httpMethod = method
         request.allHTTPHeaderFields = headers
-        request.setValue("PCL-Mac/0.1.1", forHTTPHeaderField: "User-Agent")
+        request.setValue("PCL-Mac/\(Metadata.appVersion)", forHTTPHeaderField: "User-Agent")
         if noCache {
             request.cachePolicy = .reloadIgnoringLocalCacheData
         }

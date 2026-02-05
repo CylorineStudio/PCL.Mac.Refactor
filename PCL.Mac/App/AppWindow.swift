@@ -16,7 +16,7 @@ class AppWindow: NSWindow {
     
     init() {
         super.init(
-            contentRect: .init(x: 0, y: 0, width: 1000, height: 600),
+            contentRect: .init(x: 0, y: 0, width: 1000, height: 550),
             styleMask: [.titled, .closable, .resizable, .miniaturizable, .fullSizeContentView],
             backing: .buffered, defer: false
         )
@@ -26,6 +26,7 @@ class AppWindow: NSWindow {
         self.contentView = NSHostingView(
             rootView: ContentView()
                 .ignoresSafeArea(.container, edges: .top)
+                .frame(minWidth: 1000, minHeight: 550)
                 .environmentObject(InstanceViewModel())
                 .environmentObject(MinecraftDownloadPageViewModel())
                 .environmentObject(InstanceListViewModel())
