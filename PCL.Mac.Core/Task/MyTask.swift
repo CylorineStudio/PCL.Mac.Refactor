@@ -65,7 +65,12 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
         let subTaskLists: [[SubTask]] = subTasks.reduce(into: Array(repeating: [], count: maxOrdinal + 1)) { $0[$1.ordinal].append($1) }
         log("正在执行任务 \(name)")
         for subTaskList in subTaskLists {
-            try await execute(taskList: subTaskList)
+            do {
+                try await execute(taskList: subTaskList)
+            } catch Error.cancelled {
+                log("任务 \(name) 被子任务中断")
+                return
+            }
         }
         log("任务 \(name) 执行完成")
     }
@@ -122,6 +127,12 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
             await setProgressAsync(1)
         }
         
+        /// 使 `MyTask` 停止执行所有待执行任务。
+        /// - Throws: 该方法必定抛出 `MyTask.Error.cancelled`。
+        public func cancel() throws {
+            throw Error.cancelled
+        }
+        
         @MainActor
         public func setProgress(_ progress: Double) {
             self.progress = progress
@@ -138,6 +149,10 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
                 self.state = state
             }
         }
+    }
+    
+    private enum Error: Swift.Error {
+        case cancelled
     }
 }
 

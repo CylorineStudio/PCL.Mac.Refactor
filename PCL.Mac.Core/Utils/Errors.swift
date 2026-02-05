@@ -20,7 +20,6 @@ public enum LaunchError: Error {
     case missingManifest
     case missingAccount
     case missingRepository
-    case invalidMemory
 }
 
 public enum URLError: Error {

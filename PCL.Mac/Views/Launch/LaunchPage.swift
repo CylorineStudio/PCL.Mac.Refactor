@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Core
 
 struct LaunchPage: View {
     @StateObject private var loadingModel: MyLoadingViewModel = .init(text: "加载中")
@@ -85,6 +86,24 @@ struct LaunchPage: View {
                         }
                     }
                     .frame(width: 80)
+                    
+                    MyButton("[临时] Java 安装弹窗") {
+                        Task {
+                            if await MessageBoxManager.shared.showText(
+                                title: "没有可用的 Java",
+                                content: "这个实例需要 Java 21 才能启动，但你的电脑上没有安装。\nPCL.Mac.Refactor 暂时没有 Java 安装功能，但是可以帮你打开下载网页。",
+                                level: .error,
+                                .init(id: 0, label: "取消", type: .normal),
+                                .init(id: 1, label: "打开下载网页", type: .normal)
+                            ) == 1 {
+                                let version: String = "java-21-lts"
+                                let arch: String = Architecture.systemArchitecture() == .arm64 ? "arm-64-bit" : "x86-64-bit"
+                                let url: String = "https://www.azul.com/downloads/?version=\(version)&os=macos&architecture=\(arch)&package=jdk#zulu"
+                                NSWorkspace.shared.open(URL(string: url)!)
+                            }
+                        }
+                    }
+                    .frame(width: 160)
                 }
                 .frame(height: 40)
             }

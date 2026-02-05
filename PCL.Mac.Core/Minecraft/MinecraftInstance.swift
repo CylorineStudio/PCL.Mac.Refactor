@@ -46,11 +46,11 @@ public class MinecraftInstance {
         saveConfig()
     }
     
-    /// 重新搜索并设置最适合的 Java。
+    /// 搜索最适合的 Java。
     /// - Parameter research: 是否重新构建 Java 列表。
-    /// - Returns: 一个布尔值，表示是否找到了可用的 Java。
+    /// - Returns: 搜到的 Java。
     @discardableResult
-    public func selectJava(research: Bool = false) -> Bool {
+    public func searchJava(research: Bool = false) -> JavaRuntime? {
         if research {
             do {
                 try JavaManager.shared.research()
@@ -71,11 +71,10 @@ public class MinecraftInstance {
             .filter({ $0.versionNumber >= manifest.javaVersion.majorVersion })
             .sorted(by: { getScore(of: $0) > getScore(of: $1) })
             .first {
-            setJava(url: runtime.executableURL)
-            return true
+            return runtime
         }
         warn("未找到 \(version) 可用的 Java")
-        return false
+        return nil
     }
     
     /// 获取实例使用的 `JavaRuntime` 对象。
@@ -157,7 +156,7 @@ public class MinecraftInstance {
             instance.saveConfig()
         }
         if instance.config.javaURL == nil {
-            instance.selectJava()
+            instance.setJava(url: instance.searchJava()?.executableURL)
         }
         return instance
     }

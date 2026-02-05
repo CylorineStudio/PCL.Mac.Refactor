@@ -93,9 +93,9 @@ public class ClientManifest: Decodable {
     
     public class Downloads: Decodable {
         public let client: Download
-        public let clientMappings: Download
+        public let clientMappings: Download?
         public let server: Download
-        public let serverMappings: Download
+        public let serverMappings: Download?
         
         private enum CodingKeys: String, CodingKey {
             case client, server
