@@ -21,16 +21,18 @@ public enum MinecraftLaunchTask {
     public static func create(
         for instance: MinecraftInstance,
         using account: Account,
-        in repository: MinecraftRepository
+        in repository: MinecraftRepository,
+        onProcessStarted: @escaping (Process) -> Void
     ) -> MyTask<Model> {
         return .init(
             name: "启动游戏 - \(instance.name)",
-            model: .init(instance: instance, account: account, repository: repository),
+            model: .init(instance: instance, account: account, repository: repository, onProcessStarted: onProcessStarted),
             .init(0, "检查 Java", checkJava(task:model:)),
             .init(1, "刷新账号", refreshAccount(task:model:)),
             .init(2, "预检查", precheck(task:model:)),
             .init(3, "检查资源完整性", checkResources(task:model:)),
-            .init(4, "启动游戏", launch(task:model:))
+            .init(4, "启动游戏", launch(task:model:)),
+            .init(5, "等待游戏窗口出现", display: false, waitForWindow(task:model:))
         )
     }
     
@@ -168,7 +170,11 @@ public enum MinecraftLaunchTask {
         LauncherConfig.shared.launchCount += 1
         let launcher: MinecraftLauncher = .init(options: model.options)
         do {
-            _ = try launcher.launch()
+            let process: Process = try launcher.launch()
+            model.process = process
+            await MainActor.run {
+                model.onProcessStarted(process)
+            }
         } catch {
             err("启动游戏失败：\(error.localizedDescription)")
             _ = await MessageBoxManager.shared.showText(
@@ -179,16 +185,51 @@ public enum MinecraftLaunchTask {
         }
     }
     
+    private static func waitForWindow(task: SubTask, model: Model) async throws {
+        guard let process = model.process else {
+            err("model.process 为 nil")
+            return
+        }
+        try await withTaskCancellationHandler {
+            while true {
+                try Task.checkCancellation()
+                if checkWindows(for: process) {
+                    break
+                }
+                try await Task.sleep(seconds: 1)
+            }
+        } onCancel: {
+            process.terminate()
+        }
+    }
+    
+    private static func checkWindows(for process: Process) -> Bool {
+        let option: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+        guard let infoList = CGWindowListCopyWindowInfo(option, kCGNullWindowID) as? [[String: Any]] else {
+            return false
+        }
+        for info in infoList {
+            if let windowPID: Int = info[kCGWindowOwnerPID as String] as? Int,
+               windowPID == process.processIdentifier {
+                return true
+            }
+        }
+        return false
+    }
+    
     public class Model: TaskModel {
         public let instance: MinecraftInstance
         public let account: Account
         public let repository: MinecraftRepository
+        public let onProcessStarted: (Process) -> Void
         public var options: LaunchOptions
+        public var process: Process?
         
-        init(instance: MinecraftInstance, account: Account, repository: MinecraftRepository) {
+        init(instance: MinecraftInstance, account: Account, repository: MinecraftRepository, onProcessStarted: @escaping (Process) -> Void) {
             self.instance = instance
             self.account = account
             self.repository = repository
+            self.onProcessStarted = onProcessStarted
             self.options = .init()
             
             self.options.profile = account.profile

@@ -34,8 +34,8 @@ public class MinecraftLauncher {
     }
     
     /// 启动 Minecraft。
-    /// - Returns: 进程退出代码。
-    public func launch(_ completion: ((Process) -> Void)? = nil) throws -> Int32 {
+    /// - Returns: 游戏进程。
+    public func launch() throws -> Process {
         values["classpath"] = buildClasspath()
         let process: Process = .init()
         process.executableURL = options.javaRuntime.executableURL
@@ -48,9 +48,7 @@ public class MinecraftLauncher {
         process.arguments = arguments
         log("正在使用以下参数启动 Minecraft：\(arguments)")
         try process.run()
-        completion?(process)
-        process.waitUntilExit()
-        return process.terminationStatus
+        return process
     }
     
     private func buildClasspath() -> String {

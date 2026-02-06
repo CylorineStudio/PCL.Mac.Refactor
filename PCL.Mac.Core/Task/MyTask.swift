@@ -68,6 +68,7 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
         let subTaskLists: [[SubTask]] = subTasks.reduce(into: Array(repeating: [], count: maxOrdinal + 1)) { $0[$1.ordinal].append($1) }
         
         let progressCalcTask: Task<Void, Error> = Task {
+            let subTasks: [SubTask] = subTasks.filter(\.display)
             while !Task.isCancelled {
                 try await Task.sleep(seconds: 0.1)
                 let progress: Double = subTasks.reduce(0) { $0 + $1.progress } / Double(subTasks.count)

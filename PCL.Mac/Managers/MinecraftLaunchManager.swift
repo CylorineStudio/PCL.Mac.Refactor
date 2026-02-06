@@ -38,9 +38,15 @@ class MinecraftLaunchManager: ObservableObject {
         in repository: MinecraftRepository
     ) -> Bool {
         if launching { return false }
-        let task: MyTask<MinecraftLaunchTask.Model> = MinecraftLaunchTask.create(for: instance, using: account, in: repository)
+        self.loadingModel.text = "正在启动游戏"
+        let task: MyTask<MinecraftLaunchTask.Model> = MinecraftLaunchTask.create(for: instance, using: account, in: repository) { process in
+            self.loadingModel.text = "已启动游戏"
+        }
         TaskManager.shared.execute(task: task, display: false) { _ in
             self.task = nil
+            self.currentStage = nil
+            self.instanceName = nil
+            self.progress = 0
         }
         self.instanceName = instance.name
         self.task = task
@@ -81,6 +87,7 @@ class MinecraftLaunchManager: ObservableObject {
         case 2: "预检查"
         case 3: "检查资源完整性"
         case 4: "启动游戏"
+        case 5: "等待游戏窗口出现"
         default: "\(ordinal)"
         }
     }
