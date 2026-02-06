@@ -15,12 +15,14 @@ public class AnyMyTask: ObservableObject, Identifiable {
     
     public let id: UUID
     public let name: String
+    public let display: Bool
     private let _subTasks: () -> [SubTask]
     private var cancellable: AnyCancellable?
     
-    public init<Model>(_ task: MyTask<Model>) where Model: TaskModel {
+    public init<Model>(_ task: MyTask<Model>, display: Bool) where Model: TaskModel {
         self.id = task.id
         self.name = task.name
+        self.display = display
         self._subTasks = {
             task.subTasks.filter({ $0.display }).map { (name: $0.name, progress: $0.progress, state: $0.state) }
         }

@@ -10,7 +10,7 @@ import Core
 
 struct LaunchSidebar: Sidebar {
     @EnvironmentObject private var instanceViewModel: InstanceViewModel
-    @ObservedObject private var router: AppRouter = .shared
+    @ObservedObject private var launchManager: MinecraftLaunchManager = .shared
     @StateObject private var accountViewModel: AccountViewModel = .init()
     @State private var showingAccountEditor: Bool = false
     @State private var accountEditAppeared: Bool = false
@@ -19,66 +19,75 @@ struct LaunchSidebar: Sidebar {
     
     var body: some View {
         VStack {
-            Spacer()
-            if showingAccountEditor {
-                accountEditorView
-                    .opacity(accountEditAppeared ? 1 : 0)
-                    .scaleEffect(accountEditAppeared ? 1 : 0.95)
-                    .animation(.spring(response: 0.2), value: accountEditAppeared)
-                    .onAppear {
-                        accountEditAppeared = true
-                    }
-            } else if let account = accountViewModel.currentAccount {
-                MyListItem {
-                    VStack(spacing: 15) {
-                        PlayerAvatar(account)
-                        MyText(account.profile.name, size: 16)
-                    }
+            if launchManager.launching {
+                launchingBody
+            } else {
+                normalBody
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var normalBody: some View {
+        Spacer()
+        if showingAccountEditor {
+            accountEditorView
+                .opacity(accountEditAppeared ? 1 : 0)
+                .scaleEffect(accountEditAppeared ? 1 : 0.95)
+                .animation(.spring(response: 0.2), value: accountEditAppeared)
+                .onAppear {
+                    accountEditAppeared = true
                 }
-                .fixedSize()
-                .onTapGesture {
-                    showingAccountEditor = true
+        } else if let account = accountViewModel.currentAccount {
+            MyListItem {
+                VStack(spacing: 15) {
+                    PlayerAvatar(account)
+                    MyText(account.profile.name, size: 16)
                 }
             }
-            Spacer()
-            VStack(spacing: 11) {
-                Group {
-                    if let instance = instanceViewModel.currentInstance,
-                       let repository = instanceViewModel.currentRepository {
-                        MyButton("启动游戏", subLabel: instance.name, type: .highlight) {
-                            if let account: Account = accountViewModel.currentAccount {
-                                instanceViewModel.launch(instance, account, in: repository)
-                            } else {
-                                hint("你还没有添加账号！", type: .critical)
-                            }
-                        }
-                    } else {
-                        MyButton("下载游戏", subLabel: "未找到可用的游戏实例", type: .normal) {
-                            router.setRoot(.download)
-                        }
-                    }
-                }
-                .frame(height: 50)
-                HStack(spacing: 11) {
-                    MyButton("实例选择") {
-                        if let repository: MinecraftRepository = instanceViewModel.currentRepository {
-                            router.append(.instanceList(repository))
+            .fixedSize()
+            .onTapGesture {
+                showingAccountEditor = true
+            }
+        }
+        Spacer()
+        VStack(spacing: 11) {
+            Group {
+                if let instance = instanceViewModel.currentInstance,
+                   let repository = instanceViewModel.currentRepository {
+                    MyButton("启动游戏", subLabel: instance.name, type: .highlight) {
+                        if let account: Account = accountViewModel.currentAccount {
+                            instanceViewModel.launch(instance, account, in: repository)
                         } else {
-                            router.append(.noInstanceRepository)
+                            hint("你还没有添加账号！", type: .critical)
                         }
                     }
-                    if let instance = instanceViewModel.currentInstance {
-                        MyButton("实例设置") {
-                            router.append(.instanceSettings(id: instance.name))
-                        }
+                } else {
+                    MyButton("下载游戏", subLabel: "未找到可用的游戏实例", type: .normal) {
+                        AppRouter.shared.setRoot(.download)
                     }
                 }
-                .frame(height: 32)
             }
-            .padding(21)
-            .onAppear {
-                if accountViewModel.currentAccount == nil { showingAccountEditor = true }
+            .frame(height: 50)
+            HStack(spacing: 11) {
+                MyButton("实例选择") {
+                    if let repository: MinecraftRepository = instanceViewModel.currentRepository {
+                        AppRouter.shared.append(.instanceList(repository))
+                    } else {
+                        AppRouter.shared.append(.noInstanceRepository)
+                    }
+                }
+                if let instance = instanceViewModel.currentInstance {
+                    MyButton("实例设置") {
+                        AppRouter.shared.append(.instanceSettings(id: instance.name))
+                    }
+                }
             }
+            .frame(height: 32)
+        }
+        .padding(21)
+        .onAppear {
+            if accountViewModel.currentAccount == nil { showingAccountEditor = true }
         }
     }
     
@@ -151,5 +160,18 @@ struct LaunchSidebar: Sidebar {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: accountViewModel.currentAccount?.id)
+    }
+    
+    @ViewBuilder
+    private var launchingBody: some View {
+        Spacer()
+        if let currentStage: String = launchManager.currentStage {
+            MyText("当前阶段：\(currentStage)")
+        }
+        MyText("进度：\(launchManager.progress)")
+        Spacer()
+        MyButton("取消", launchManager.cancel)
+            .frame(height: 32)
+            .padding(21)
     }
 }

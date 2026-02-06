@@ -32,7 +32,7 @@ struct TasksPage: View {
                 }
                 .frame(height: 40)
             }
-            ForEach(taskManager.tasks) { task in
+            ForEach(taskManager.tasks.filter(\.display)) { task in
                 TaskCard(task)
             }
         }

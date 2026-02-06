@@ -117,8 +117,11 @@ class InstanceViewModel: ObservableObject {
     ///   - account: 使用的账号。
     ///   - repository: 游戏仓库。
     public func launch(_ instance: MinecraftInstance, _ account: Account, in repository: MinecraftRepository) {
-        log("正在启动游戏 \(instance.name)")
-        let task: MyTask<MinecraftLaunchTask.Model> = MinecraftLaunchTask.create(for: instance, using: account, in: repository)
-        TaskManager.shared.execute(task: task)
+        if MinecraftLaunchManager.shared.launch(instance, using: account, in: repository) {
+            log("正在启动游戏 \(instance.name)")
+        } else {
+            hint("有游戏正在运行！", type: .critical)
+            log("已有游戏正在运行，停止启动")
+        }
     }
 }
