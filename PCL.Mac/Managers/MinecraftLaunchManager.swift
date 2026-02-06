@@ -15,6 +15,8 @@ class MinecraftLaunchManager: ObservableObject {
     @Published public var launching: Bool = false
     @Published public var progress: Double = 0
     @Published public var currentStage: String? = nil
+    @Published public var instanceName: String?
+    public let loadingModel: MyLoadingViewModel = .init(text: "正在启动游戏")
     
     private var task: MyTask<MinecraftLaunchTask.Model>? {
         didSet {
@@ -40,6 +42,7 @@ class MinecraftLaunchManager: ObservableObject {
         TaskManager.shared.execute(task: task, display: false) { _ in
             self.task = nil
         }
+        self.instanceName = instance.name
         self.task = task
         return true
     }

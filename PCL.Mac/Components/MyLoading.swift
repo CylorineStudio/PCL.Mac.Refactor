@@ -16,15 +16,41 @@ struct MyLoading: View {
     @State private var leftPathOffset: CGSize = .zero
     @State private var rightPathOffset: CGSize = .zero
     @State private var pathOpacity: CGFloat = 1
+    @State private var timer = Timer.publish(every: 1.68, on: .main, in: .common).autoconnect()
     
-    private let timer = Timer.publish(every: 1.68, on: .main, in: .common).autoconnect()
+    private let showCard: Bool
     
-    init(viewModel: MyLoadingViewModel) {
+    init(viewModel: MyLoadingViewModel, showCard: Bool = true) {
         self.viewModel = viewModel
+        self.showCard = showCard
     }
     
     var body: some View {
-        MyCard("", titled: false) {
+        Group {
+            if showCard {
+                MyCard("", titled: false) {
+                    pickaxe
+                }
+            } else {
+                pickaxe
+            }
+        }
+        .fixedSize()
+        .onReceive(timer) { _ in
+            animate()
+        }
+        .onAppear(perform: animate)
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isFailed)
+        .onChange(of: viewModel.isFailed) { newValue in
+            if newValue == false {
+                isFailed = false
+                animate()
+            }
+        }
+    }
+    
+    private var pickaxe: some View {
+        VStack {
             ZStack {
                 // 横线
                 Path { path in
@@ -100,18 +126,6 @@ struct MyLoading: View {
             .foregroundStyle(viewModel.isFailed ? Color.red : Color.color2)
             .frame(width: 80, height: 80)
             MyText(viewModel.text, size: 16, color: viewModel.isFailed ? Color.red : Color.color2)
-        }
-        .fixedSize()
-        .onReceive(timer) { _ in
-            animate()
-        }
-        .onAppear(perform: animate)
-        .animation(.easeInOut(duration: 0.2), value: viewModel.isFailed)
-        .onChange(of: viewModel.isFailed) { newValue in
-            if newValue == false {
-                isFailed = false
-                animate()
-            }
         }
     }
     
