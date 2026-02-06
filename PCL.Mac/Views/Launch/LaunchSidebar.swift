@@ -189,21 +189,42 @@ struct LaunchSidebar: Sidebar {
                 if let currentStage: String = launchManager.currentStage {
                     launchingInfo(name: "当前步骤", value: currentStage)
                 }
-                launchingInfo(name: "启动进度", value: .init(format: "%.2f %%", launchManager.progress * 100))
+                launchingInfo(name: "启动进度") {
+                    AnimatablePercentText(progress: launchManager.progress)
+                }
             }
             Spacer()
             MyButton("取消", launchManager.cancel)
                 .frame(height: 32)
                 .padding(21)
         }
+        .animation(.easeOut(duration: 0.2), value: launchManager.progress)
     }
     
     @ViewBuilder
     private func launchingInfo(name: String, value: String) -> some View {
+        launchingInfo(name: name) { MyText(value, size: 12.5)}
+    }
+    
+    @ViewBuilder
+    private func launchingInfo(name: String, value: () -> some View) -> some View {
         HStack(spacing: 15) {
             MyText(name, size: 12.5)
                 .opacity(0.5)
-            MyText(value, size: 12.5)
+            value()
         }
+    }
+}
+
+private struct AnimatablePercentText: View, Animatable {
+    var progress: Double
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
+    
+    var body: some View {
+        let clamped: Double = min(max(progress, 0), 1)
+        MyText(String(format: "%.2f %%", clamped * 100), size: 12.5)
     }
 }
