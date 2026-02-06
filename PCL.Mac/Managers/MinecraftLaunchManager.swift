@@ -17,6 +17,7 @@ class MinecraftLaunchManager: ObservableObject {
     @Published public var currentStage: String? = nil
     @Published public var instanceName: String?
     public let loadingModel: MyLoadingViewModel = .init(text: "正在启动游戏")
+    private var gameProcess: Process?
     
     private var task: MyTask<MinecraftLaunchTask.Model>? {
         didSet {
@@ -40,6 +41,15 @@ class MinecraftLaunchManager: ObservableObject {
         if launching { return false }
         self.loadingModel.text = "正在启动游戏"
         let task: MyTask<MinecraftLaunchTask.Model> = MinecraftLaunchTask.create(for: instance, using: account, in: repository) { process in
+            self.gameProcess = process
+            process.terminationHandler = { [weak self] process in
+                log("游戏进程已退出，退出代码：\(process.terminationStatus)")
+                if ![0, 9, 15, 128 + 9, 128 + 15].contains(process.terminationStatus) {
+                    log("游戏非正常退出")
+                    self?.onGameCrash(instance: instance)
+                }
+                self?.gameProcess = nil
+            }
             self.loadingModel.text = "已启动游戏"
         }
         TaskManager.shared.execute(task: task, display: false) { _ in
@@ -57,6 +67,29 @@ class MinecraftLaunchManager: ObservableObject {
     public func cancel() {
         if let task {
             TaskManager.shared.cancel(task.id)
+        }
+    }
+    
+    /// Minecraft 是否正在运行。
+    public func isRunning() -> Bool {
+        return gameProcess != nil
+    }
+    
+    public func stop() {
+        if let gameProcess {
+            gameProcess.terminate()
+            self.gameProcess = nil
+        }
+    }
+    
+    private func onGameCrash(instance: MinecraftInstance) {
+        Task {
+            hint("检测到 Minecraft 发生崩溃，崩溃分析已开始……", type: .critical)
+            _ = await MessageBoxManager.shared.showText(
+                title: "Minecraft 发生崩溃",
+                content: "你的游戏发生了一些问题，无法继续运行。\n很抱歉，PCL.Mac 暂时没有崩溃分析功能……\n\n若要寻求帮助，请点击“导出崩溃报告”并将导出的文件发给他人，而不是发送关于此页面的图片！！！",
+                level: .error
+            )
         }
     }
     

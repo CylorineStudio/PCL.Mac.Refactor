@@ -193,6 +193,10 @@ public enum MinecraftLaunchTask {
         try await withTaskCancellationHandler {
             while true {
                 try Task.checkCancellation()
+                if !process.isRunning {
+                    log("进程已被关闭，停止检测窗口")
+                    break
+                }
                 if checkWindows(for: process) {
                     break
                 }
