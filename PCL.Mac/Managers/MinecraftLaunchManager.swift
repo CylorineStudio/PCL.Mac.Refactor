@@ -37,7 +37,7 @@ class MinecraftLaunchManager: ObservableObject {
     ) -> Bool {
         if launching { return false }
         let task: MyTask<MinecraftLaunchTask.Model> = MinecraftLaunchTask.create(for: instance, using: account, in: repository)
-        TaskManager.shared.execute(task: task) { _ in
+        TaskManager.shared.execute(task: task, display: false) { _ in
             self.task = nil
         }
         self.task = task
@@ -76,7 +76,8 @@ class MinecraftLaunchManager: ObservableObject {
         case 0: "检查 Java"
         case 1: "刷新账号"
         case 2: "预检查"
-        case 3: "启动游戏"
+        case 3: "检查资源完整性"
+        case 4: "启动游戏"
         default: "\(ordinal)"
         }
     }

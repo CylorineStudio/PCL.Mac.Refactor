@@ -87,9 +87,9 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
             }
             do {
                 try await execute(taskList: subTaskList)
-            } catch TaskError.cancelled {
-                log("任务 \(name) 被子任务中断")
-                return
+            } catch let error as CancellationError {
+                log("任务 \(name) 被中断")
+                throw error
             }
         }
         log("任务 \(name) 执行完成")
@@ -139,8 +139,8 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
             await setState(.executing)
             do {
                 try await execute(self, model)
-            } catch TaskError.cancelled {
-                throw TaskError.cancelled
+            } catch let error as CancellationError {
+                throw error
             } catch {
                 err("子任务 \(name) 执行失败：\(error.localizedDescription)")
                 await setState(.failed)
@@ -152,9 +152,9 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
         }
         
         /// 使 `MyTask` 停止执行所有待执行任务。
-        /// - Throws: 该方法必定抛出 `MyTask.Error.cancelled`。
+        /// - Throws: 该方法必定抛出 `CancellationError`。
         public func cancel() throws {
-            throw TaskError.cancelled
+            throw CancellationError()
         }
         
         @MainActor

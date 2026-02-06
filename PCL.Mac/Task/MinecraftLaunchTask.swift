@@ -29,7 +29,8 @@ public enum MinecraftLaunchTask {
             .init(0, "检查 Java", checkJava(task:model:)),
             .init(1, "刷新账号", refreshAccount(task:model:)),
             .init(2, "预检查", precheck(task:model:)),
-            .init(3, "启动游戏", launch(task:model:))
+            .init(3, "检查资源完整性", checkResources(task:model:)),
+            .init(4, "启动游戏", launch(task:model:))
         )
     }
     
@@ -153,6 +154,14 @@ public enum MinecraftLaunchTask {
                 }
             }
         }
+    }
+    
+    private static func checkResources(task: SubTask, model: Model) async throws {
+        try await MinecraftInstallTask.completeResources(
+            instance: model.instance,
+            repository: model.repository,
+            progressHandler: task.setProgress(_:)
+        )
     }
     
     private static func launch(task: SubTask, model: Model) async throws {

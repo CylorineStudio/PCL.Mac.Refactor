@@ -31,7 +31,6 @@ public enum URLError: Error {
 public enum TaskError: Error, Equatable {
     case invalidOrdinal(value: Int)
     case unknownError
-    case cancelled
 }
 
 public enum MinecraftError: LocalizedError {
