@@ -38,7 +38,7 @@ class MultiplayerViewModel: ObservableObject {
             }
             state = .creatingRoom
             let code: String = RoomCode.generate()
-            let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Steve"
+            let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Anonymous"
             let server: ScaffoldingServer = .init(
                 easyTier: EasyTierManager.shared.easyTier,
                 roomCode: code,
@@ -108,7 +108,7 @@ class MultiplayerViewModel: ObservableObject {
     ///   - playerName: 房客玩家名。
     @MainActor
     public func join(roomCode: String) {
-        let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Steve"
+        let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Anonymous"
         let client: ScaffoldingClient = .init(
             easyTier: EasyTierManager.shared.easyTier,
             playerName: playerName,
