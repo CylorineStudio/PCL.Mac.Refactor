@@ -56,6 +56,13 @@ public class MinecraftLauncher {
         arguments = arguments.map(replaceWithValue(_:))
         process.arguments = arguments
         
+        // accessToken 打码
+        // arguments 不会再被使用了，可以直接修改
+        if let accessTokenIndex: Int = arguments.firstIndex(of: "--accessToken"),
+           accessTokenIndex + 1 < arguments.count {
+            arguments[accessTokenIndex + 1] = "🥚"
+        }
+        
         let pipe: Pipe = .init()
         process.standardOutput = pipe
         process.standardError = pipe
