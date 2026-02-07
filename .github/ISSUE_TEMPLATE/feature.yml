@@ -1,5 +1,5 @@
 name: "新功能建议"
-description: "为 PCL.Mac 提出一个新功能建议。"
+description: "为启动器提出一个新功能建议。"
 labels: "Feature"
 
 title: "[Feature] "
@@ -8,7 +8,7 @@ body:
 - type: checkboxes
   id: checklist
   attributes:
-    label: 检查单
+    label: "检查单"
     description: "请逐项确认以下内容："
     options:
       - label: "我已将启动器更新至最新版，并且该建议依然适用。"
@@ -18,14 +18,7 @@ body:
 - type: textarea
   id: feature
   attributes:
-    label: 你希望增加什么功能？请简明描述
+    label: "你希望增加什么功能？请简明描述"
     placeholder: "请详细描述你需要的新功能或改进。"
   validations:
     required: true
-- type: textarea
-  id: scenario
-  attributes:
-    label: 使用场景
-    placeholder: "请说明你希望在哪些场景下使用该功能，为什么这个功能对你有帮助。"
-  validations:
-    required: false
