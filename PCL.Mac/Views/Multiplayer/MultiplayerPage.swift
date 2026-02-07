@@ -31,6 +31,11 @@ struct MultiplayerPage: View {
         }
         .onAppear {
             isEasyTierInstalled = EasyTierManager.shared.isInstalled()
+            if viewModel.state == .creatingRoom {
+                loadingViewModel.text = "创建房间中"
+            } else if viewModel.state == .joiningRoom {
+                loadingViewModel.text = "加入房间中"
+            }
         }
         .onChange(of: viewModel.state) { newValue in
             if newValue == .creatingRoom {
