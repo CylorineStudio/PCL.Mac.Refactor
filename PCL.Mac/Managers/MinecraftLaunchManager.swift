@@ -14,16 +14,17 @@ import AppKit
 class MinecraftLaunchManager: ObservableObject {
     public static let shared: MinecraftLaunchManager = .init()
     
-    @Published public var launching: Bool = false
+    @Published public var isLaunching: Bool = false
     @Published public var progress: Double = 0
     @Published public var currentStage: String? = nil
     @Published public var instanceName: String?
     @Published private var gameProcess: Process?
+    public var isRunning: Bool { gameProcess != nil }
     public let loadingModel: MyLoadingViewModel = .init(text: "正在启动游戏")
     
     private var task: MyTask<MinecraftLaunchTask.Model>? {
         didSet {
-            launching = task != nil
+            isLaunching = task != nil
             subscribeToTask()
         }
     }
@@ -40,7 +41,7 @@ class MinecraftLaunchManager: ObservableObject {
         using account: Account,
         in repository: MinecraftRepository
     ) -> Bool {
-        if launching { return false }
+        if isLaunching { return false }
         self.loadingModel.text = "正在启动游戏"
         let task: MyTask<MinecraftLaunchTask.Model> = MinecraftLaunchTask.create(for: instance, using: account, in: repository) { launcher, process in
             self.gameProcess = process
@@ -51,6 +52,7 @@ class MinecraftLaunchManager: ObservableObject {
                     self?.onGameCrash(instance: instance, options: launcher.options, logURL: launcher.logURL)
                 }
                 DispatchQueue.main.async {
+                    self?.cancel()
                     self?.gameProcess = nil
                 }
             }
@@ -72,11 +74,6 @@ class MinecraftLaunchManager: ObservableObject {
         if let task {
             TaskManager.shared.cancel(task.id)
         }
-    }
-    
-    /// Minecraft 是否正在运行。
-    public func isRunning() -> Bool {
-        return gameProcess != nil
     }
     
     public func stop() {
@@ -107,7 +104,7 @@ class MinecraftLaunchManager: ObservableObject {
                     panel.nameFieldStringValue = fileName
                     await panel.beginSheetModal(for: NSApplication.shared.windows.first!)
                     return panel.url
-                }.result.get()
+                }.value
                 guard let url else { return }
                 do {
                     try exportCrashReport(for: instance, to: url, with: fileName, options: options, logURL: logURL)

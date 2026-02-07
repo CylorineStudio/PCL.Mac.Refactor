@@ -18,7 +18,7 @@ struct LaunchSidebar: Sidebar {
     let width: CGFloat = 285
     
     var body: some View {
-        if launchManager.launching {
+        if launchManager.isLaunching {
             launchingBody
         } else {
             normalBody
@@ -211,8 +211,8 @@ struct LaunchSidebar: Sidebar {
                 MyText("这是一段测试用的小提示文本，它应该足够长以让它有两行。", size: 12.5)
                     .padding(11)
             }
-            .frame(width: 260, height: launchManager.isRunning() ? nil : 0)
-            .opacity(launchManager.isRunning() ? 1 : 0)
+            .frame(width: 260, height: launchManager.isRunning ? nil : 0)
+            .opacity(launchManager.isRunning ? 1 : 0)
             .padding(.top, 26)
             .fixedSize(horizontal: false, vertical: true)
             
@@ -222,7 +222,7 @@ struct LaunchSidebar: Sidebar {
                 .padding(21)
         }
         .animation(.easeOut(duration: 0.2), value: launchManager.progress)
-        .animation(.easeOut(duration: 0.1), value: launchManager.isRunning())
+        .animation(.easeOut(duration: 0.1), value: launchManager.isRunning)
     }
     
     @ViewBuilder
