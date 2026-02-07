@@ -43,7 +43,7 @@ struct MultiplayerPage: View {
     
     private var installEasyTierBody: some View {
         MyCard("安装 EasyTier", foldable: false) {
-            MyListItem(.init(image: .init(named: "DownloadPageIcon"), imageSize: 28, name: "安装 EasyTier", description: "联机功能使用 EasyTier 实现，所以你需要先安装 EasyTier 才能进行联机！"))
+            MyListItem(.init(image: "DownloadPageIcon", imageSize: 28, name: "安装 EasyTier", description: "联机功能使用 EasyTier 实现，所以你需要先安装 EasyTier 才能进行联机！"))
                 .onTapGesture {
                     Task {
                         try await checkDisclaimer()
@@ -60,7 +60,7 @@ struct MultiplayerPage: View {
     private var readyBody: some View {
         MyCard("开始联机", foldable: false) {
             VStack(spacing: 0) {
-                MyListItem(.init(image: .init(named: "MultiplayerPageIcon"), imageSize: 28, name: "创建房间", description: "使用局域网世界创建房间，并邀请好友加入！"))
+                MyListItem(.init(image: "MultiplayerPageIcon", imageSize: 28, name: "创建房间", description: "使用局域网世界创建房间，并邀请好友加入！"))
                     .onTapGesture {
                         Task {
                             if await EasyTierManager.shared.hintInstall() {
@@ -83,7 +83,7 @@ struct MultiplayerPage: View {
                             viewModel.startHost(serverPort: port)
                         }
                     }
-                MyListItem(.init(image: .init(named: "IconAdd"), imageSize: 28, name: "加入房间", description: "通过房主分享的房间码，加入游戏世界！"))
+                MyListItem(.init(image: "IconAdd", imageSize: 28, name: "加入房间", description: "通过房主分享的房间码，加入游戏世界！"))
                     .onTapGesture {
                         Task {
                             if await EasyTierManager.shared.hintInstall() {
@@ -110,7 +110,7 @@ struct MultiplayerPage: View {
                             }
                         }
                     }
-                MyListItem(.init(image: .init(named: "IconAbout"), imageSize: 28, name: "帮助文档", description: "点击这里打开多人联机教程！"))
+                MyListItem(.init(image: "IconAbout", imageSize: 28, name: "帮助文档", description: "点击这里可以查看联机教程！"))
                     .onTapGesture {
                         NSWorkspace.shared.open(URL(string: "https://ceciliastudio.top/helps/PCL.Mac#联机")!)
                     }

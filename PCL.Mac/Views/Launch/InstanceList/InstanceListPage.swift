@@ -55,6 +55,6 @@ private struct InstanceView: View {
     }
     
     var body: some View {
-        MyListItem(.init(image: .init(named: "GrassBlock"), name: name, description: version.id))
+        MyListItem(.init(image: "GrassBlock", name: name, description: version.id))
     }
 }

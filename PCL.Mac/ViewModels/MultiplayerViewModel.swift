@@ -188,7 +188,7 @@ class MultiplayerViewModel: ObservableObject {
         guard state == .hostReady || state == .memberReady else {
             return
         }
-        if [128 + SIGTERM, 128 + SIGKILL].contains(process.terminationStatus) {
+        if [9, 15, 128 + 9, 128 + 15].contains(Int(process.terminationStatus)) {
             log("用户手动退出了 EasyTier 进程")
             showError(title: "错误", body: "无法继续联机：EasyTier 进程被杀死。")
         } else {

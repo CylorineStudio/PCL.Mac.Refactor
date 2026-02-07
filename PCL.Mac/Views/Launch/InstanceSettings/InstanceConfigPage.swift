@@ -22,7 +22,7 @@ struct InstanceConfigPage: View {
         CardContainer {
             if let instance {
                 MyCard("", titled: false, padding: 10) {
-                    MyListItem(.init(image: .init(named: "GrassBlock"), name: instance.name, description: instance.version.id))
+                    MyListItem(.init(image: "GrassBlock", name: instance.name, description: instance.version.id))
                 }
                 jvmCard(instance)
             } else {

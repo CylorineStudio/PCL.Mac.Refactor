@@ -32,7 +32,7 @@ struct MyListItem<Content: View>: View {
                     }
                     HStack {
                         if let image = model.image {
-                            Image(nsImage: image)
+                            Image(image)
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: model.imageSize, height: model.imageSize)

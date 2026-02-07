@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct ListItem {
-    public let image: NSImage?
+    public let image: String?
     public let imageSize: CGFloat
     public let name: String
     public let description: String?
     
-    init(image: NSImage? = nil, imageSize: CGFloat = 36, name: String, description: String?) {
+    init(image: String? = nil, imageSize: CGFloat = 36, name: String, description: String?) {
         self.image = image
         self.imageSize = imageSize
         self.name = name
