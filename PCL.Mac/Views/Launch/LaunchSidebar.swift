@@ -185,6 +185,8 @@ struct LaunchSidebar: Sidebar {
             .frame(width: 225, height: 4)
             .padding(.top, 12)
             .padding(.bottom, 27)
+            
+            // PanLaunchingInfo
             VStack(alignment: .leading) {
                 if let currentStage: String = launchManager.currentStage {
                     launchingInfo(name: "当前步骤", value: currentStage)
@@ -193,17 +195,39 @@ struct LaunchSidebar: Sidebar {
                     AnimatablePercentText(progress: launchManager.progress)
                 }
             }
+            
+            // PanLaunchingHint
+            ZStack(alignment: .top) {
+                RoundedRectangle(cornerRadius: 3)
+                    .stroke(Color.colorGray1, lineWidth: 1)
+                    .padding(1)
+                HStack {
+                    MyText("你知道吗", size: 12.5)
+                        .opacity(0.5)
+                        .padding(.horizontal, 10)
+                        .background(.white)
+                        .offset(y: -8)
+                }
+                MyText("这是一段测试用的小提示文本，它应该足够长以让它有两行。", size: 12.5)
+                    .padding(11)
+            }
+            .frame(width: 260, height: launchManager.isRunning() ? nil : 0)
+            .opacity(launchManager.isRunning() ? 1 : 0)
+            .padding(.top, 26)
+            .fixedSize(horizontal: false, vertical: true)
+            
             Spacer()
             MyButton("取消", launchManager.cancel)
                 .frame(height: 32)
                 .padding(21)
         }
         .animation(.easeOut(duration: 0.2), value: launchManager.progress)
+        .animation(.easeOut(duration: 0.1), value: launchManager.isRunning())
     }
     
     @ViewBuilder
     private func launchingInfo(name: String, value: String) -> some View {
-        launchingInfo(name: name) { MyText(value, size: 12.5)}
+        launchingInfo(name: name) { MyText(value, size: 12.5) }
     }
     
     @ViewBuilder

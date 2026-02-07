@@ -22,7 +22,7 @@ public enum MinecraftLaunchTask {
         for instance: MinecraftInstance,
         using account: Account,
         in repository: MinecraftRepository,
-        onProcessStarted: @escaping (Process) -> Void
+        onProcessStarted: @escaping (MinecraftLauncher, Process) -> Void
     ) -> MyTask<Model> {
         return .init(
             name: "启动游戏 - \(instance.name)",
@@ -169,11 +169,12 @@ public enum MinecraftLaunchTask {
     private static func launch(task: SubTask, model: Model) async throws {
         LauncherConfig.shared.launchCount += 1
         let launcher: MinecraftLauncher = .init(options: model.options)
+        model.launcher = launcher
         do {
             let process: Process = try launcher.launch()
             model.process = process
             await MainActor.run {
-                model.onProcessStarted(process)
+                model.onProcessStarted(launcher, process)
             }
         } catch {
             err("启动游戏失败：\(error.localizedDescription)")
@@ -225,11 +226,12 @@ public enum MinecraftLaunchTask {
         public let instance: MinecraftInstance
         public let account: Account
         public let repository: MinecraftRepository
-        public let onProcessStarted: (Process) -> Void
+        public let onProcessStarted: (MinecraftLauncher, Process) -> Void
+        public var launcher: MinecraftLauncher?
         public var options: LaunchOptions
         public var process: Process?
         
-        init(instance: MinecraftInstance, account: Account, repository: MinecraftRepository, onProcessStarted: @escaping (Process) -> Void) {
+        init(instance: MinecraftInstance, account: Account, repository: MinecraftRepository, onProcessStarted: @escaping (MinecraftLauncher, Process) -> Void) {
             self.instance = instance
             self.account = account
             self.repository = repository

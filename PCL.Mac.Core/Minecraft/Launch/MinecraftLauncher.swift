@@ -8,10 +8,12 @@
 import Foundation
 
 public class MinecraftLauncher {
+    private static let gameLogQueue: DispatchQueue = .init(label: "PCL.Mac.GameLog")
+    public private(set) var output: String = ""
+    public let options: LaunchOptions
     private let manifest: ClientManifest
     private let runningDirectory: URL
     private let librariesURL: URL
-    private let options: LaunchOptions
     private var values: [String: String]
     
     public init(options: LaunchOptions) {
@@ -40,14 +42,29 @@ public class MinecraftLauncher {
         let process: Process = .init()
         process.executableURL = options.javaRuntime.executableURL
         process.currentDirectoryURL = runningDirectory
+        
         var arguments: [String] = []
         arguments.append(contentsOf: manifest.jvmArguments.flatMap { $0.rules.allSatisfy { $0.test() } ? $0.value : [] })
         arguments.append(manifest.mainClass)
         arguments.append(contentsOf: manifest.gameArguments.flatMap { $0.rules.allSatisfy { $0.test() } ? $0.value : [] })
         arguments = arguments.map(replaceWithValue(_:))
         process.arguments = arguments
+        
+        let pipe: Pipe = .init()
+        process.standardOutput = pipe
+        process.standardError = pipe
+        
         log("正在使用以下参数启动 Minecraft：\(arguments)")
         try process.run()
+        Self.gameLogQueue.async {
+            while process.isRunning {
+                let data: Data = pipe.fileHandleForReading.availableData
+                if data.isEmpty { break }
+                if let string: String = .init(data: data, encoding: .utf8) {
+                    self.output += string
+                }
+            }
+        }
         return process
     }
     

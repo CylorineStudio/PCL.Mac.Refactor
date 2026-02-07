@@ -8,6 +8,8 @@
 import Foundation
 import Core
 import Combine
+import ZIPFoundation
+import AppKit
 
 class MinecraftLaunchManager: ObservableObject {
     public static let shared: MinecraftLaunchManager = .init()
@@ -16,8 +18,8 @@ class MinecraftLaunchManager: ObservableObject {
     @Published public var progress: Double = 0
     @Published public var currentStage: String? = nil
     @Published public var instanceName: String?
+    @Published private var gameProcess: Process?
     public let loadingModel: MyLoadingViewModel = .init(text: "正在启动游戏")
-    private var gameProcess: Process?
     
     private var task: MyTask<MinecraftLaunchTask.Model>? {
         didSet {
@@ -40,15 +42,17 @@ class MinecraftLaunchManager: ObservableObject {
     ) -> Bool {
         if launching { return false }
         self.loadingModel.text = "正在启动游戏"
-        let task: MyTask<MinecraftLaunchTask.Model> = MinecraftLaunchTask.create(for: instance, using: account, in: repository) { process in
+        let task: MyTask<MinecraftLaunchTask.Model> = MinecraftLaunchTask.create(for: instance, using: account, in: repository) { launcher, process in
             self.gameProcess = process
             process.terminationHandler = { [weak self] process in
                 log("游戏进程已退出，退出代码：\(process.terminationStatus)")
                 if ![0, 9, 15, 128 + 9, 128 + 15].contains(process.terminationStatus) {
                     log("游戏非正常退出")
-                    self?.onGameCrash(instance: instance)
+                    self?.onGameCrash(instance: instance, options: launcher.options, output: launcher.output)
                 }
-                self?.gameProcess = nil
+                DispatchQueue.main.async {
+                    self?.gameProcess = nil
+                }
             }
             self.loadingModel.text = "已启动游戏"
         }
@@ -82,15 +86,67 @@ class MinecraftLaunchManager: ObservableObject {
         }
     }
     
-    private func onGameCrash(instance: MinecraftInstance) {
+    private func onGameCrash(instance: MinecraftInstance, options: LaunchOptions, output: String) {
         Task {
             hint("检测到 Minecraft 发生崩溃，崩溃分析已开始……", type: .critical)
-            _ = await MessageBoxManager.shared.showText(
+            if await MessageBoxManager.shared.showText(
                 title: "Minecraft 发生崩溃",
                 content: "你的游戏发生了一些问题，无法继续运行。\n很抱歉，PCL.Mac 暂时没有崩溃分析功能……\n\n若要寻求帮助，请点击“导出崩溃报告”并将导出的文件发给他人，而不是发送关于此页面的图片！！！",
-                level: .error
-            )
+                level: .error,
+                .init(id: 0, label: "返回", type: .normal),
+                .init(id: 1, label: "导出崩溃报告", type: .normal)
+            ) == 1 {
+                let dateFormatter: DateFormatter = .init()
+                dateFormatter.dateFormat = "yyyy_MM_dd_HH_mm_SS"
+                let fileName: String = "崩溃报告-\(dateFormatter.string(from: .now)).zip"
+                let url: URL? = await MainActor.run {
+                    let panel = NSSavePanel()
+                    panel.title = "选择报告位置"
+                    panel.allowedContentTypes = [.zip]
+                    panel.canCreateDirectories = true
+                    panel.nameFieldStringValue = fileName
+                    panel.begin { _ in }
+                    return panel.url
+                }
+                guard let url else { return }
+                do {
+                    try exportCrashReport(for: instance, to: url, with: fileName, options: options, output: output)
+                    log("导出崩溃报告成功")
+                } catch {
+                    err("导出崩溃报告失败：\(error.localizedDescription)")
+                    hint("导出崩溃报告失败：\(error.localizedDescription)", type: .critical)
+                }
+            }
         }
+    }
+    
+    private func exportCrashReport(for instance: MinecraftInstance, to destination: URL, with fileName: String, options: LaunchOptions, output: String) throws {
+        let reportURL: URL = URLConstants.temperatureURL.appending(path: fileName)
+        try FileManager.default.createDirectory(at: reportURL, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: reportURL) }
+        
+        let launcherInfo: LauncherInfo = .init(
+            launcher: "PCL.Mac.Refactor",
+            launcherVersion: Metadata.appVersion,
+            minecraftVersion: instance.version.id,
+            javaVersion: options.javaRuntime.version,
+            javaArchitecture: options.javaRuntime.architecture.rawValue,
+            instanceName: instance.name
+        )
+        
+        try JSONEncoder.shared.encode(launcherInfo).write(to: reportURL.appending(path: "launcher-info.json"))
+        
+        try output.data(using: .utf8)!.write(to: reportURL.appending(path: "game-output.log"))
+        
+        if let range: Range<String.Index> = output.range(of: "\n#@!@# Game crashed! Crash report saved to: #@!@# ") {
+            let crashReportURL: URL = .init(fileURLWithPath: String(output[range.upperBound...].dropLast()))
+            if FileManager.default.fileExists(atPath: crashReportURL.path) {
+                try FileManager.default.copyItem(at: crashReportURL, to: reportURL.appending(path: "crash-report.txt"))
+            } else {
+                warn("日志中提供的崩溃报告路径对应的文件不存在：\(crashReportURL.path)")
+            }
+        }
+        try FileManager.default.zipItem(at: reportURL, to: destination, shouldKeepParent: false)
     }
     
     private func subscribeToTask() {
@@ -126,4 +182,13 @@ class MinecraftLaunchManager: ObservableObject {
     }
     
     private init() {}
+    
+    private struct LauncherInfo: Codable {
+        public let launcher: String
+        public let launcherVersion: String
+        public let minecraftVersion: String
+        public let javaVersion: String
+        public let javaArchitecture: String
+        public let instanceName: String
+    }
 }
