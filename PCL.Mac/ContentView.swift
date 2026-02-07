@@ -176,7 +176,7 @@ private struct ExtraButtonsOverlay: View {
                     Image(imageName)
                         .resizable()
                         .scaledToFit()
-                        .padding(12)
+                        .padding(10)
                         .foregroundStyle(Color.color8)
                 }
                 .gesture(

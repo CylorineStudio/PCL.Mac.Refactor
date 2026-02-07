@@ -45,6 +45,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             try SwiftScaffolding.Logger.enableLogging(url: URLConstants.logsDirectoryURL.appending(path: "swift-scaffolding.log"))
         }
         _ = LauncherConfig.shared
+        executeTask("清理临时文件") {
+            for url in try FileManager.default.contentsOfDirectory(at: URLConstants.tempURL, includingPropertiesForKeys: nil) {
+                try FileManager.default.removeItem(at: url)
+            }
+        }
         executeTask("加载版本缓存") {
             try VersionCache.load()
         }

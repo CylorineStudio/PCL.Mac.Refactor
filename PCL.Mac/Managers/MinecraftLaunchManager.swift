@@ -50,6 +50,8 @@ class MinecraftLaunchManager: ObservableObject {
                 if ![0, 9, 15, 128 + 9, 128 + 15].contains(process.terminationStatus) {
                     log("游戏非正常退出")
                     self?.onGameCrash(instance: instance, options: launcher.options, logURL: launcher.logURL)
+                } else {
+                    try? FileManager.default.removeItem(at: launcher.logURL)
                 }
                 DispatchQueue.main.async {
                     self?.cancel()
