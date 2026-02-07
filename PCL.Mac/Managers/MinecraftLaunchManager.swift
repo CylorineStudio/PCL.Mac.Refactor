@@ -48,7 +48,7 @@ class MinecraftLaunchManager: ObservableObject {
                 log("游戏进程已退出，退出代码：\(process.terminationStatus)")
                 if ![0, 9, 15, 128 + 9, 128 + 15].contains(process.terminationStatus) {
                     log("游戏非正常退出")
-                    self?.onGameCrash(instance: instance, options: launcher.options, output: launcher.output)
+                    self?.onGameCrash(instance: instance, options: launcher.options, logURL: launcher.logURL)
                 }
                 DispatchQueue.main.async {
                     self?.gameProcess = nil
@@ -86,7 +86,7 @@ class MinecraftLaunchManager: ObservableObject {
         }
     }
     
-    private func onGameCrash(instance: MinecraftInstance, options: LaunchOptions, output: String) {
+    private func onGameCrash(instance: MinecraftInstance, options: LaunchOptions, logURL: URL) {
         Task {
             hint("检测到 Minecraft 发生崩溃，崩溃分析已开始……", type: .critical)
             if await MessageBoxManager.shared.showText(
@@ -99,18 +99,18 @@ class MinecraftLaunchManager: ObservableObject {
                 let dateFormatter: DateFormatter = .init()
                 dateFormatter.dateFormat = "yyyy_MM_dd_HH_mm_SS"
                 let fileName: String = "崩溃报告-\(dateFormatter.string(from: .now)).zip"
-                let url: URL? = await MainActor.run {
+                let url: URL? = await Task { @MainActor in
                     let panel = NSSavePanel()
                     panel.title = "选择报告位置"
                     panel.allowedContentTypes = [.zip]
                     panel.canCreateDirectories = true
                     panel.nameFieldStringValue = fileName
-                    panel.begin { _ in }
+                    await panel.beginSheetModal(for: NSApplication.shared.windows.first!)
                     return panel.url
-                }
+                }.result.get()
                 guard let url else { return }
                 do {
-                    try exportCrashReport(for: instance, to: url, with: fileName, options: options, output: output)
+                    try exportCrashReport(for: instance, to: url, with: fileName, options: options, logURL: logURL)
                     log("导出崩溃报告成功")
                 } catch {
                     err("导出崩溃报告失败：\(error.localizedDescription)")
@@ -120,8 +120,8 @@ class MinecraftLaunchManager: ObservableObject {
         }
     }
     
-    private func exportCrashReport(for instance: MinecraftInstance, to destination: URL, with fileName: String, options: LaunchOptions, output: String) throws {
-        let reportURL: URL = URLConstants.temperatureURL.appending(path: fileName)
+    private func exportCrashReport(for instance: MinecraftInstance, to destination: URL, with fileName: String, options: LaunchOptions, logURL: URL) throws {
+        let reportURL: URL = URLConstants.tempURL.appending(path: fileName)
         try FileManager.default.createDirectory(at: reportURL, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: reportURL) }
         
@@ -136,14 +136,21 @@ class MinecraftLaunchManager: ObservableObject {
         
         try JSONEncoder.shared.encode(launcherInfo).write(to: reportURL.appending(path: "launcher-info.json"))
         
-        try output.data(using: .utf8)!.write(to: reportURL.appending(path: "game-output.log"))
+        if FileManager.default.fileExists(atPath: logURL.path) {
+            try FileManager.default.moveItem(at: logURL, to: reportURL.appending(path: "game-log.log"))
+        }
         
-        if let range: Range<String.Index> = output.range(of: "\n#@!@# Game crashed! Crash report saved to: #@!@# ") {
-            let crashReportURL: URL = .init(fileURLWithPath: String(output[range.upperBound...].dropLast()))
-            if FileManager.default.fileExists(atPath: crashReportURL.path) {
-                try FileManager.default.copyItem(at: crashReportURL, to: reportURL.appending(path: "crash-report.txt"))
-            } else {
-                warn("日志中提供的崩溃报告路径对应的文件不存在：\(crashReportURL.path)")
+        let crashReportDirectory: URL = instance.runningDirectory.appending(path: "crash-reports")
+        if FileManager.default.fileExists(atPath: crashReportDirectory.path) {
+            let crashReports: [URL] = try FileManager.default.contentsOfDirectory(at: crashReportDirectory, includingPropertiesForKeys: [.contentModificationDateKey])
+            if let latestCrashReport: URL = crashReports
+                .filter({ (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) ?? false })
+                .max(by: { lhs, rhs in
+                    let lDate: Date? = (try? lhs.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+                    let rDate: Date? = (try? rhs.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+                    return (lDate ?? .distantPast) < (rDate ?? .distantPast)
+                }) {
+                try FileManager.default.copyItem(at: latestCrashReport, to: reportURL.appending(path: "crash-report.txt"))
             }
         }
         try FileManager.default.zipItem(at: reportURL, to: destination, shouldKeepParent: false)

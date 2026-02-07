@@ -9,8 +9,8 @@ import Foundation
 
 public class MinecraftLauncher {
     private static let gameLogQueue: DispatchQueue = .init(label: "PCL.Mac.GameLog")
-    public private(set) var output: String = ""
     public let options: LaunchOptions
+    public let logURL: URL
     private let manifest: ClientManifest
     private let runningDirectory: URL
     private let librariesURL: URL
@@ -21,6 +21,7 @@ public class MinecraftLauncher {
         self.runningDirectory = options.runningDirectory
         self.librariesURL = options.repository.librariesURL
         self.options = options
+        self.logURL = URLConstants.tempURL.appending(path: "game-log-\(UUID().uuidString.lowercased()).log")
         self.values = [
             "natives_directory": runningDirectory.appending(path: "natives").path,
             "launcher_name": "PCL.Mac",
@@ -70,12 +71,20 @@ public class MinecraftLauncher {
         log("正在使用以下参数启动 Minecraft：\(arguments)")
         try process.run()
         Self.gameLogQueue.async {
+            FileManager.default.createFile(atPath: self.logURL.path, contents: nil)
+            let handle: FileHandle?
+            do {
+                handle = try .init(forWritingTo: self.logURL)
+            } catch {
+                err("开启日志 FileHandle 失败：\(error.localizedDescription)")
+                handle = nil
+            }
+            defer { try? handle?.close() }
+            
             while process.isRunning {
                 let data: Data = pipe.fileHandleForReading.availableData
                 if data.isEmpty { break }
-                if let string: String = .init(data: data, encoding: .utf8) {
-                    self.output += string
-                }
+                try? handle?.write(contentsOf: data)
             }
         }
         return process

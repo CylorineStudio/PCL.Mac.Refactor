@@ -15,7 +15,7 @@ public struct URLConstants {
     public static let logsDirectoryURL: URL = applicationSupportURL.appending(path: "Logs")
     public static let configURL: URL = applicationSupportURL.appending(path: "config.json")
     public static let cacheURL: URL = applicationSupportURL.appending(path: "Caches")
-    public static let temperatureURL: URL = applicationSupportURL.appending(path: "Temp")
+    public static let tempURL: URL = applicationSupportURL.appending(path: "Temp")
     public static let authlibInjectorURL: URL = applicationSupportURL.appending(path: "authlib-injector.jar")
     public static let easyTierURL: URL = applicationSupportURL.appending(path: "EasyTier")
     
@@ -24,7 +24,7 @@ public struct URLConstants {
         try? fileManager.createDirectory(at: applicationSupportURL, withIntermediateDirectories: true)
         try? fileManager.createDirectory(at: logsDirectoryURL, withIntermediateDirectories: true)
         try? fileManager.createDirectory(at: cacheURL, withIntermediateDirectories: true)
-        try? fileManager.createDirectory(at: temperatureURL, withIntermediateDirectories: true)
+        try? fileManager.createDirectory(at: tempURL, withIntermediateDirectories: true)
         try? fileManager.createDirectory(at: easyTierURL, withIntermediateDirectories: true)
     }
 }
