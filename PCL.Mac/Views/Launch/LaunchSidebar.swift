@@ -54,6 +54,10 @@ struct LaunchSidebar: Sidebar {
                     if let instance = instanceViewModel.currentInstance,
                        let repository = instanceViewModel.currentRepository {
                         MyButton("启动游戏", subLabel: instance.name, type: .highlight) {
+                            guard !launchManager.isRunning && !launchManager.isLaunching else {
+                                hint("已有一个游戏实例正在运行！", type: .critical)
+                                return
+                            }
                             if let account: Account = accountViewModel.currentAccount {
                                 instanceViewModel.launch(instance, account, in: repository)
                             } else {
