@@ -18,10 +18,10 @@ public class TaskManager: ObservableObject {
     /// - Parameters:
     ///   - task: 待执行的任务。
     ///   - display: 是否显示与弹出 hint。
-    ///   - completon: 任务完成回调。
+    ///   - completion: 任务完成回调。
     /// - Returns: 任务的 `id`。
     @discardableResult
-    public func execute<Model>(task: MyTask<Model>, display: Bool = true, completon: ((Error?) -> Void)? = nil) -> UUID {
+    public func execute<Model>(task: MyTask<Model>, display: Bool = true, completion: ((Error?) -> Void)? = nil) -> UUID {
         let id: UUID = task.id
         tasks.append(.init(task, display: display))
         let executorTask = Task {
@@ -41,7 +41,7 @@ public class TaskManager: ObservableObject {
                         hint("任务 \(task.name) 执行完成", type: .finish)
                     }
                 }
-                completon?(error)
+                completion?(error)
                 self.clean(for: id)
             }
         }

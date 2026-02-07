@@ -136,7 +136,7 @@ public class MinecraftInstance {
             VersionCache.add(version: version.id, for: manifestURL)
         }
         
-        let configURL: URL = manifestURL.appending(path: configFileName)
+        let configURL: URL = runningDirectory.appending(path: configFileName)
         var config: Config? = nil
         if FileManager.default.fileExists(atPath: configURL.path) {
             do {
@@ -178,7 +178,7 @@ public class MinecraftInstance {
         public required init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             self.jvmHeapSize = try container.decode(UInt64.self, forKey: .jvmHeapSize)
-            self.javaURL = try container.decode(URL.self, forKey: .javaURL)
+            self.javaURL = try container.decodeIfPresent(URL.self, forKey: .javaURL)
         }
         
         public func encode(to encoder: any Encoder) throws {

@@ -51,9 +51,9 @@ public class MinecraftLauncher {
         process.currentDirectoryURL = runningDirectory
         
         var arguments: [String] = []
-        arguments.append(contentsOf: manifest.jvmArguments.flatMap { $0.rules.allSatisfy { $0.test() } ? $0.value : [] })
+        arguments.append(contentsOf: manifest.jvmArguments.flatMap { $0.rules.allSatisfy { $0.test(with: options) } ? $0.value : [] })
         arguments.append(manifest.mainClass)
-        arguments.append(contentsOf: manifest.gameArguments.flatMap { $0.rules.allSatisfy { $0.test() } ? $0.value : [] })
+        arguments.append(contentsOf: manifest.gameArguments.flatMap { $0.rules.allSatisfy { $0.test(with: options) } ? $0.value : [] })
         arguments = arguments.map(replaceWithValue(_:))
         process.arguments = arguments
         
