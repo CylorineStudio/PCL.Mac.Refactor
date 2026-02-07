@@ -20,6 +20,7 @@ struct MessageBoxView: View {
         ZStack {
             RoundedRectangle(cornerRadius: 7)
                 .fill(.white)
+                .shadow(color: .color1.opacity(0.8), radius: 20)
             VStack(alignment: .leading, spacing: 0) {
                 MyText(model.title, size: 23, color: foregroundColor)
                     .padding(.leading, 7)
@@ -30,7 +31,7 @@ struct MessageBoxView: View {
                     .padding(.bottom, 13)
                 content
                     .frame(minHeight: 1)
-                    .padding(.leading, 7)
+                    .padding(.horizontal, 7)
                     .padding(.bottom, 17)
                 HStack(spacing: 12) {
                     Spacer(minLength: 0)
@@ -67,9 +68,10 @@ struct MessageBoxView: View {
                 MyText(text)
             case .list(let items):
                 MyList(items: items, onSelect: { self.selectedItemIndex = $0 })
-            case .input(_, let placeholder):
-                // TODO: MyTextField
-                TextField(placeholder ?? "", text: $inputText)
+            case .input(let initial, let placeholder):
+                MyTextField(initial: initial ?? "", placeholder: placeholder ?? "", immediately: true) { newValue in
+                    inputText = newValue
+                }
             }
         }
     }

@@ -12,20 +12,20 @@ struct MyTextField: View {
     @State private var hovered: Bool = false
     @FocusState private var focused: Bool
     private let placeholder: String
-    private let type: ContentType
+    private let immediately: Bool
     private let onSubmit: ((String) -> Void)?
     
-    init(initial: String = "", placeholder: String = "", onSubmit: ((String) -> Void)? = nil) {
+    init(initial: String = "", placeholder: String = "", immediately: Bool = false, onSubmit: ((String) -> Void)? = nil) {
         self.text = initial
         self.placeholder = placeholder
-        self.type = .any
+        self.immediately = immediately
         self.onSubmit = onSubmit
     }
     
     init<T: BinaryInteger>(initial: T? = nil, placeholder: String = "", parse: @escaping (String) -> T?, onSubmit: @escaping (T) -> Void) {
         self.text = initial.map(String.init) ?? ""
         self.placeholder = placeholder
-        self.type = .integer
+        self.immediately = false
         self.onSubmit = { text in
             guard let value: T = parse(text) else {
                 hint("数字格式不正确！", type: .critical)
@@ -51,13 +51,18 @@ struct MyTextField: View {
                     onSubmit?(text)
                     focused = false
                 }
+                .onChange(of: text) { newValue in
+                    if immediately { onSubmit?(newValue) }
+                }
             RoundedRectangle(cornerRadius: 3)
-                .stroke(foregroundColor, lineWidth: 1.5)
-                .padding(.top, 1.5)
+                .stroke(foregroundColor, lineWidth: 1)
+                .padding(.top, 1)
+                .allowsHitTesting(false)
             if text.isEmpty {
                 Text(placeholder)
                     .foregroundStyle(Color.colorGray3)
                     .padding(4)
+                    .allowsHitTesting(false)
             }
         }
         .onHover { hovered = $0 }
@@ -79,10 +84,6 @@ struct MyTextField: View {
     private var backgroundColor: Color {
         if focused || hovered { return .color7 }
         return .white.opacity(0.5)
-    }
-    
-    enum ContentType {
-        case any, integer
     }
 }
 
