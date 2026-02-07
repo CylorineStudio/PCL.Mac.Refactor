@@ -22,6 +22,12 @@ public class MinecraftLauncher {
         self.librariesURL = options.repository.librariesURL
         self.options = options
         self.values = [
+            "natives_directory": runningDirectory.appending(path: "natives").path,
+            "launcher_name": "PCL.Mac",
+            "launcher_version": Metadata.appVersion,
+            "classpath_separator": ":",
+            "library_directory": librariesURL.path,
+            
             "auth_player_name": options.profile.name,
             "version_name": manifest.id,
             "game_directory": runningDirectory.path,
