@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Core
 
 struct LaunchPage: View {
     @StateObject private var loadingModel: MyLoadingViewModel = .init(text: "加载中")
@@ -77,14 +78,32 @@ struct LaunchPage: View {
                     
                     MyButton("错误弹窗", type: .red) {
                         Task {
-                            await MessageBoxManager.shared.showText(
-                                title: "Minecraft 出现错误",
-                                content: "如果要寻求帮助，请把错误报告文件发给对方，而不是发送这个窗口的照片或者截图。",
-                                level: .error,
+                            _ = await MessageBoxManager.shared.showText(
+                                title: "Minecraft 发生崩溃",
+                                content: "你的游戏发生了一些问题，无法继续运行。\n很抱歉，PCL.Mac 暂时没有崩溃分析功能……\n\n若要寻求帮助，请点击“导出崩溃报告”并将导出的文件发给他人，而不是发送关于此页面的图片！！！",
+                                level: .error
                             )
                         }
                     }
                     .frame(width: 80)
+                    
+                    MyButton("[临时] Java 安装弹窗") {
+                        Task {
+                            if await MessageBoxManager.shared.showText(
+                                title: "没有可用的 Java",
+                                content: "这个实例需要 Java 21 才能启动，但你的电脑上没有安装。\nPCL.Mac.Refactor 暂时没有 Java 安装功能，但是可以帮你打开下载网页。",
+                                level: .error,
+                                .init(id: 0, label: "取消", type: .normal),
+                                .init(id: 1, label: "打开下载网页", type: .normal)
+                            ) == 1 {
+                                let version: String = "java-21-lts"
+                                let arch: String = Architecture.systemArchitecture() == .arm64 ? "arm-64-bit" : "x86-64-bit"
+                                let url: String = "https://www.azul.com/downloads/?version=\(version)&os=macos&architecture=\(arch)&package=jdk#zulu"
+                                NSWorkspace.shared.open(URL(string: url)!)
+                            }
+                        }
+                    }
+                    .frame(width: 160)
                 }
                 .frame(height: 40)
             }

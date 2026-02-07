@@ -15,13 +15,14 @@ public class ClientManifest: Decodable {
     public let assetIndex: AssetIndex
     public let downloads: Downloads
     public let id: String
+    public let javaVersion: JavaVersion
     public let libraries: [Library]
     public let logging: Logging
     public let mainClass: String
     public let type: String
     
     private enum CodingKeys: String, CodingKey {
-        case arguments, assetIndex, downloads, id, libraries, logging, mainClass, type
+        case arguments, assetIndex, downloads, id, javaVersion, libraries, logging, mainClass, type
     }
     
     private enum ArgumentsCodingKeys: String, CodingKey {
@@ -36,6 +37,7 @@ public class ClientManifest: Decodable {
         self.assetIndex = try container.decode(AssetIndex.self, forKey: .assetIndex)
         self.downloads = try container.decode(Downloads.self, forKey: .downloads)
         self.id = try container.decode(String.self, forKey: .id)
+        self.javaVersion = try container.decode(JavaVersion.self, forKey: .javaVersion)
         self.libraries = try container.decode([Library].self, forKey: .libraries)
         self.logging = try container.decode(Logging.self, forKey: .logging)
         self.mainClass = try container.decode(String.self, forKey: .mainClass)
@@ -44,7 +46,7 @@ public class ClientManifest: Decodable {
     
     public class Argument: Decodable {
         public let value: [String]
-        public let rules: [Rule]
+        public let rules: [ArgumentRule]
         
         private enum RuledCodingKeys: String, CodingKey {
             case value, rules
@@ -62,7 +64,7 @@ public class ClientManifest: Decodable {
                 } else {
                     self.value = [try container.decode(String.self, forKey: .value)]
                 }
-                self.rules = try container.decode([Rule].self, forKey: .rules)
+                self.rules = try container.decode([ArgumentRule].self, forKey: .rules)
             }
         }
     }
@@ -91,9 +93,9 @@ public class ClientManifest: Decodable {
     
     public class Downloads: Decodable {
         public let client: Download
-        public let clientMappings: Download
+        public let clientMappings: Download?
         public let server: Download
-        public let serverMappings: Download
+        public let serverMappings: Download?
         
         private enum CodingKeys: String, CodingKey {
             case client, server
@@ -176,10 +178,9 @@ public class ClientManifest: Decodable {
         public let allow: Bool
         public let osName: String?
         public let osArch: Architecture?
-        public let hasFeaturesLimit: Bool
         
         private enum CodingKeys: String, CodingKey {
-            case action, features, os
+            case action, os
         }
         
         public required init(from decoder: any Decoder) throws {
@@ -187,18 +188,56 @@ public class ClientManifest: Decodable {
             self.allow = try container.decode(String.self, forKey: .action) == "allow"
             let os: [String: String] = try container.decodeIfPresent([String: String].self, forKey: .os) ?? [:]
             self.osName = os["name"]
-            self.osArch = os["arch"].flatMap(Architecture.init(rawValue:))
-            self.hasFeaturesLimit = container.contains(.features)
+            self.osArch = os["arch"].map(Architecture.init(rawValue:))
         }
         
-        /// 判断该 `Rule` 是否通过。
+        /// 判断该规则是否通过。
         /// - Returns: 一个布尔值，表示是否通过。
         public func test() -> Bool {
             if let osName, osName != "osx" { return !allow }
-            if let osArch, osArch != .arm64 { return !allow } // TODO
-            if hasFeaturesLimit { return !allow } // TODO
+            if let osArch, osArch != .systemArchitecture() { return !allow }
             return allow
         }
+    }
+    
+    public class ArgumentRule: Rule {
+        public let features: [String: Bool]
+        
+        private enum CodingKeys: String, CodingKey {
+            case features
+        }
+        
+        public required init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.features = try container.decodeIfPresent([String: Bool].self, forKey: .features) ?? [:]
+            try super.init(from: decoder)
+        }
+        
+        /// 判断该规则是否通过。
+        /// - Parameter options: 生成参数时使用的 `LaunchOptions`。
+        /// - Returns: 一个布尔值，表示是否通过。
+        public func test(with options: LaunchOptions) -> Bool {
+            for (name, value) in features {
+                if name == "is_demo_user" && value != options.demo {
+                    return false
+                }
+                if [
+                    "has_custom_resolution",
+                    "has_quick_plays_support",
+                    "is_quick_play_singleplayer",
+                    "is_quick_play_multiplayer",
+                    "is_quick_play_realms"
+                ].contains(name) && value { // not implemented
+                    return false
+                }
+            }
+            return true
+        }
+    }
+    
+    public class JavaVersion: Decodable {
+        public let component: String
+        public let majorVersion: Int
     }
     
     /// 获取所有可用的普通依赖库。

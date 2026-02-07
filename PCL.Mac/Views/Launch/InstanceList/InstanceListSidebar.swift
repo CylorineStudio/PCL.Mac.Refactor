@@ -36,7 +36,7 @@ struct InstanceListSidebar: Sidebar {
                     try instanceViewModel.requestAddRepository()
                 }
                 ImportButton("IconImportModpack", "导入整合包（暂未完成）") {
-                    
+                    NSWorkspace.shared.open(URL(string: "https://www.bilibili.com/video/BV1GJ411x7h7")!)
                 }
             }
             Spacer()

@@ -21,37 +21,72 @@ public enum JavaSearcher {
         let bundles: [URL] = try findJavaBundles()
         for bundle in bundles {
             let homeDirectory: URL = bundle.appending(path: "Contents/Home")
-            guard let releaseData: Data = FileManager.default.contents(atPath: homeDirectory.appending(path: "release").path),
-                  let releaseContent = String(data: releaseData, encoding: .utf8) else { continue }
-            // 解析 release 文件
-            let release: [String: String] = parseProperties(releaseContent)
-            guard let javaVersion = release["JAVA_VERSION"],
-                  let implementor = release["IMPLEMENTOR"] else {
-                continue
+            do {
+                let runtime: JavaRuntime = try load(from: homeDirectory)
+                runtimes.append(runtime)
+            } catch {
+                err("加载 Java 失败：\(error.localizedDescription)")
             }
-            // 判断 Java 类型并获取可执行文件路径
-            var type: JavaRuntime.JavaType = .jdk
-            var executableURL: URL!
-            if FileManager.default.fileExists(atPath: homeDirectory.appending(path: "jre/bin/java").path) {
-                type = .jre
-                executableURL = homeDirectory.appending(path: "jre/bin/java")
-            } else if FileManager.default.fileExists(atPath: homeDirectory.appending(path: "bin/java").path) {
-                executableURL = homeDirectory.appending(path: "bin/java")
-            } else {
-                continue
-            }
-            runtimes.append(
-                JavaRuntime(
-                    version: javaVersion,
-                    versionNumber: parseVersionNumber(javaVersion),
-                    type: type,
-                    architecture: .architecture(of: executableURL),
-                    implementor: implementor,
-                    executableURL: executableURL
-                )
-            )
         }
         return runtimes
+    }
+    
+    /// 加载磁盘上的 `JavaRuntime`。
+    ///
+    /// - Parameter url: 运行时的 `URL`，包含 `Home` 目录即可。
+    public static func load(from url: URL) throws -> JavaRuntime {
+        var url: URL = url
+        while url.path != "/" {
+            if url.lastPathComponent == "Home" && url.deletingLastPathComponent().lastPathComponent == "Contents" {
+                break
+            }
+            url = url.deletingLastPathComponent()
+        }
+        if url.path == "/" {
+            throw JavaError.invalidURL
+        }
+        let homeDirectory: URL = url
+        // 解析 release 文件
+        guard let releaseData: Data = FileManager.default.contents(atPath: homeDirectory.appending(path: "release").path),
+              let releaseContent: String = .init(data: releaseData, encoding: .utf8) else {
+            throw JavaError.failedToParseReleaseFile
+        }
+        let release: [String: String] = parseProperties(releaseContent)
+        guard let javaVersion = release["JAVA_VERSION"],
+              let implementor = release["IMPLEMENTOR"] else {
+            throw JavaError.failedToParseReleaseFile
+        }
+        guard let versionMajor: Int = parseVersionNumber(javaVersion) else {
+            throw JavaError.failedToParseVersionNumber(version: javaVersion)
+        }
+        // Java 类型判断
+        var type: JavaRuntime.JavaType?
+        var executableURL: URL?
+        var architecture: Architecture?
+        for (javaType, path) in [
+            (JavaRuntime.JavaType.jdk, "bin/java"),
+            (JavaRuntime.JavaType.jre, "jre/bin/java")
+        ] {
+            let url: URL = homeDirectory.appending(path: path)
+            let arch: Architecture = .architecture(of: url)
+            if arch != .unknown {
+                type = javaType
+                executableURL = url
+                architecture = arch
+                break
+            }
+        }
+        guard let type, let executableURL, let architecture else {
+            throw JavaError.missingExecutableFile
+        }
+        return JavaRuntime(
+            version: javaVersion,
+            versionNumber: versionMajor,
+            type: type,
+            architecture: architecture,
+            implementor: implementor,
+            executableURL: executableURL
+        )
     }
     
     private static func parseProperties(_ fileContent: String) -> [String: String] {
@@ -62,20 +97,22 @@ public enum JavaSearcher {
             let parts: [String] = line.components(separatedBy: "=")
             guard parts.count >= 2 else { continue }
             let key: String = parts[0].trimmingCharacters(in: .whitespaces)
-            let value: String = parts[1...].joined(separator: "=").trimmingCharacters(in: .whitespaces)
+            let value: String = parts[1...].joined(separator: "=").trimmingCharacters(in: .whitespaces.union(["\""]))
             result[key] = value
         }
         return result
     }
     
-    private static func parseVersionNumber(_ version: String) -> Int {
-        let components: [Substring] = version.split(separator: ".")
-        if let first: Substring = components.first, first == "1", components.count > 1 {
-            return Int(components[1]) ?? 0
-        } else if let first: Substring = components.first {
-            return Int(first) ?? 0
+    private static func parseVersionNumber(_ version: String) -> Int? {
+        let components: [String] = version.split(separator: ".").map(String.init)
+        if components.count > 1 {
+            if components[0] == "1" {
+                return Int(components[1])
+            } else {
+                return Int(components[0])
+            }
         }
-        return 0
+        return nil
     }
     
     private static func findJavaBundles() throws -> [URL] {

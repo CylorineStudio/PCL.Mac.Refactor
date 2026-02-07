@@ -25,6 +25,8 @@ import Combine
 /// try await task.start()
 /// ```
 public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
+    @Published public var currentTaskOrdinal: Int?
+    @Published public var progress: Double = 0
     public let id: UUID = .init()
     public let name: String
     public let subTasks: [SubTask]
@@ -52,6 +54,7 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
     }
     
     /// 开始按顺序执行任务。
+    ///
     /// 执行时，会按 `ordinal` 将 `subTasks` 分组，`ordinal` 越小的越先执行。
     public func start() async throws {
         guard !subTasks.isEmpty else {
@@ -63,9 +66,32 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
         }
         let maxOrdinal: Int = subTasks.map(\.ordinal).max()!
         let subTaskLists: [[SubTask]] = subTasks.reduce(into: Array(repeating: [], count: maxOrdinal + 1)) { $0[$1.ordinal].append($1) }
+        
+        let progressCalcTask: Task<Void, Error> = Task {
+            let subTasks: [SubTask] = subTasks.filter(\.display)
+            while !Task.isCancelled {
+                try await Task.sleep(seconds: 0.1)
+                let progress: Double = subTasks.reduce(0) { $0 + $1.progress } / Double(subTasks.count)
+                await MainActor.run {
+                    self.progress = progress
+                }
+            }
+        }
+        defer { progressCalcTask.cancel() }
+        
         log("正在执行任务 \(name)")
         for subTaskList in subTaskLists {
-            try await execute(taskList: subTaskList)
+            if let subTask: SubTask = subTaskList.first {
+                await MainActor.run {
+                    self.currentTaskOrdinal = subTask.ordinal
+                }
+            }
+            do {
+                try await execute(taskList: subTaskList)
+            } catch let error as CancellationError {
+                log("任务 \(name) 被中断")
+                throw error
+            }
         }
         log("任务 \(name) 执行完成")
     }
@@ -74,6 +100,7 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
         try await withThrowingTaskGroup(of: Void.self) { group in
             for task in taskList {
                 group.addTask {
+                    try Task.checkCancellation()
                     try await task.start(self.model)
                 }
             }
@@ -94,7 +121,8 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
         /// - Parameters:
         ///   - ordinal: 该子任务在 `MyTask` 中的执行顺序，数值越小则越先执行，不能小于 0。
         ///   - name: 子任务名。
-        ///   - start: 子任务的开始函数。
+        ///   - display: 是否在任务列表中显示。
+        ///   - execute: 子任务的开始函数。
         public init(
             _ ordinal: Int,
             _ name: String,
@@ -112,6 +140,8 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
             await setState(.executing)
             do {
                 try await execute(self, model)
+            } catch let error as CancellationError {
+                throw error
             } catch {
                 err("子任务 \(name) 执行失败：\(error.localizedDescription)")
                 await setState(.failed)
@@ -120,6 +150,12 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
             log("子任务 \(name) 执行完成")
             await setState(.finished)
             await setProgressAsync(1)
+        }
+        
+        /// 使 `MyTask` 停止执行所有待执行任务。
+        /// - Throws: 该方法必定抛出 `CancellationError`。
+        public func cancel() throws {
+            throw CancellationError()
         }
         
         @MainActor

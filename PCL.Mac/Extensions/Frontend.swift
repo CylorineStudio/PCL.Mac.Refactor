@@ -40,3 +40,12 @@ extension SubTaskState {
         }
     }
 }
+
+extension AccountType {
+    public var localized: String {
+        switch self {
+        case .offline: "离线账号"
+        case .microsoft: "正版账号"
+        }
+    }
+}

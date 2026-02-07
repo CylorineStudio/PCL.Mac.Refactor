@@ -135,6 +135,7 @@ class AccountViewModel: ObservableObject {
                 log("添加正版账号成功")
                 hint("账号添加成功！", type: .finish)
                 await MainActor.run {
+                    LauncherConfig.shared.hasMicrosoftAccount = true
                     addAccount(account)
                 }
             } catch {

@@ -20,7 +20,6 @@ public enum LaunchError: Error {
     case missingManifest
     case missingAccount
     case missingRepository
-    case invalidMemory
 }
 
 public enum URLError: Error {
@@ -50,6 +49,26 @@ public enum MinecraftError: LocalizedError {
 
 public enum UUIDError: Error, Equatable {
     case invalidUUIDFormat
+}
+
+public enum JavaError: LocalizedError {
+    case invalidURL
+    case failedToParseReleaseFile
+    case missingExecutableFile
+    case failedToParseVersionNumber(version: String)
+    
+    public var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            "无效的 Java URL。"
+        case .failedToParseReleaseFile:
+            "解析 release 文件失败。"
+        case .missingExecutableFile:
+            "未找到可执行文件。"
+        case .failedToParseVersionNumber(let version):
+            "解析版本号 \(version) 失败。"
+        }
+    }
 }
 
 public struct SimpleError: LocalizedError {

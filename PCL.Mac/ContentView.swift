@@ -31,6 +31,7 @@ struct ContentView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay { ExtraButtonsOverlay() }
         .overlay { MessageBoxOverlay() }
         .overlay {
             VStack(alignment: .leading, spacing: 16) {
@@ -133,6 +134,65 @@ private struct MessageBoxOverlay: View {
                     rotation = 6
                 }
             }
+        }
+    }
+}
+
+private struct ExtraButtonsOverlay: View {
+    @ObservedObject private var launchManager: MinecraftLaunchManager = .shared
+    
+    var body: some View {
+        VStack {
+            ExtraButton("IconPower", launchManager.isRunning) {
+                launchManager.stop()
+                if launchManager.isLaunching {
+                    hint("已取消启动！", type: .finish)
+                } else {
+                    hint("已关闭游戏！", type: .finish)
+                }
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+    }
+    
+    private struct ExtraButton: View {
+        @State private var hovered: Bool = false
+        @State private var pressed: Bool = false
+        private let imageName: String
+        private let show: Bool
+        private let onClick: () -> Void
+        
+        init(_ imageName: String, _ show: Bool, onClick: @escaping () -> Void) {
+            self.imageName = imageName
+            self.show = show
+            self.onClick = onClick
+        }
+        
+        var body: some View {
+            Circle()
+                .fill(hovered ? Color.color4 : .color3)
+                .frame(width: 40)
+                .overlay {
+                    Image(imageName)
+                        .resizable()
+                        .scaledToFit()
+                        .padding(12)
+                        .foregroundStyle(Color.color8)
+                }
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { _ in pressed = true }
+                        .onEnded { _ in
+                            pressed = false
+                            onClick()
+                        }
+                )
+                .onHover { hovered = $0 }
+                .scaleEffect(show ? (pressed ? 0.85 : 1) : 0, anchor: .center)
+                .animation(.linear(duration: 0.15), value: hovered)
+                .animation(.easeOut(duration: 0.15), value: pressed)
+                .animation(.spring(response: 0.4), value: show)
         }
     }
 }

@@ -32,16 +32,54 @@ public enum MinecraftInstallTask {
         )
         return .init(
             name: "\(name) 安装", model: model,
-            .init(0, "下载客户端 JSON 文件", downloadClientManifest(task:model:)),
-            .init(1, "下载资源索引文件", downloadAssetIndex(task:model:)),
-            .init(2, "下载客户端本体", downloadClient(task:model:)),
-            .init(2, "下载散列资源文件", downloadAssets(task:model:)),
-            .init(2, "下载依赖库文件", downloadLibraries(task:model:)),
+            .init(0, "下载客户端 JSON 文件") { task, model in
+                guard let versionManifest = CoreState.versionManifest else {
+                    err("CoreState.versionManifest 为空")
+                    throw TaskError.unknownError
+                }
+                let manifest: ClientManifest = try await downloadClientManifest(
+                    versionManifest: versionManifest,
+                    versionId: version.id,
+                    runningDirectory: model.runningDirectory,
+                    progressHandler: task.setProgress(_:)
+                )
+                model.manifest = manifest
+            },
+            .init(1, "下载资源索引文件") { task, model in
+                let assetIndex: AssetIndex = try await downloadAssetIndex(
+                    assetIndex: model.manifest.assetIndex,
+                    repository: model.repository,
+                    progressHandler: task.setProgress(_:)
+                )
+                model.assetIndex = assetIndex
+            },
+            .init(2, "下载客户端本体") { task, model in
+                try await downloadClient(
+                    clientDownload: model.manifest.downloads.client,
+                    runningDirectory: model.runningDirectory,
+                    progressHandler: task.setProgress(_:)
+                )
+            },
+            .init(2, "下载散列资源文件") { task, model in
+                try await downloadAssets(
+                    assetIndex: model.assetIndex,
+                    repository: model.repository,
+                    progressHandler: task.setProgress(_:)
+                )
+            },
+            .init(2, "下载依赖库文件") { task, model in
+                try await downloadLibraries(
+                    manifest: model.manifest,
+                    repository: model.repository,
+                    progressHandler: task.setProgress(_:)
+                )
+            },
             .init(3, "__completion", display: false) { _, _ in
                 let instance: MinecraftInstance = .init(
                     runningDirectory: repository.versionsURL.appending(path: name),
                     version: version,
-                    manifest: model.manifest
+                    manifest: model.manifest,
+                    config: .init()
                 )
                 repository.instances?.append(instance)
                 await MainActor.run {
@@ -51,65 +89,121 @@ public enum MinecraftInstallTask {
         )
     }
     
-    private static func downloadClientManifest(task: SubTask, model: Model) async throws {
-        guard let manifest = CoreState.versionManifest else {
-            err("CoreState.versionManifest 为空")
-            throw TaskError.unknownError
+    /// 补全实例资源文件。
+    /// - Parameters:
+    ///   - repository: 实例所在的 `MinecraftRepository`。
+    ///   - progressHandler: 进度回调。
+    public static func completeResources(
+        instance: MinecraftInstance,
+        repository: MinecraftRepository,
+        progressHandler: @MainActor @escaping (Double) -> Void
+    ) async throws {
+        var progress: [Double] = Array(repeating: 0, count: 4) {
+            didSet {
+                progressHandler(progress[0] * 0.15 + progress[1] * 0.05 + progress[2] * 0.5 + progress[3] * 0.3)
+            }
         }
-        guard let version = manifest.version(for: model.version.id) else {
-            err("未找到版本：\(model.version)")
+        
+        try await downloadClient(
+            clientDownload: instance.manifest.downloads.client,
+            runningDirectory: instance.runningDirectory,
+            progressHandler: { progress[0] = $0 }
+        )
+        let assetIndex: AssetIndex = try await downloadAssetIndex(
+            assetIndex: instance.manifest.assetIndex,
+            repository: repository,
+            progressHandler: { progress[1] = $0 }
+        )
+        try await downloadAssets(
+            assetIndex: assetIndex,
+            repository: repository,
+            progressHandler: { progress[2] = $0 }
+        )
+        try await downloadLibraries(
+            manifest: instance.manifest,
+            repository: repository,
+            progressHandler: { progress[3] = $0 }
+        )
+    }
+    
+    private static func downloadClientManifest(
+        versionManifest: VersionManifest,
+        versionId: String,
+        runningDirectory: URL,
+        progressHandler: @MainActor @escaping (Double) -> Void
+    ) async throws -> ClientManifest {
+        guard let version = versionManifest.version(for: versionId) else {
+            err("未找到版本：\(versionId)")
             throw TaskError.unknownError
         }
         
-        let destination: URL = model.runningDirectory.appending(path: "\(model.name).json")
+        let destination: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
         try await SingleFileDownloader.download(
             url: version.url,
             destination: destination,
             sha1: nil,
             replaceMethod: .skip,
-            progressHandler: task.setProgress(_:)
+            progressHandler: progressHandler
         )
-        model.manifest = try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: destination))
+        return try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: destination))
     }
     
-    private static func downloadAssetIndex(task: SubTask, model: Model) async throws {
-        let destination: URL = model.repository.assetsURL
-            .appending(path: "indexes/\(model.manifest.assetIndex.id).json")
+    private static func downloadAssetIndex(
+        assetIndex: ClientManifest.AssetIndex,
+        repository: MinecraftRepository,
+        progressHandler: @MainActor @escaping (Double) -> Void
+    ) async throws -> AssetIndex {
+        let destination: URL = repository.assetsURL
+            .appending(path: "indexes/\(assetIndex.id).json")
         try await SingleFileDownloader.download(
-            url: model.manifest.assetIndex.url,
+            url: assetIndex.url,
             destination: destination,
-            sha1: model.manifest.assetIndex.sha1,
+            sha1: assetIndex.sha1,
             replaceMethod: .skip,
-            progressHandler: task.setProgress(_:)
+            progressHandler: progressHandler
         )
-        model.assetIndex = try JSONDecoder.shared.decode(AssetIndex.self, from: Data(contentsOf: destination))
+        return try JSONDecoder.shared.decode(AssetIndex.self, from: Data(contentsOf: destination))
     }
     
-    private static func downloadClient(task: SubTask, model: Model) async throws {
+    private static func downloadClient(
+        clientDownload: ClientManifest.Downloads.Download,
+        runningDirectory: URL,
+        progressHandler: @MainActor @escaping (Double) -> Void
+    ) async throws {
         try await SingleFileDownloader.download(
-            url: model.manifest.downloads.client.url,
-            destination: model.runningDirectory.appending(path: "\(model.name).jar"),
-            sha1: model.manifest.downloads.client.sha1,
+            url: clientDownload.url,
+            destination: runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).jar"),
+            sha1: clientDownload.sha1,
             replaceMethod: .skip,
-            progressHandler: task.setProgress(_:)
+            progressHandler: progressHandler
         )
     }
     
-    private static func downloadAssets(task: SubTask, model: Model) async throws {
+    private static func downloadAssets(
+        assetIndex: AssetIndex,
+        repository: MinecraftRepository,
+        progressHandler: @MainActor @escaping (Double) -> Void
+    ) async throws {
         let root: URL = URL(string: "https://resources.download.minecraft.net")!
-        let items: [DownloadItem] = model.assetIndex.objects.map { .init(
-            url: root.appending(path: "\($0.hash.prefix(2))/\($0.hash)"),
-            destination: model.repository.assetsURL.appending(path: "objects/\($0.hash.prefix(2))/\($0.hash)"),
-            sha1: $0.hash
-        ) }
-        try await MultiFileDownloader(items: items, concurrentLimit: 64, replaceMethod: .skip, progressHandler: task.setProgress(_:)).start()
+        let items: [DownloadItem] = autoreleasepool {
+            assetIndex.objects.map { .init(
+                url: root.appending(path: "\($0.hash.prefix(2))/\($0.hash)"),
+                destination: repository.assetsURL.appending(path: "objects/\($0.hash.prefix(2))/\($0.hash)"),
+                sha1: $0.hash
+            ) }
+        }
+        try await MultiFileDownloader(items: items, concurrentLimit: 64, replaceMethod: .skip, progressHandler: progressHandler).start()
     }
     
-    private static func downloadLibraries(task: SubTask, model: Model) async throws {
-        let items: [DownloadItem] = (model.manifest.getLibraries() + model.manifest.getNatives())
+    private static func downloadLibraries(
+        manifest: ClientManifest,
+        repository: MinecraftRepository,
+        progressHandler: @MainActor @escaping (Double) -> Void
+    ) async throws {
+        let items: [DownloadItem] = (manifest.getLibraries() + manifest.getNatives())
             .compactMap(\.artifact)
-            .map { DownloadItem(url: $0.url, destination: model.repository.librariesURL.appending(path: $0.path), sha1: $0.sha1) }
-        try await MultiFileDownloader(items: items, concurrentLimit: 64, replaceMethod: .skip, progressHandler: task.setProgress(_:)).start()
+            .map { DownloadItem(url: $0.url, destination: repository.librariesURL.appending(path: $0.path), sha1: $0.sha1) }
+        try await MultiFileDownloader(items: items, concurrentLimit: 64, replaceMethod: .skip, progressHandler: progressHandler).start()
     }
     
     public class Model: TaskModel {

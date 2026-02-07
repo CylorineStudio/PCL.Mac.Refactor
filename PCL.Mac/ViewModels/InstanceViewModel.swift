@@ -37,6 +37,19 @@ class InstanceViewModel: ObservableObject {
         }
     }
     
+    /// 在当前仓库中加载实例。
+    ///
+    /// - Parameter id: 实例 ID。
+    public func loadInstance(_ id: String) throws -> MinecraftInstance {
+        guard let currentRepository else {
+            throw SimpleError("未设置当前仓库。")
+        }
+        if let currentInstance, id == currentInstance.name {
+            return currentInstance
+        }
+        return try currentRepository.instance(id: id)
+    }
+    
     /// 切换当前实例。
     /// - Parameters:
     ///   - instance: 目标实例。
@@ -98,21 +111,17 @@ class InstanceViewModel: ObservableObject {
     }
     
     /// 启动游戏。
+    /// 
     /// - Parameters:
     ///   - instance: 目标游戏实例。
+    ///   - account: 使用的账号。
     ///   - repository: 游戏仓库。
-    public func launch(_ instance: MinecraftInstance, in repository: MinecraftRepository) {
-        log("正在启动游戏 \(instance.name)")
-        Task.detached {
-            var options: LaunchOptions = .init()
-            options.runningDirectory = instance.runningDirectory
-            options.javaURL = URL(fileURLWithPath: "/usr/bin/java")
-            options.manifest = instance.manifest
-            options.repository = repository
-            options.memory = 4096
-            try options.validate()
-            let launcher: MinecraftLauncher = .init(options: options)
-            let _ = try launcher.launch()
+    public func launch(_ instance: MinecraftInstance, _ account: Account, in repository: MinecraftRepository) {
+        if MinecraftLaunchManager.shared.launch(instance, using: account, in: repository) {
+            log("正在启动游戏 \(instance.name)")
+        } else {
+            hint("有游戏正在运行！", type: .critical)
+            log("已有游戏正在运行，停止启动")
         }
     }
 }
