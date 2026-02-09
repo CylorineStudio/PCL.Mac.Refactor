@@ -17,8 +17,15 @@ class MinecraftDownloadPageViewModel: ObservableObject {
     
     @discardableResult
     public func load(noCache: Bool = false) async throws -> VersionManifest {
-        let manifest: VersionManifest = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", noCache: noCache).decode(VersionManifest.self)
+        let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", noCache: noCache)
+        let manifest: VersionManifest = try response.decode(VersionManifest.self)
         CoreState.versionManifest = manifest
+        do {
+            try response.data.write(to: URLConstants.cacheURL.appending(path: "version_manifest.json"))
+        } catch {
+            err("保存版本列表缓存失败：\(error.localizedDescription)")
+        }
+        
         
         await MainActor.run {
             latestRelease = manifest.version(for: manifest.latestRelease)

@@ -26,6 +26,7 @@ public enum JavaSearcher {
                 runtimes.append(runtime)
             } catch {
                 err("加载 Java 失败：\(error.localizedDescription)")
+                debug("homeDirectory：\(homeDirectory.path)")
             }
         }
         return runtimes
@@ -52,13 +53,14 @@ public enum JavaSearcher {
             throw JavaError.failedToParseReleaseFile
         }
         let release: [String: String] = parseProperties(releaseContent)
-        guard let javaVersion = release["JAVA_VERSION"],
-              let implementor = release["IMPLEMENTOR"] else {
+        guard let javaVersion = release["JAVA_VERSION"] else {
             throw JavaError.failedToParseReleaseFile
         }
         guard let versionMajor: Int = parseVersionNumber(javaVersion) else {
             throw JavaError.failedToParseVersionNumber(version: javaVersion)
         }
+        let implementor: String = release["IMPLEMENTOR"] ?? "Unknown"
+        
         // Java 类型判断
         var type: JavaRuntime.JavaType?
         var executableURL: URL?

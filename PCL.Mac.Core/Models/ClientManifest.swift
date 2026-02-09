@@ -37,7 +37,14 @@ public class ClientManifest: Decodable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         if container.contains(.minecraftArguments) { // 1.12-
             self.gameArguments = try container.decode(String.self, forKey: .minecraftArguments).split(separator: " ").map { .init(value: [String($0)], rules: []) }
-            self.jvmArguments = []
+            self.jvmArguments = [
+                "-XX:+UnlockExperimentalVMOptions", "-XX:+UseG1GC", "-XX:-UseAdaptiveSizePolicy", "-XX:-OmitStackTraceInFastThrow",
+                "-Djava.library.path=${natives_directory}",
+                "-Dorg.lwjgl.system.SharedLibraryExtractPath=${natives_directory}",
+                "-Dio.netty.native.workdir=${natives_directory}",
+                "-Djna.tmpdir=${natives_directory}",
+                "-cp", "${classpath}"
+            ].map { .init(value: [$0], rules: []) }
         } else {
             let argumentsContainer = try container.nestedContainer(keyedBy: ArgumentsCodingKeys.self, forKey: .arguments)
             self.gameArguments = try argumentsContainer.decode([Argument].self, forKey: .game)

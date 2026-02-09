@@ -23,7 +23,7 @@ struct InstanceListPage: View {
                 CardContainer {
                     MyCard("常规实例") {
                         VStack(spacing: 0) {
-                            ForEach(instances, id: \.name) { instance in
+                            ForEach(instances.sorted(by: { $0.version > $1.version }), id: \.name) { instance in
                                 InstanceView(instance: instance)
                                     .onTapGesture {
                                         instanceViewModel.switchInstance(to: instance, repository)

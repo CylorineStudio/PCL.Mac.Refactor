@@ -38,8 +38,7 @@ public struct VersionManifest: Decodable {
     /// - Parameter id: 版本号。
     /// - Returns: 在 `versions` 中的顺序。
     public func ordinal(of id: String) -> Int {
-        guard let index = versions.firstIndex(where: { $0.id == id }) else { return -1 }
-        return versions.count - index
+        return versions.firstIndex(where: { $0.id == id }) ?? -1
     }
     
     /// 获取版本号对应的 `Version` 对象。

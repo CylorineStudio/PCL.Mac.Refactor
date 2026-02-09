@@ -32,6 +32,7 @@ public class MinecraftInstance {
         self.manifest = manifest
         self.config = config
         VersionCache.add(version: version, for: self)
+        setJava(url: searchJava().map(\.executableURL))
     }
     
     /// 设置 JVM Heap Size 并保存。
