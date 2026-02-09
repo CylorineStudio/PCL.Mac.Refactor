@@ -41,8 +41,9 @@ public class MultiFileDownloader {
         } else {
             items = self.items
         }
-        let total: Int = items.count
-        let skipped: Int = self.items.count - items.count
+        let dedupedItems: [DownloadItem] = Array(Set(items))
+        let total: Int = dedupedItems.count
+        let skipped: Int = self.items.count - dedupedItems.count
         var tickerTask: Task<Void, Error>? = nil
         if let progressHandler {
             tickerTask = Task {
@@ -60,7 +61,7 @@ public class MultiFileDownloader {
         try await withThrowingTaskGroup(of: Void.self) { group in
             let initial = min(concurrentLimit, total)
             while nextIndex < initial {
-                let item = items[nextIndex]
+                let item: DownloadItem = dedupedItems[nextIndex]
                 group.addTask {
                     try await self.download(item)
                 }
@@ -69,7 +70,7 @@ public class MultiFileDownloader {
             
             while let _ = try await group.next() {
                 if nextIndex < total {
-                    let item = items[nextIndex]
+                    let item: DownloadItem = dedupedItems[nextIndex]
                     group.addTask {
                         try await self.download(item)
                     }

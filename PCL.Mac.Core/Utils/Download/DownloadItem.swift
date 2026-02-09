@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct DownloadItem {
+public struct DownloadItem: Hashable {
     public let url: URL
     public let destination: URL
     public let sha1: String?

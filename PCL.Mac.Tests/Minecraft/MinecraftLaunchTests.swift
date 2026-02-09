@@ -15,7 +15,7 @@ struct MinecraftLaunchTests {
         let runningDirectory: URL = FileManager.default.homeDirectoryForCurrentUser.appending(path: "minecraft")
         if !FileManager.default.fileExists(atPath: runningDirectory.path) { return }
         var options: LaunchOptions = .init()
-        options.javaURL = URL(fileURLWithPath: "/usr/bin/java")
+//        options.javaURL = URL(fileURLWithPath: "/usr/bin/java")
         options.runningDirectory = runningDirectory
         options.manifest = try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: runningDirectory.appending(path: "1.21.10.json")))
         _ = try MinecraftLauncher(options: options).launch()

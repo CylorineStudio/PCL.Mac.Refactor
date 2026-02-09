@@ -77,7 +77,7 @@ class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
                     totalBytesWritten: Int64,
                     totalBytesExpectedToWrite: Int64) {
         DownloadSpeedManager.shared.addBytes(bytesWritten)
-        if totalBytesExpectedToWrite != 0 {
+        if totalBytesExpectedToWrite > 0 {
             updateProgress(for: downloadTask, with: Double(totalBytesWritten) / Double(totalBytesExpectedToWrite))
         }
     }

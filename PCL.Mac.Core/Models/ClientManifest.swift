@@ -21,8 +21,12 @@ public class ClientManifest: Decodable {
     public let mainClass: String
     public let type: String
     
+    public let inheritsFrom: String?
+    
     private enum CodingKeys: String, CodingKey {
         case arguments, assetIndex, downloads, id, javaVersion, libraries, logging, mainClass, type
+        case minecraftArguments
+        case inheritsFrom
     }
     
     private enum ArgumentsCodingKeys: String, CodingKey {
@@ -31,9 +35,14 @@ public class ClientManifest: Decodable {
     
     public required init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let argumentsContainer = try container.nestedContainer(keyedBy: ArgumentsCodingKeys.self, forKey: .arguments)
-        self.gameArguments = try argumentsContainer.decode([Argument].self, forKey: .game)
-        self.jvmArguments = try argumentsContainer.decode([Argument].self, forKey: .jvm)
+        if container.contains(.minecraftArguments) { // 1.12-
+            self.gameArguments = try container.decode(String.self, forKey: .minecraftArguments).split(separator: " ").map { .init(value: [String($0)], rules: []) }
+            self.jvmArguments = []
+        } else {
+            let argumentsContainer = try container.nestedContainer(keyedBy: ArgumentsCodingKeys.self, forKey: .arguments)
+            self.gameArguments = try argumentsContainer.decode([Argument].self, forKey: .game)
+            self.jvmArguments = try argumentsContainer.decode([Argument].self, forKey: .jvm)
+        }
         self.assetIndex = try container.decode(AssetIndex.self, forKey: .assetIndex)
         self.downloads = try container.decode(Downloads.self, forKey: .downloads)
         self.id = try container.decode(String.self, forKey: .id)
@@ -42,6 +51,7 @@ public class ClientManifest: Decodable {
         self.logging = try container.decode(Logging.self, forKey: .logging)
         self.mainClass = try container.decode(String.self, forKey: .mainClass)
         self.type = try container.decode(String.self, forKey: .type)
+        self.inheritsFrom = try container.decodeIfPresent(String.self, forKey: .inheritsFrom)
     }
     
     public class Argument: Decodable {
@@ -66,6 +76,11 @@ public class ClientManifest: Decodable {
                 }
                 self.rules = try container.decode([ArgumentRule].self, forKey: .rules)
             }
+        }
+        
+        public init(value: [String], rules: [ArgumentRule]) {
+            self.value = value
+            self.rules = rules
         }
     }
     
