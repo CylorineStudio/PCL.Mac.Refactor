@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftyJSON
+import ZIPFoundation
 
 /// Minecraft 安装任务生成器。
 public enum MinecraftInstallTask {
@@ -74,7 +75,15 @@ public enum MinecraftInstallTask {
                     progressHandler: task.setProgress(_:)
                 )
             },
-            .init(3, "__completion", display: false) { _, _ in
+            .init(3, "解压本地库文件") { task, model in
+                try await extractNatives(
+                    manifest: model.manifest,
+                    runningDirectory: model.runningDirectory,
+                    repository: model.repository,
+                    progressHandler: task.setProgress(_:)
+                )
+            },
+            .init(4, "__completion", display: false) { _, _ in
                 let instance: MinecraftInstance = .init(
                     runningDirectory: repository.versionsURL.appending(path: name),
                     version: version,
@@ -98,9 +107,9 @@ public enum MinecraftInstallTask {
         repository: MinecraftRepository,
         progressHandler: @MainActor @escaping (Double) -> Void
     ) async throws {
-        var progress: [Double] = Array(repeating: 0, count: 4) {
+        var progress: [Double] = Array(repeating: 0, count: 5) {
             didSet {
-                progressHandler(progress[0] * 0.15 + progress[1] * 0.05 + progress[2] * 0.5 + progress[3] * 0.3)
+                progressHandler(progress[0] * 0.15 + progress[1] * 0.05 + progress[2] * 0.5 + progress[3] * 0.25 + progress[4] * 0.05)
             }
         }
         
@@ -123,6 +132,12 @@ public enum MinecraftInstallTask {
             manifest: instance.manifest,
             repository: repository,
             progressHandler: { progress[3] = $0 }
+        )
+        try await extractNatives(
+            manifest: instance.manifest,
+            runningDirectory: instance.runningDirectory,
+            repository: repository,
+            progressHandler: { progress[4] = $0 }
         )
     }
     
@@ -204,6 +219,43 @@ public enum MinecraftInstallTask {
             .compactMap(\.artifact)
             .map { DownloadItem(url: $0.url, destination: repository.librariesURL.appending(path: $0.path), sha1: $0.sha1) }
         try await MultiFileDownloader(items: items, concurrentLimit: 64, replaceMethod: .skip, progressHandler: progressHandler).start()
+    }
+    
+    private static func extractNatives(
+        manifest: ClientManifest,
+        runningDirectory: URL,
+        repository: MinecraftRepository,
+        progressHandler: @MainActor @escaping (Double) -> Void
+    ) async throws {
+        let natives: [ClientManifest.Library] = manifest.getNatives()
+        for native in natives {
+            guard let path: String = native.artifact?.path else {
+                err("本地库 \(native.name) 通过了 rules 检查，但 classifiers 中没有其对应的 artifact")
+                continue
+            }
+            let url: URL = repository.librariesURL.appending(path: path)
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                err("本地库 \(native.name) 似乎未被下载")
+                continue
+            }
+            
+            let nativesDirectory: URL = runningDirectory.appending(path: "natives")
+            let archive: Archive = try .init(url: url, accessMode: .read)
+            for entry in archive where entry.type == .file {
+                if entry.path.hasSuffix(".dylib") || entry.path.hasSuffix(".jnilib") {
+                    guard let name: String = entry.path.split(separator: "/").last.map(String.init) else {
+                        warn("获取 \(entry.path) 的文件名失败")
+                        continue
+                    }
+                    let destination: URL = nativesDirectory.appending(path: name)
+                    if FileManager.default.fileExists(atPath: destination.path) { continue }
+                    _ = try archive.extract(entry, to: destination)
+                }
+            }
+        }
+        await MainActor.run {
+            progressHandler(1)
+        }
     }
     
     public class Model: TaskModel {
