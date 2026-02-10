@@ -33,6 +33,32 @@ public class ClientManifest: Decodable {
         case game, jvm
     }
     
+    public init(
+        gameArguments: [Argument],
+        jvmArguments: [Argument],
+        assetIndex: AssetIndex,
+        downloads: Downloads,
+        id: String,
+        javaVersion: JavaVersion,
+        libraries: [Library],
+        logging: Logging,
+        mainClass: String,
+        type: String,
+        inheritsFrom: String?
+    ) {
+        self.gameArguments = gameArguments
+        self.jvmArguments = jvmArguments
+        self.assetIndex = assetIndex
+        self.downloads = downloads
+        self.id = id
+        self.javaVersion = javaVersion
+        self.libraries = libraries
+        self.logging = logging
+        self.mainClass = mainClass
+        self.type = type
+        self.inheritsFrom = inheritsFrom
+    }
+    
     public required init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         if container.contains(.minecraftArguments) { // 1.12-
@@ -155,6 +181,13 @@ public class ClientManifest: Decodable {
         }()
         public lazy var isRulesSatisfied: Bool = { rules.allSatisfy { $0.test() } }()
         
+        public init(name: String, artifact: Artifact?, rules: [Rule], isNativeLibrary: Bool) {
+            self.name = name
+            self.artifact = artifact
+            self.rules = rules
+            self.isNativesLibrary = isNativeLibrary
+        }
+        
         public required init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             self.name = try container.decode(String.self, forKey: .name)
@@ -273,5 +306,10 @@ public class ClientManifest: Decodable {
     /// - Returns: 所有可用的本地库。
     public func getNatives() -> [Library] {
         return libraries.filter { $0.isNativesLibrary && $0.isRulesSatisfied }
+    }
+    
+    /// 创建一个新清单，继承本清单的所有属性，并使用指定的 libraries。
+    public func setLibraries(to libraries: [Library]) -> ClientManifest {
+        return .init(gameArguments: gameArguments, jvmArguments: jvmArguments, assetIndex: assetIndex, downloads: downloads, id: id, javaVersion: javaVersion, libraries: libraries, logging: logging, mainClass: mainClass, type: type, inheritsFrom: inheritsFrom)
     }
 }

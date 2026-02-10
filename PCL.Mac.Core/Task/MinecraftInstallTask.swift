@@ -45,10 +45,11 @@ public enum MinecraftInstallTask {
                     progressHandler: task.setProgress(_:)
                 )
                 model.manifest = manifest
+                model.mappedManifest = NativesMapper.map(manifest)
             },
             .init(1, "下载资源索引文件") { task, model in
                 let assetIndex: AssetIndex = try await downloadAssetIndex(
-                    assetIndex: model.manifest.assetIndex,
+                    assetIndex: model.mappedManifest.assetIndex,
                     repository: model.repository,
                     progressHandler: task.setProgress(_:)
                 )
@@ -56,7 +57,7 @@ public enum MinecraftInstallTask {
             },
             .init(2, "下载客户端本体") { task, model in
                 try await downloadClient(
-                    clientDownload: model.manifest.downloads.client,
+                    clientDownload: model.mappedManifest.downloads.client,
                     runningDirectory: model.runningDirectory,
                     progressHandler: task.setProgress(_:)
                 )
@@ -70,14 +71,14 @@ public enum MinecraftInstallTask {
             },
             .init(2, "下载依赖库文件") { task, model in
                 try await downloadLibraries(
-                    manifest: model.manifest,
+                    manifest: model.mappedManifest,
                     repository: model.repository,
                     progressHandler: task.setProgress(_:)
                 )
             },
             .init(3, "解压本地库文件", display: version < .init("1.19.1")) { task, model in
                 try await extractNatives(
-                    manifest: model.manifest,
+                    manifest: model.mappedManifest,
                     runningDirectory: model.runningDirectory,
                     repository: model.repository,
                     progressHandler: task.setProgress(_:)
@@ -112,14 +113,15 @@ public enum MinecraftInstallTask {
                 progressHandler(progress[0] * 0.15 + progress[1] * 0.05 + progress[2] * 0.5 + progress[3] * 0.25 + progress[4] * 0.05)
             }
         }
+        let manifest: ClientManifest = NativesMapper.map(instance.manifest)
         
         try await downloadClient(
-            clientDownload: instance.manifest.downloads.client,
+            clientDownload: manifest.downloads.client,
             runningDirectory: instance.runningDirectory,
             progressHandler: { progress[0] = $0 }
         )
         let assetIndex: AssetIndex = try await downloadAssetIndex(
-            assetIndex: instance.manifest.assetIndex,
+            assetIndex: manifest.assetIndex,
             repository: repository,
             progressHandler: { progress[1] = $0 }
         )
@@ -129,12 +131,12 @@ public enum MinecraftInstallTask {
             progressHandler: { progress[2] = $0 }
         )
         try await downloadLibraries(
-            manifest: instance.manifest,
+            manifest: manifest,
             repository: repository,
             progressHandler: { progress[3] = $0 }
         )
         try await extractNatives(
-            manifest: instance.manifest,
+            manifest: manifest,
             runningDirectory: instance.runningDirectory,
             repository: repository,
             progressHandler: { progress[4] = $0 }
@@ -265,6 +267,7 @@ public enum MinecraftInstallTask {
         public let repository: MinecraftRepository
         
         public var manifest: ClientManifest!
+        public var mappedManifest: ClientManifest!
         public var assetIndex: AssetIndex!
         
         public init(name: String, version: MinecraftVersion, repository: MinecraftRepository) {

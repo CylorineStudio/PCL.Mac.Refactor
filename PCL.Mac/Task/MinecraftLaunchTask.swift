@@ -240,7 +240,7 @@ public enum MinecraftLaunchTask {
             
             self.options.profile = account.profile
             self.options.runningDirectory = instance.runningDirectory
-            self.options.manifest = instance.manifest
+            self.options.manifest = NativesMapper.map(instance.manifest)
             self.options.repository = repository
             self.options.memory = instance.config.jvmHeapSize
         }
