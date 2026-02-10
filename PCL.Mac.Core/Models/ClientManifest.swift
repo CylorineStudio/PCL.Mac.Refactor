@@ -239,9 +239,10 @@ public class ClientManifest: Decodable {
         /// - Parameter options: 生成参数时使用的 `LaunchOptions`。
         /// - Returns: 一个布尔值，表示是否通过。
         public func test(with options: LaunchOptions) -> Bool {
+            guard super.test() else { return false }
             for (name, value) in features {
                 if name == "is_demo_user" && value != options.demo {
-                    return false
+                    return !allow
                 }
                 if [
                     "has_custom_resolution",
@@ -250,10 +251,10 @@ public class ClientManifest: Decodable {
                     "is_quick_play_multiplayer",
                     "is_quick_play_realms"
                 ].contains(name) && value { // not implemented
-                    return false
+                    return !allow
                 }
             }
-            return true
+            return allow
         }
     }
     

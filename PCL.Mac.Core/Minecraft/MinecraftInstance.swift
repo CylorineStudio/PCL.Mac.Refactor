@@ -32,7 +32,9 @@ public class MinecraftInstance {
         self.manifest = manifest
         self.config = config
         VersionCache.add(version: version, for: self)
-        setJava(url: searchJava().map(\.executableURL))
+        if config.javaURL == nil {
+            setJava(url: searchJava().map(\.executableURL))
+        }
     }
     
     /// 设置 JVM Heap Size 并保存。
@@ -153,12 +155,6 @@ public class MinecraftInstance {
             manifest: manifest,
             config: config ?? .init()
         )
-        if !FileManager.default.fileExists(atPath: configURL.path) {
-            instance.saveConfig()
-        }
-        if instance.config.javaURL == nil {
-            instance.setJava(url: instance.searchJava()?.executableURL)
-        }
         return instance
     }
     

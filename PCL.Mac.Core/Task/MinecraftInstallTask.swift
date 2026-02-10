@@ -75,7 +75,7 @@ public enum MinecraftInstallTask {
                     progressHandler: task.setProgress(_:)
                 )
             },
-            .init(3, "解压本地库文件") { task, model in
+            .init(3, "解压本地库文件", display: version < .init("1.19.1")) { task, model in
                 try await extractNatives(
                     manifest: model.manifest,
                     runningDirectory: model.runningDirectory,
