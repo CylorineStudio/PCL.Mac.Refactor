@@ -79,9 +79,17 @@ public class ClientManifest: Decodable {
         self.assetIndex = try container.decode(AssetIndex.self, forKey: .assetIndex)
         self.downloads = try container.decode(Downloads.self, forKey: .downloads)
         self.id = try container.decode(String.self, forKey: .id)
-        self.javaVersion = try container.decode(JavaVersion.self, forKey: .javaVersion)
+        self.javaVersion = try container.decodeIfPresent(JavaVersion.self, forKey: .javaVersion) ?? .init(component: "jre-legacy", majorVersion: 8)
         self.libraries = try container.decode([Library].self, forKey: .libraries)
-        self.logging = try container.decode(Logging.self, forKey: .logging)
+        self.logging = try container.decodeIfPresent(Logging.self, forKey: .logging) ?? .init(
+            argument: "-Dlog4j.configurationFile=${path}",
+            file: .init(
+                id: "client-1.12.xml",
+                url: URL(string: "https://piston-data.mojang.com/v1/objects/bd65e7d2e3c237be76cfbef4c2405033d7f91521/client-1.12.xml")!,
+                size: 888,
+                sha1: "bd65e7d2e3c237be76cfbef4c2405033d7f91521"
+            )
+        )
         self.mainClass = try container.decode(String.self, forKey: .mainClass)
         self.type = try container.decode(String.self, forKey: .type)
         self.inheritsFrom = try container.decodeIfPresent(String.self, forKey: .inheritsFrom)
@@ -142,7 +150,7 @@ public class ClientManifest: Decodable {
     public class Downloads: Decodable {
         public let client: Download
         public let clientMappings: Download?
-        public let server: Download
+        public let server: Download?
         public let serverMappings: Download?
         
         private enum CodingKeys: String, CodingKey {
@@ -194,7 +202,7 @@ public class ClientManifest: Decodable {
             self.isNativesLibrary = container.contains(.natives)
             let downloadsContainer = try? container.nestedContainer(keyedBy: DownloadsCodingKeys.self, forKey: .downloads)
             if !isNativesLibrary {
-                self.artifact = try downloadsContainer.unwrap().decode(Artifact.self, forKey: .artifact)
+                self.artifact = try downloadsContainer.unwrap("该支持库没有 artifact。").decode(Artifact.self, forKey: .artifact)
             } else {
                 let natives: [String: String] = try container.decode([String: String].self, forKey: .natives)
                 if let key = natives["osx"] {
@@ -214,6 +222,11 @@ public class ClientManifest: Decodable {
         
         private enum CodingKeys: String, CodingKey { case client }
         private enum ClientCodingKeys: String, CodingKey { case argument, file }
+        
+        public init(argument: String, file: File) {
+            self.argument = argument
+            self.file = file
+        }
         
         public required init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self).nestedContainer(keyedBy: ClientCodingKeys.self, forKey: .client)
@@ -294,6 +307,11 @@ public class ClientManifest: Decodable {
     public class JavaVersion: Decodable {
         public let component: String
         public let majorVersion: Int
+        
+        public init(component: String, majorVersion: Int) {
+            self.component = component
+            self.majorVersion = majorVersion
+        }
     }
     
     /// 获取所有可用的普通依赖库。

@@ -21,6 +21,15 @@ struct InstanceListPage: View {
         VStack {
             if let instances = repository.instances {
                 CardContainer {
+                    if let errorInstances = repository.errorInstances {
+                        MyCard("错误的实例") {
+                            VStack(spacing: 0) {
+                                ForEach(errorInstances, id: \.name) { instance in
+                                    MyListItem(.init(image: "RedstoneBlock", name: instance.name, description: instance.message))
+                                }
+                            }
+                        }
+                    }
                     MyCard("常规实例") {
                         VStack(spacing: 0) {
                             ForEach(instances.sorted(by: { $0.version > $1.version }), id: \.name) { instance in

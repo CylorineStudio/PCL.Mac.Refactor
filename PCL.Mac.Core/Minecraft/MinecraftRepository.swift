@@ -12,6 +12,7 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     @Published public var name: String
     @Published public var url: URL
     @Published public var instances: [MinecraftInstance]?
+    @Published public var errorInstances: [ErrorInstance]?
     
     public lazy var assetsURL: URL = { url.appending(path: "assets") }()
     public lazy var librariesURL: URL = { url.appending(path: "libraries") }()
@@ -34,22 +35,20 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     
     /// 加载该仓库中的所有实例。
     /// 只会在读取目录失败时抛出错误。
-    @discardableResult
-    public func load() throws -> [MinecraftInstance] {
-        let instances = try getInstanceList()
+    public func load() throws {
+        let (instances, errorInstances) = try getInstanceList()
         self.instances = instances
-        return instances
+        self.errorInstances = errorInstances
     }
     
     /// 异步加载该仓库中的所有实例。
     /// 只会在读取目录失败时抛出错误。
-    @discardableResult
-    public func loadAsync() async throws -> [MinecraftInstance] {
-        let instances: [MinecraftInstance] = try getInstanceList()
+    public func loadAsync() async throws {
+        let (instances, errorInstances) = try getInstanceList()
         await MainActor.run {
             self.instances = instances
+            self.errorInstances = errorInstances
         }
-        return instances
     }
     
     /// 从仓库中加载实例。
@@ -60,22 +59,27 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     }
     
     
-    private func getInstanceList() throws -> [MinecraftInstance] {
+    private func getInstanceList() throws -> ([MinecraftInstance], [ErrorInstance]) {
         try createDirectories()
         var instances: [MinecraftInstance] = []
+        var errorInstances: [ErrorInstance] = []
         let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])
         for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {
             let instance: MinecraftInstance
             do {
                 log("正在加载实例 \(content.lastPathComponent)")
                 instance = try MinecraftInstance.load(from: content)
+            } catch MinecraftError.unknownManifestFormat {
+                err("加载实例失败：不支持的客户端清单格式。")
+                errorInstances.append(.init(name: content.lastPathComponent, message: "不支持的客户端清单格式。"))
+                continue
             } catch {
                 err("加载实例失败：\(error.localizedDescription)")
                 continue
             }
             instances.append(instance)
         }
-        return instances
+        return (instances, errorInstances)
     }
     
     public static func == (lhs: MinecraftRepository, rhs: MinecraftRepository) -> Bool {
@@ -99,5 +103,10 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(self.name, forKey: .name)
         try container.encode(self.url, forKey: .url)
+    }
+    
+    public struct ErrorInstance {
+        public let name: String
+        public let message: String
     }
 }

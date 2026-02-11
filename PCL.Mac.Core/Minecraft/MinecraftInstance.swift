@@ -119,6 +119,7 @@ public class MinecraftInstance {
         do {
             manifest = try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: manifestURL))
         } catch {
+            err("加载客户端清单失败：\(error)")
             throw MinecraftError.unknownManifestFormat
         }
         // 获取版本

@@ -69,7 +69,7 @@ public enum NativesMapper {
     }
     
     private static func setArtifact(for library: ClientManifest.Library, to name: String, in urlRoot: URL = .init(string: "https://libraries.minecraft.net/")!) -> ClientManifest.Library {
-        log("Mapped \(library.name) to \(name)")
+        log("已将 \(library.name) 转换为 \(name)")
         let path: String = MavenCoordinateUtils.path(of: name)
         return .init(
             name: name,
