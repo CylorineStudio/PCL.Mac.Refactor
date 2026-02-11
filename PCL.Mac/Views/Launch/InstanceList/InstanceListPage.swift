@@ -41,6 +41,7 @@ struct InstanceListPage: View {
                             }
                         }
                     }
+                    .cardIndex(1)
                 }
             } else {
                 MyLoading(viewModel: viewModel.loadingViewModel)

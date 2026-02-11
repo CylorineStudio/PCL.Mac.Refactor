@@ -156,6 +156,21 @@ public enum MinecraftLaunchTask {
                         break
                     }
                 }
+            case .armNotSupported:
+                if let runtime: JavaRuntime = model.instance.searchJava(arch: .x64) {
+                    if await MessageBoxManager.shared.showText(
+                        title: "不支持的 Java 架构",
+                        content: "你正在启动的版本（\(model.instance.version)）不支持使用 ARM64 架构的 Java！\nPCL.Mac 找到了一个可用的 Java，是否切换并继续启动？",
+                        level: .error,
+                        .init(id: 0, label: "取消", type: .normal),
+                        .init(id: 1, label: "切换并继续", type: .highlight)
+                    ) == 0 {
+                        try task.cancel()
+                    }
+                    model.instance.setJava(url: runtime.executableURL)
+                    model.options.javaRuntime = runtime
+                    model.manifest = model.instance.manifest
+                }
             }
         }
     }

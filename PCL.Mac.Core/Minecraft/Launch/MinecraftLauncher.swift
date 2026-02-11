@@ -38,7 +38,7 @@ public class MinecraftLauncher {
             "auth_access_token": options.accessToken,
             "user_type": "msa",
             "version_type": "PCL.Mac",
-            "user_properties": "\"{}\""
+            "user_properties": "{}"
         ]
     }
     
