@@ -104,7 +104,8 @@ public enum MinecraftInstallTask {
     ///   - repository: 实例所在的 `MinecraftRepository`。
     ///   - progressHandler: 进度回调。
     public static func completeResources(
-        instance: MinecraftInstance,
+        runningDirectory: URL,
+        manifest: ClientManifest,
         repository: MinecraftRepository,
         progressHandler: @MainActor @escaping (Double) -> Void
     ) async throws {
@@ -113,11 +114,10 @@ public enum MinecraftInstallTask {
                 progressHandler(progress[0] * 0.15 + progress[1] * 0.05 + progress[2] * 0.5 + progress[3] * 0.25 + progress[4] * 0.05)
             }
         }
-        let manifest: ClientManifest = NativesMapper.map(instance.manifest)
         
         try await downloadClient(
             clientDownload: manifest.downloads.client,
-            runningDirectory: instance.runningDirectory,
+            runningDirectory: runningDirectory,
             progressHandler: { progress[0] = $0 }
         )
         let assetIndex: AssetIndex = try await downloadAssetIndex(
@@ -137,7 +137,7 @@ public enum MinecraftInstallTask {
         )
         try await extractNatives(
             manifest: manifest,
-            runningDirectory: instance.runningDirectory,
+            runningDirectory: runningDirectory,
             repository: repository,
             progressHandler: { progress[4] = $0 }
         )

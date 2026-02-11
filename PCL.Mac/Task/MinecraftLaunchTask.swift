@@ -74,6 +74,7 @@ public enum MinecraftLaunchTask {
         
         if let runtime {
             model.options.javaRuntime = runtime
+            model.manifest = NativesMapper.map(model.manifest, to: runtime.architecture)
         }
     }
     
@@ -99,6 +100,7 @@ public enum MinecraftLaunchTask {
     }
     
     private static func precheck(task: SubTask, model: Model) async throws {
+        model.options.manifest = model.manifest
         try model.options.validate()
         let entries: [LaunchPrecheck.Entry] = LaunchPrecheck.check(for: model.instance, with: model.options, hasMicrosoftAccount: LauncherConfig.shared.hasMicrosoftAccount)
         log("共 \(entries.count) 个问题：\(entries)")
@@ -159,8 +161,12 @@ public enum MinecraftLaunchTask {
     }
     
     private static func checkResources(task: SubTask, model: Model) async throws {
+        // 防止本地库架构与 Java 架构不同，先清除本地库
+        try? FileManager.default.removeItem(at: model.instance.runningDirectory.appending(path: "natives"))
+        
         try await MinecraftInstallTask.completeResources(
-            instance: model.instance,
+            runningDirectory: model.instance.runningDirectory,
+            manifest: model.manifest,
             repository: model.repository,
             progressHandler: task.setProgress(_:)
         )
@@ -227,6 +233,7 @@ public enum MinecraftLaunchTask {
         public let account: Account
         public let repository: MinecraftRepository
         public let onProcessStarted: (MinecraftLauncher, Process) -> Void
+        public var manifest: ClientManifest
         public var launcher: MinecraftLauncher?
         public var options: LaunchOptions
         public var process: Process?
@@ -236,11 +243,11 @@ public enum MinecraftLaunchTask {
             self.account = account
             self.repository = repository
             self.onProcessStarted = onProcessStarted
+            self.manifest = instance.manifest
             self.options = .init()
             
             self.options.profile = account.profile
             self.options.runningDirectory = instance.runningDirectory
-            self.options.manifest = NativesMapper.map(instance.manifest)
             self.options.repository = repository
             self.options.memory = instance.config.jvmHeapSize
         }
