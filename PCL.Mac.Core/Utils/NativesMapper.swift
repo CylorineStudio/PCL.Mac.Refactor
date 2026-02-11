@@ -25,6 +25,7 @@ public enum NativesMapper {
             for library in natives {
                 if library.groupId.starts(with: "org.lwjgl") && library.artifactId != "lwjgl-platform" {
                     newLibraries.append(setArtifact(for: library, to: "org.lwjgl:\(library.artifactId):3.3.2:natives-macos"))
+                    continue
                 }
                 newLibraries.append(library)
             }
