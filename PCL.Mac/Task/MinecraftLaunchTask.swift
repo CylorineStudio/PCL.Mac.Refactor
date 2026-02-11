@@ -162,7 +162,15 @@ public enum MinecraftLaunchTask {
     
     private static func checkResources(task: SubTask, model: Model) async throws {
         // 防止本地库架构与 Java 架构不同，先清除本地库
-        try? FileManager.default.removeItem(at: model.instance.runningDirectory.appending(path: "natives"))
+        let nativesURL: URL = model.instance.runningDirectory.appending(path: "natives")
+        if FileManager.default.fileExists(atPath: nativesURL.path) {
+            do {
+                try FileManager.default.removeItem(at: nativesURL)
+                log("删除本地库目录成功")
+            } catch {
+                err("删除本地库目录失败：\(error.localizedDescription)")
+            }
+        }
         
         try await MinecraftInstallTask.completeResources(
             runningDirectory: model.instance.runningDirectory,
