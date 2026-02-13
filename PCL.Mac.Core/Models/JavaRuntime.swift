@@ -21,7 +21,14 @@ public struct JavaRuntime {
     /// `java` 可执行文件 URL。
     public let executableURL: URL
     
-    public enum JavaType {
+    public enum JavaType: CustomStringConvertible {
         case jdk, jre
+        
+        public var description: String {
+            switch self {
+            case .jdk: "JDK"
+            case .jre: "JRE"
+            }
+        }
     }
 }

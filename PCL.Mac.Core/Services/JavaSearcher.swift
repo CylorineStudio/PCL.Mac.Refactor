@@ -120,14 +120,21 @@ public enum JavaSearcher {
     private static func findJavaBundles() throws -> [URL] {
         var bundleDirectories: [URL] = []
         
-        for directory in javaDirectories {
+        for directory in javaDirectories where FileManager.default.fileExists(atPath: directory.path) {
             bundleDirectories.append(contentsOf: try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil))
         }
         // Homebrew
-        let homebrewDirectories: [URL] = try FileManager.default.contentsOfDirectory(at: URL(fileURLWithPath: "/opt/homebrew/opt"), includingPropertiesForKeys: nil)
-            .filter { $0.lastPathComponent.starts(with: "openjdk@") }
-        for directory in homebrewDirectories {
-            bundleDirectories.append(directory.appending(path: "libexec").appending(path: "openjdk.jdk"))
+        let homebrewRoot: URL = .init(fileURLWithPath: "/opt/homebrew/opt")
+        if FileManager.default.fileExists(atPath: homebrewRoot.path) {
+            do {
+                let homebrewDirectories: [URL] = try FileManager.default.contentsOfDirectory(at: homebrewRoot, includingPropertiesForKeys: nil)
+                    .filter { $0.lastPathComponent.starts(with: "openjdk@") }
+                for directory in homebrewDirectories {
+                    bundleDirectories.append(directory.appending(path: "libexec").appending(path: "openjdk.jdk"))
+                }
+            } catch {
+                err("搜索 Homebrew 目录失败：\(error.localizedDescription)")
+            }
         }
         return bundleDirectories.filter { FileManager.default.fileExists(atPath: $0.appending(path: "Contents/Home/release").path) }
     }
