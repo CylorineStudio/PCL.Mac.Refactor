@@ -30,7 +30,7 @@ public class MinecraftLauncher {
             "library_directory": librariesURL.path,
             
             "auth_player_name": options.profile.name,
-            "version_name": manifest.id,
+            "version_name": options.runningDirectory.lastPathComponent,
             "game_directory": runningDirectory.path,
             "assets_root": librariesURL.deletingLastPathComponent().appending(path: "assets").path,
             "assets_index_name": manifest.assetIndex.id,

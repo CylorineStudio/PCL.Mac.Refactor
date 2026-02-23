@@ -65,24 +65,31 @@ public enum MinecraftInstallTask {
             
             // Forge / NeoForge
             
-            .init(5, "__map_manifest", display: false) { task, model in
+            .init(5, "__modify_manifest", display: false) { task, model in
+                let manifestURL: URL = model.runningDirectory.appending(path: "\(model.name).json")
+                if var dict: [String: Any] = try JSON(data: Data(contentsOf: manifestURL)).dictionaryObject {
+                    dict["id"] = model.name
+                    dict["version"] = model.version.id
+                    let manifestData: Data = try JSONSerialization.data(withJSONObject: dict, options: [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys])
+                    try manifestData.write(to: manifestURL, options: .atomic)
+                }
                 model.mappedManifest = NativesMapper.map(model.manifest)
             },
-            .init(5, "下载散列资源文件") { task, model in
+            .init(6, "下载散列资源文件") { task, model in
                 try await downloadAssets(
                     assetIndex: model.assetIndex,
                     repository: model.repository,
                     progressHandler: task.setProgress(_:)
                 )
             },
-            .init(5, "下载依赖库文件") { task, model in
+            .init(6, "下载依赖库文件") { task, model in
                 try await downloadLibraries(
                     manifest: model.mappedManifest,
                     repository: model.repository,
                     progressHandler: task.setProgress(_:)
                 )
             },
-            .init(6, "解压本地库文件", display: version < .init("1.19.1")) { task, model in
+            .init(7, "解压本地库文件", display: version < .init("1.19.1")) { task, model in
                 try await extractNatives(
                     manifest: model.mappedManifest,
                     runningDirectory: model.runningDirectory,
@@ -90,7 +97,7 @@ public enum MinecraftInstallTask {
                     progressHandler: task.setProgress(_:)
                 )
             },
-            .init(7, "__completion", display: false) { _, _ in
+            .init(8, "__completion", display: false) { _, _ in
                 let instance: MinecraftInstance = .init(
                     runningDirectory: repository.versionsURL.appending(path: name),
                     version: version,
@@ -156,11 +163,17 @@ public enum MinecraftInstallTask {
         let progressHandler: ConcurrentProgressHandler = .init(totalHandler: progressHandler)
         progressHandler.startCalculate(interval: 0.1)
         
-        try await downloadClient(
-            clientDownload: manifest.downloads.client,
-            runningDirectory: runningDirectory,
-            progressHandler: progressHandler.handler(withMultiplier: 0.15)
-        )
+        if let downloads = manifest.downloads {
+            try await downloadClient(
+                clientDownload: downloads.client,
+                runningDirectory: runningDirectory,
+                progressHandler: progressHandler.handler(withMultiplier: 0.15)
+            )
+        } else {
+            warn("manifest.downloads 为空")
+            await progressHandler.handler(withMultiplier: 0.15)(1)
+        }
+        
         let assetIndex: AssetIndex = try await downloadAssetIndex(
             assetIndex: manifest.assetIndex,
             repository: repository,
@@ -205,14 +218,6 @@ public enum MinecraftInstallTask {
             replaceMethod: .skip,
             progressHandler: progressHandler
         )
-        
-        if var dict: [String: Any] = try JSON(data: Data(contentsOf: destination)).dictionaryObject {
-            dict["id"] = runningDirectory.lastPathComponent
-            dict["version"] = versionId
-            let manifestData: Data = try JSONSerialization.data(withJSONObject: dict, options: [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys])
-            try manifestData.write(to: destination, options: .atomic)
-            return try JSONDecoder.shared.decode(ClientManifest.self, from: manifestData)
-        }
         return try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: destination))
     }
     

@@ -413,6 +413,12 @@ public extension ClientManifest {
         }
     }
     
+    /// 从磁盘加载 `ClientManifest`。
+    /// - Parameters:
+    ///   - url: 客户端清单文件 `URL`。
+    ///   - loadParent: 是否加载父清单（`inhertsFrom`）。如果此参数为 `false`，且清单中包含 `inheritsFrom` 键，会抛出 `LoadError.missingParentManifest` 错误。
+    /// - Returns: 一个 `ClientManifest`。
+    /// - Throws: `LoadError`
     static func load(at url: URL, loadParent: Bool = true) throws -> ClientManifest {
         guard FileManager.default.fileExists(atPath: url.path) else { throw LoadError.fileNotFound }
         let data: Data
@@ -421,16 +427,21 @@ public extension ClientManifest {
         } catch {
             throw LoadError.failedToRead(underlying: error)
         }
+        
+        let manifest: ClientManifest = try .load(from: data)
+        if let inheritsFrom: String = manifest.inheritsFrom {
+            guard loadParent else { throw LoadError.missingParentManifest }
+            let parentURL: URL = url.deletingLastPathComponent().appending(path: ".parent/\(inheritsFrom).json")
+            guard FileManager.default.fileExists(atPath: parentURL.path) else { throw LoadError.missingParentManifest }
+            let parentManifest: ClientManifest = try .load(at: parentURL, loadParent: false)
+            return manifest.merge(to: parentManifest)
+        }
+        return manifest
+    }
+    
+    static func load(from data: Data) throws -> ClientManifest {
         do {
-            let manifest: ClientManifest = try JSONDecoder.shared.decode(ClientManifest.self, from: data)
-            if let inheritsFrom: String = manifest.inheritsFrom {
-                guard loadParent else { throw LoadError.missingParentManifest }
-                let parentURL: URL = url.deletingLastPathComponent().appending(path: ".parent/\(inheritsFrom).json")
-                guard FileManager.default.fileExists(atPath: parentURL.path) else { throw LoadError.missingParentManifest }
-                let parentManifest: ClientManifest = try .load(at: parentURL, loadParent: false)
-                return manifest.merge(to: parentManifest)
-            }
-            return manifest
+            return try JSONDecoder.shared.decode(ClientManifest.self, from: data)
         } catch let error as DecodingError {
             err("解析失败：\(error)")
             throw LoadError.formatError
