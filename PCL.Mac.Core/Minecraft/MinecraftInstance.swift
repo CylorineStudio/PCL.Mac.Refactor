@@ -117,20 +117,7 @@ public class MinecraftInstance {
         // 加载客户端清单
         let manifestURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
         guard FileManager.default.fileExists(atPath: manifestURL.path) else { throw MinecraftError.missingManifest }
-        let manifest: ClientManifest
-        do {
-            let manifest1: ClientManifest = try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: manifestURL))
-            if let baseId: String = manifest1.inheritsFrom {
-                let baseURL: URL = runningDirectory.appending(path: ".parent/\(baseId).json")
-                let baseManifest: ClientManifest = try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: baseURL))
-                manifest = manifest1.merge(to: baseManifest)
-            } else {
-                manifest = manifest1
-            }
-        } catch {
-            err("加载客户端清单失败：\(error)")
-            throw MinecraftError.unknownManifestFormat
-        }
+        let manifest: ClientManifest = try .load(at: manifestURL)
         // 获取版本
         let version: MinecraftVersion
         if let cachedVersion = VersionCache.version(of: manifestURL) {

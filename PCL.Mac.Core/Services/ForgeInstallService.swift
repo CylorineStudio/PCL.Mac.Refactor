@@ -9,10 +9,17 @@ import Foundation
 import ZIPFoundation
 
 public class ForgeInstallService {
-    public init(minecraftVersion: MinecraftVersion, version: String, repository: MinecraftRepository, runningDirectory: URL) {
+    public init(
+        minecraftVersion: MinecraftVersion,
+        version: String,
+        repository: MinecraftRepository,
+        manifest: ClientManifest,
+        runningDirectory: URL
+    ) {
         self.minecraftVersion = minecraftVersion
         self.version = version
         self.repository = repository
+        self.manifest = manifest
         self.runningDirectory = runningDirectory
         self.tempDirectory = URLConstants.tempURL.appending(path: "forge-install-\(UUID().uuidString.lowercased())")
         try? FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
@@ -31,6 +38,7 @@ public class ForgeInstallService {
     private let minecraftVersion: MinecraftVersion
     private let version: String
     private let repository: MinecraftRepository
+    private let manifest: ClientManifest
     private let runningDirectory: URL
     private let tempDirectory: URL
     private var installProfile: ForgeInstallProfile!
@@ -57,7 +65,14 @@ public class ForgeInstallService {
         var progress: Double = 0
         let progressStep: Double = 1.0 / Double(processors.count)
         for processor in processors {
-            try executeProcessor(processor)
+            if processor.outputs?["{MOJMAPS}"] != nil {
+                guard let destination: URL = values["MOJMAPS"].map(URL.init(fileURLWithPath:)) else {
+                    throw SimpleError("下载混淆表失败：未找到混淆表下载项。")
+                }
+                try await downloadMojmaps(to: destination)
+            } else {
+                try executeProcessor(processor)
+            }
             progress += progressStep
             await progressHandler(progress)
         }
@@ -136,5 +151,12 @@ public class ForgeInstallService {
         if process.terminationStatus != 0 {
             throw SimpleError("Forge 安装器 \(processor.jar) 执行失败。")
         }
+    }
+    
+    private func downloadMojmaps(to destination: URL) async throws {
+        guard let url: URL = manifest.downloads.clientMappings?.url else {
+            throw SimpleError("下载混淆表失败：未找到混淆表下载项。")
+        }
+        try await SingleFileDownloader.download(url: url, destination: destination, sha1: nil, replaceMethod: .skip)
     }
 }

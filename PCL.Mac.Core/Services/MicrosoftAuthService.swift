@@ -142,11 +142,12 @@ public class MicrosoftAuthService {
     }
     
     private func post(_ url: URLConvertible, _ body: [String: Any], encodeMethod: Requests.EncodeMethod = .json) async throws -> JSON {
-        let json: JSON = try await Requests.post(url, body: body, using: encodeMethod).json()
+        let response = try await Requests.post(url, body: body, using: encodeMethod)
+        let json: JSON = try response.json()
         if let error: String = json["error"].string,
            error != "authorization_pending" && error != "slow_down" {
             let description: String = json["error_description"].string ?? json["errorMessage"].stringValue
-            err("调用 API 失败：\(error)，错误描述：\(description)")
+            err("调用 API 失败：\(response.statusCode) \(error)，错误描述：\(description)")
             throw Error.apiError(description: description)
         }
         return json

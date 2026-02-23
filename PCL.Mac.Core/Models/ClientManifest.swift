@@ -392,4 +392,48 @@ public extension ClientManifest {
             self.isNativesLibrary = library.isNativesLibrary
         }
     }
+    
+    enum LoadError: LocalizedError {
+        case fileNotFound
+        case formatError
+        case missingParentManifest
+        case failedToRead(underlying: Error)
+        
+        public var errorDescription: String? {
+            switch self {
+            case .fileNotFound:
+                "客户端清单文件不存在。"
+            case .formatError:
+                "客户端清单格式错误。"
+            case .missingParentManifest:
+                "未找到客户端清单的父清单。"
+            case .failedToRead(let underlying):
+                "读取客户端清单失败：\(underlying.localizedDescription)"
+            }
+        }
+    }
+    
+    static func load(at url: URL, loadParent: Bool = true) throws -> ClientManifest {
+        guard FileManager.default.fileExists(atPath: url.path) else { throw LoadError.fileNotFound }
+        let data: Data
+        do {
+            data = try .init(contentsOf: url)
+        } catch {
+            throw LoadError.failedToRead(underlying: error)
+        }
+        do {
+            let manifest: ClientManifest = try JSONDecoder.shared.decode(ClientManifest.self, from: data)
+            if let inheritsFrom: String = manifest.inheritsFrom {
+                guard loadParent else { throw LoadError.missingParentManifest }
+                let parentURL: URL = url.deletingLastPathComponent().appending(path: ".parent/\(inheritsFrom).json")
+                guard FileManager.default.fileExists(atPath: parentURL.path) else { throw LoadError.missingParentManifest }
+                let parentManifest: ClientManifest = try .load(at: parentURL, loadParent: false)
+                return manifest.merge(to: parentManifest)
+            }
+            return manifest
+        } catch let error as DecodingError {
+            err("解析失败：\(error)")
+            throw LoadError.formatError
+        }
+    }
 }

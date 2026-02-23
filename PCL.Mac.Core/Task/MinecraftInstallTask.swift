@@ -75,14 +75,14 @@ public enum MinecraftInstallTask {
                     progressHandler: task.setProgress(_:)
                 )
             },
-            .init(6, "下载依赖库文件") { task, model in
+            .init(5, "下载依赖库文件") { task, model in
                 try await downloadLibraries(
                     manifest: model.mappedManifest,
                     repository: model.repository,
                     progressHandler: task.setProgress(_:)
                 )
             },
-            .init(7, "解压本地库文件", display: version < .init("1.19.1")) { task, model in
+            .init(6, "解压本地库文件", display: version < .init("1.19.1")) { task, model in
                 try await extractNatives(
                     manifest: model.mappedManifest,
                     runningDirectory: model.runningDirectory,
@@ -90,7 +90,7 @@ public enum MinecraftInstallTask {
                     progressHandler: task.setProgress(_:)
                 )
             },
-            .init(8, "__completion", display: false) { _, _ in
+            .init(7, "__completion", display: false) { _, _ in
                 let instance: MinecraftInstance = .init(
                     runningDirectory: repository.versionsURL.appending(path: name),
                     version: version,
@@ -124,7 +124,7 @@ public enum MinecraftInstallTask {
             case .forge:
                 subTasks.insert(
                     .init(3, "下载 Forge 安装器文件") { task, model in
-                        let service: ForgeInstallService = .init(minecraftVersion: model.version, version: modLoader.version, repository: model.repository, runningDirectory: model.runningDirectory)
+                        let service: ForgeInstallService = .init(minecraftVersion: model.version, version: modLoader.version, repository: model.repository, manifest: model.manifest, runningDirectory: model.runningDirectory)
                         model.forgeInstallService = service
                         try await service.downloadFiles(progressHandler: task.setProgress(_:))
                     },
@@ -133,6 +133,7 @@ public enum MinecraftInstallTask {
                 subTasks.insert(
                     .init(4, "执行 Forge 安装器") { task, model in
                         try await model.forgeInstallService!.executeProcessors(progressHandler: task.setProgress(_:))
+                        model.manifest = try .load(at: model.runningDirectory.appending(path: "\(model.name).json"))
                     },
                     at: 4
                 )
@@ -204,6 +205,14 @@ public enum MinecraftInstallTask {
             replaceMethod: .skip,
             progressHandler: progressHandler
         )
+        
+        if var dict: [String: Any] = try JSON(data: Data(contentsOf: destination)).dictionaryObject {
+            dict["id"] = runningDirectory.lastPathComponent
+            dict["version"] = versionId
+            let manifestData: Data = try JSONSerialization.data(withJSONObject: dict, options: [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys])
+            try manifestData.write(to: destination, options: .atomic)
+            return try JSONDecoder.shared.decode(ClientManifest.self, from: manifestData)
+        }
         return try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: destination))
     }
     
