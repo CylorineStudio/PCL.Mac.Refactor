@@ -8,14 +8,12 @@
 import Foundation
 
 public struct ForgeInstallProfile: Codable {
-    public let path: String
     public let data: [String: DataEntry]
     public let processors: [Processor]
     public let libraries: [Library]
     public let clientManifestPath: String
     
     private enum CodingKeys: String, CodingKey {
-        case path
         case data
         case processors
         case libraries

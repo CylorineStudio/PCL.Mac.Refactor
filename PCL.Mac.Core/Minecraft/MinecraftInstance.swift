@@ -129,6 +129,8 @@ public class MinecraftInstance {
                let json: JSON = try? JSON(data: ArchiveUtils.getEntry(url: jarURL, path: "version.json")) {
                 log("成功解析 version.json")
                 version = .init(json["id"].stringValue)
+            } else if let clVersion: String = manifest.version {
+                version = .init(clVersion)
             } else {
                 warn("\(jarURL.lastPathComponent)!/version.json 不存在或解析失败，使用客户端清单中的 id 作为版本号")
                 version = .init(manifest.id)

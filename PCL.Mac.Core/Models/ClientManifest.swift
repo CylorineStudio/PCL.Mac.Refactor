@@ -23,10 +23,14 @@ public class ClientManifest: Decodable {
     
     public let inheritsFrom: String?
     
+    // 非标准字段
+    public let version: String?
+    
     private enum CodingKeys: String, CodingKey {
         case arguments, assetIndex, downloads, id, javaVersion, libraries, logging, mainClass, type
         case minecraftArguments
         case inheritsFrom
+        case version
     }
     
     private enum ArgumentsCodingKeys: String, CodingKey {
@@ -44,7 +48,8 @@ public class ClientManifest: Decodable {
         logging: Logging,
         mainClass: String,
         type: String,
-        inheritsFrom: String?
+        inheritsFrom: String?,
+        version: String?
     ) {
         self.gameArguments = gameArguments
         self.jvmArguments = jvmArguments
@@ -57,6 +62,7 @@ public class ClientManifest: Decodable {
         self.mainClass = mainClass
         self.type = type
         self.inheritsFrom = inheritsFrom
+        self.version = version
     }
     
     public required init(from decoder: any Decoder) throws {
@@ -93,6 +99,7 @@ public class ClientManifest: Decodable {
         self.mainClass = try container.decode(String.self, forKey: .mainClass)
         self.type = try container.decode(String.self, forKey: .type)
         self.inheritsFrom = try container.decodeIfPresent(String.self, forKey: .inheritsFrom)
+        self.version = try container.decodeIfPresent(String.self, forKey: .version)
     }
     
     public class Argument: Decodable {
@@ -350,7 +357,7 @@ public class ClientManifest: Decodable {
     
     /// 创建一个新清单，继承本清单的所有属性，并使用指定的 libraries。
     public func setLibraries(to libraries: [Library]) -> ClientManifest {
-        return .init(gameArguments: gameArguments, jvmArguments: jvmArguments, assetIndex: assetIndex, downloads: downloads, id: id, javaVersion: javaVersion, libraries: libraries, logging: logging, mainClass: mainClass, type: type, inheritsFrom: inheritsFrom)
+        return .init(gameArguments: gameArguments, jvmArguments: jvmArguments, assetIndex: assetIndex, downloads: downloads, id: id, javaVersion: javaVersion, libraries: libraries, logging: logging, mainClass: mainClass, type: type, inheritsFrom: inheritsFrom, version: version)
     }
 }
 
@@ -375,7 +382,8 @@ public extension ClientManifest {
             logging: baseManifest.logging,
             mainClass: mainClass,
             type: baseManifest.type,
-            inheritsFrom: nil
+            inheritsFrom: nil,
+            version: version
         )
     }
     

@@ -45,7 +45,7 @@ public class ForgeInstallService {
     private var values: [String: String]!
     
     private lazy var installerURL: URL = tempDirectory.appending(path: "installer")
-    private lazy var librariesURL: URL = tempDirectory.appending(path: "libraries")
+    private lazy var librariesURL: URL = repository.librariesURL
     
     /// 下载安装器及其所需文件。
     /// - Parameter progressHandler: 进度回调。
@@ -65,7 +65,7 @@ public class ForgeInstallService {
         var progress: Double = 0
         let progressStep: Double = 1.0 / Double(processors.count)
         for processor in processors {
-            if processor.outputs?["{MOJMAPS}"] != nil {
+            if processor.args.contains("DOWNLOAD_MOJMAPS") {
                 guard let destination: URL = values["MOJMAPS"].map(URL.init(fileURLWithPath:)) else {
                     throw SimpleError("下载混淆表失败：未找到混淆表下载项。")
                 }
@@ -102,30 +102,30 @@ public class ForgeInstallService {
     }
     
     private func makeValueDict() -> [String: String] {
-        var values: [String: String] = [
+        let values: [String: String] = [
             "SIDE": "client",
             "INSTALLER": tempDirectory.appending(path: "installer.jar").path,
             "MINECRAFT_JAR": runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).jar").path,
             "MINECRAFT_VERSION": minecraftVersion.id,
             "ROOT": repository.url.path,
-            "LIBRARY_DIR": repository.librariesURL.path
-        ]
+            "LIBRARY_DIR": librariesURL.path
+        ].merging(installProfile.data.mapValues { parseValue($0.client) }, uniquingKeysWith: { _, value in value })
         
-        for (key, value) in installProfile.data.mapValues(\.client) {
-            let parsedValue: String
-            if value.starts(with: "/") {
-                parsedValue = installerURL.appending(path: value).path
-            } else if value.starts(with: "[") && value.hasSuffix("]") {
-                let path: String = MavenCoordinateUtils.path(of: String(value.dropFirst().dropLast()))
-                parsedValue = repository.librariesURL.appending(path: path).path
-            } else if value.starts(with: "'") && value.hasSuffix("'") {
-                parsedValue = String(value.dropFirst().dropLast())
-            } else {
-                parsedValue = value
-            }
-            values[key] = parsedValue
-        }
         return values
+    }
+    
+    
+    private func parseValue(_ value: String) -> String {
+        if value.starts(with: "/") {
+            return installerURL.appending(path: value).path
+        } else if value.starts(with: "[") && value.hasSuffix("]") {
+            let path: String = MavenCoordinateUtils.path(of: String(value.dropFirst().dropLast()))
+            return librariesURL.appending(path: path).path
+        } else if value.starts(with: "'") && value.hasSuffix("'") {
+            return String(value.dropFirst().dropLast())
+        } else {
+            return value
+        }
     }
     
     /// 下载安装器所需的依赖项。
@@ -142,7 +142,7 @@ public class ForgeInstallService {
     private func executeProcessor(_ processor: ForgeInstallProfile.Processor) throws {
         let classpath: String = (processor.classpath + [processor.jar]).map(parseMavenCoord(coord:)).joined(separator: ":")
         let mainClass: String = try JarUtils.mainClass(of: librariesURL.appending(path: MavenCoordinateUtils.path(of: processor.jar)))
-        let arguments: [String] = ["-cp", classpath, mainClass] + processor.args.map { Utils.replace($0, withValues: values, withDollarPrefix: false) }
+        let arguments: [String] = ["-cp", classpath, mainClass] + processor.args.map { Utils.replace(parseValue($0), withValues: values, withDollarPrefix: false) }
         let process: Process = .init()
         process.arguments = arguments
         process.executableURL = URL(fileURLWithPath: "/usr/bin/java")
