@@ -256,7 +256,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1640;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					EC71A32C2EC034AA006E496F = {
 						CreatedOnToolsVersion = 16.4;
@@ -612,7 +612,7 @@
 				INFOPLIST_FILE = PCL.Mac/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PCL.Mac;
 				INFOPLIST_KEY_GCSupportsGameMode = YES;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -643,7 +643,7 @@
 				INFOPLIST_FILE = PCL.Mac/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PCL.Mac;
 				INFOPLIST_KEY_GCSupportsGameMode = YES;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
