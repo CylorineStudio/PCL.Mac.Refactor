@@ -151,7 +151,7 @@ private struct ModLoaderCard: View {
                 try await Requests.get("https://bmclapi2.bangbang93.com/forge/minecraft/\(minecraftVersion)").json().arrayValue
                     .map { .init(id: $0["version"].stringValue) }
             }
-            self.versions = versions
+            self.versions = versions.sorted {  $0.id.compare($1.id, options: .numeric) == .orderedDescending }
             loadState = versions.isEmpty ? .noUsableVersion : .finished
         } catch {
             err("加载 \(type) 版本列表失败：\(error.localizedDescription)")
