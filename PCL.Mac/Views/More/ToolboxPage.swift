@@ -13,8 +13,26 @@ struct ToolboxPage: View {
     
     var body: some View {
         CardContainer {
-            MyTip(text: "回声洞里的消息目前还比较有限，所以很可能会重复……\n你可以前往 https://github.com/CeciliaStudio/PCL.Mac.Refactor/discussions/43 进行投稿！", theme: .blue)
+            MyCard("百宝箱", foldable: false) {
+                HStack {
+                    MyButton("今日人品") {
+                        let lucky: Int = viewModel.todayLucky
+                        Task {
+                            _ = await MessageBoxManager.shared.showText(
+                                title: "今日人品 - \(viewModel.todayDate)",
+                                content: "你今天的人品值是：\(viewModel.formatLucky(lucky))",
+                                level: lucky <= 30 ? .error : .info
+                            )
+                        }
+                    }
+                    .frame(width: 100)
+                    Spacer()
+                }
+                .frame(height: 40)
+            }
             MyCard("回声洞", foldable: false, limitHeight: false) {
+                MyTip(text: "回声洞里的消息目前还比较有限，所以很可能会重复……\n欢迎前往 https://github.com/CeciliaStudio/PCL.Mac.Refactor/discussions/43 进行投稿！", theme: .blue)
+                    .padding(.bottom, 10)
                 Color.clear
                     .modifier(CaveMessageModifier(text: viewModel.currentCaveMessage, progress: viewModel.revealProgress))
                     .frame(maxWidth: .infinity, alignment: .leading)
