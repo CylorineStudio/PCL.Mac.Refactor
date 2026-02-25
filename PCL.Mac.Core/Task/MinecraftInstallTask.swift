@@ -106,7 +106,8 @@ public enum MinecraftInstallTask {
                     runningDirectory: repository.versionsURL.appending(path: name),
                     version: version,
                     manifest: model.manifest,
-                    config: .init()
+                    config: .init(),
+                    modLoader: modLoader?.type
                 )
                 repository.instances?.append(instance)
                 try? FileManager.default.removeItem(at: model.runningDirectory.appending(path: ".incomplete"))
@@ -145,7 +146,7 @@ public enum MinecraftInstallTask {
                 subTasks.insert(
                     .init(4, "执行 Forge 安装器") { task, model in
                         try await model.forgeInstallService!.executeProcessors(progressHandler: task.setProgress(_:))
-                        model.manifest = try .load(at: model.runningDirectory.appending(path: "\(model.name).json"))
+                        model.manifest = try .load(at: model.runningDirectory.appending(path: "\(model.name).json")).0
                     },
                     at: 4
                 )

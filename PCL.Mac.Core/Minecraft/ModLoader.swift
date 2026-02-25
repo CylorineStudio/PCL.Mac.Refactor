@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum ModLoader: CustomStringConvertible {
+public enum ModLoader: Int, CustomStringConvertible {
     case fabric, forge
     
     public var description: String {

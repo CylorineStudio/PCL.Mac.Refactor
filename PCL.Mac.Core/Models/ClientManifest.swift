@@ -426,7 +426,7 @@ public extension ClientManifest {
     ///   - loadParent: 是否加载父清单（`inhertsFrom`）。如果此参数为 `false`，且清单中包含 `inheritsFrom` 键，会抛出 `LoadError.missingParentManifest` 错误。
     /// - Returns: 一个 `ClientManifest`。
     /// - Throws: `LoadError`
-    static func load(at url: URL, loadParent: Bool = true) throws -> ClientManifest {
+    static func load(at url: URL, loadParent: Bool = true) throws -> (ClientManifest, ModLoader?) {
         guard FileManager.default.fileExists(atPath: url.path) else { throw LoadError.fileNotFound }
         let data: Data
         do {
@@ -435,15 +435,27 @@ public extension ClientManifest {
             throw LoadError.failedToRead(underlying: error)
         }
         
+        let modLoader: ModLoader?
+        guard let str: String = .init(data: data, encoding: .utf8) else { throw LoadError.formatError }
+        if str.contains("neoforge") {
+            modLoader = nil // unsupported
+        } else if str.contains("forge") {
+            modLoader = .forge
+        } else if str.contains("fabric") {
+            modLoader = .fabric
+        } else {
+            modLoader = nil
+        }
+        
         let manifest: ClientManifest = try .load(from: data)
         if let inheritsFrom: String = manifest.inheritsFrom {
             guard loadParent else { throw LoadError.missingParentManifest }
             let parentURL: URL = url.deletingLastPathComponent().appending(path: ".parent/\(inheritsFrom).json")
             guard FileManager.default.fileExists(atPath: parentURL.path) else { throw LoadError.missingParentManifest }
-            let parentManifest: ClientManifest = try .load(at: parentURL, loadParent: false)
-            return manifest.merge(to: parentManifest)
+            let parentManifest: ClientManifest = try .load(at: parentURL, loadParent: false).0
+            return (manifest.merge(to: parentManifest), modLoader)
         }
-        return manifest
+        return (manifest, modLoader)
     }
     
     static func load(from data: Data) throws -> ClientManifest {

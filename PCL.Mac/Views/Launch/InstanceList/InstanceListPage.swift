@@ -30,18 +30,20 @@ struct InstanceListPage: View {
                             }
                         }
                     }
-                    MyCard("常规实例") {
-                        VStack(spacing: 0) {
-                            ForEach(instances.sorted(by: { $0.version > $1.version }), id: \.name) { instance in
-                                InstanceView(instance: instance)
-                                    .onTapGesture {
-                                        instanceViewModel.switchInstance(to: instance, repository)
-                                        AppRouter.shared.removeLast()
-                                    }
-                            }
+                    let moddedInstances: [MinecraftInstance] = instances.filter { $0.modLoader != nil }
+                    if !moddedInstances.isEmpty {
+                        MyCard("可安装 Mod") {
+                            instanceList(moddedInstances)
                         }
+                        .cardIndex(1)
                     }
-                    .cardIndex(1)
+                    let vanillaInstances: [MinecraftInstance] = instances.filter { !moddedInstances.contains($0) }
+                    if !vanillaInstances.isEmpty {
+                        MyCard("常规实例") {
+                            instanceList(vanillaInstances)
+                        }
+                        .cardIndex(moddedInstances.isEmpty ? 1 : 2)
+                    }
                 }
             } else {
                 MyLoading(viewModel: viewModel.loadingViewModel)
@@ -53,18 +55,44 @@ struct InstanceListPage: View {
         }
         .id(repository.url)
     }
+    
+    private func compareInstance(lhs: MinecraftInstance, rhs: MinecraftInstance) -> Bool {
+        if lhs.modLoader == rhs.modLoader {
+            return lhs.version > rhs.version
+        }
+        return (lhs.modLoader?.rawValue ?? -1) > (rhs.modLoader?.rawValue ?? -1)
+    }
+    
+    @ViewBuilder
+    private func instanceList(_ instances: [MinecraftInstance]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(instances.sorted(by: compareInstance(lhs:rhs:)), id: \.name) { instance in
+                InstanceView(instance: instance)
+                    .onTapGesture {
+                        instanceViewModel.switchInstance(to: instance, repository)
+                        AppRouter.shared.removeLast()
+                    }
+            }
+        }
+    }
 }
 
 private struct InstanceView: View {
     private let name: String
     private let version: MinecraftVersion
+    private let iconName: String
     
     init(instance: MinecraftInstance) {
         self.name = instance.name
         self.version = instance.version
+        if let modLoader = instance.modLoader {
+            self.iconName = modLoader.description
+        } else {
+            self.iconName = "GrassBlock"
+        }
     }
     
     var body: some View {
-        MyListItem(.init(image: "GrassBlock", name: name, description: version.id))
+        MyListItem(.init(image: iconName, name: name, description: version.id))
     }
 }
