@@ -10,10 +10,12 @@ import SwiftyJSON
 
 /// https://zh.minecraft.wiki/w/客户端清单文件格式
 public class ClientManifest: Decodable {
+    private static let oldVersionFlag: String = "-Dorg.ceciliastudio.cl.OldVersionFlag=1"
+    
     public let gameArguments: [Argument]
     public let jvmArguments: [Argument]
-    public let assetIndex: AssetIndex
-    public let downloads: Downloads
+    public let assetIndex: AssetIndex!
+    public let downloads: Downloads!
     public let id: String
     public let javaVersion: JavaVersion
     public let libraries: [Library]
@@ -23,10 +25,14 @@ public class ClientManifest: Decodable {
     
     public let inheritsFrom: String?
     
+    // 非标准字段
+    public let version: String?
+    
     private enum CodingKeys: String, CodingKey {
         case arguments, assetIndex, downloads, id, javaVersion, libraries, logging, mainClass, type
         case minecraftArguments
         case inheritsFrom
+        case version
     }
     
     private enum ArgumentsCodingKeys: String, CodingKey {
@@ -36,15 +42,16 @@ public class ClientManifest: Decodable {
     public init(
         gameArguments: [Argument],
         jvmArguments: [Argument],
-        assetIndex: AssetIndex,
-        downloads: Downloads,
+        assetIndex: AssetIndex?,
+        downloads: Downloads?,
         id: String,
         javaVersion: JavaVersion,
         libraries: [Library],
         logging: Logging,
         mainClass: String,
         type: String,
-        inheritsFrom: String?
+        inheritsFrom: String?,
+        version: String?
     ) {
         self.gameArguments = gameArguments
         self.jvmArguments = jvmArguments
@@ -57,6 +64,7 @@ public class ClientManifest: Decodable {
         self.mainClass = mainClass
         self.type = type
         self.inheritsFrom = inheritsFrom
+        self.version = version
     }
     
     public required init(from decoder: any Decoder) throws {
@@ -64,6 +72,7 @@ public class ClientManifest: Decodable {
         if container.contains(.minecraftArguments) { // 1.12-
             self.gameArguments = try container.decode(String.self, forKey: .minecraftArguments).split(separator: " ").map { .init(value: [String($0)], rules: []) }
             self.jvmArguments = [
+                Self.oldVersionFlag,
                 "-XX:+UnlockExperimentalVMOptions", "-XX:+UseG1GC", "-XX:-UseAdaptiveSizePolicy", "-XX:-OmitStackTraceInFastThrow",
                 "-Djava.library.path=${natives_directory}",
                 "-Dorg.lwjgl.system.SharedLibraryExtractPath=${natives_directory}",
@@ -73,15 +82,15 @@ public class ClientManifest: Decodable {
             ].map { .init(value: [$0], rules: []) }
         } else {
             let argumentsContainer = try container.nestedContainer(keyedBy: ArgumentsCodingKeys.self, forKey: .arguments)
-            self.gameArguments = try argumentsContainer.decode([Argument].self, forKey: .game)
-            self.jvmArguments = try argumentsContainer.decode([Argument].self, forKey: .jvm)
+            self.gameArguments = try argumentsContainer.decodeIfPresent([Argument].self, forKey: .game) ?? []
+            self.jvmArguments = try argumentsContainer.decodeIfPresent([Argument].self, forKey: .jvm) ?? []
         }
-        self.assetIndex = try container.decode(AssetIndex.self, forKey: .assetIndex)
-        self.downloads = try container.decode(Downloads.self, forKey: .downloads)
+        self.assetIndex = try container.decodeIfPresent(AssetIndex.self, forKey: .assetIndex)
+        self.downloads = try container.decodeIfPresent(Downloads.self, forKey: .downloads)
         self.id = try container.decode(String.self, forKey: .id)
         self.javaVersion = try container.decodeIfPresent(JavaVersion.self, forKey: .javaVersion) ?? .init(component: "jre-legacy", majorVersion: 8)
         self.libraries = try container.decode([Library].self, forKey: .libraries)
-        self.logging = try container.decodeIfPresent(Logging.self, forKey: .logging) ?? .init(
+        self.logging = (try? container.decodeIfPresent(Logging.self, forKey: .logging)) ?? .init(
             argument: "-Dlog4j.configurationFile=${path}",
             file: .init(
                 id: "client-1.12.xml",
@@ -93,6 +102,7 @@ public class ClientManifest: Decodable {
         self.mainClass = try container.decode(String.self, forKey: .mainClass)
         self.type = try container.decode(String.self, forKey: .type)
         self.inheritsFrom = try container.decodeIfPresent(String.self, forKey: .inheritsFrom)
+        self.version = try container.decodeIfPresent(String.self, forKey: .version)
     }
     
     public class Argument: Decodable {
@@ -125,21 +135,33 @@ public class ClientManifest: Decodable {
         }
     }
     
-    public class Artifact: Decodable {
+    public class Artifact: Codable {
         public let path: String
         public let sha1: String?
         public let size: Int?
-        public let url: URL
+        public let url: URL?
         
-        public init(path: String, sha1: String?, size: Int?, url: URL) {
+        public init(path: String, sha1: String?, size: Int?, url: URL?) {
             self.path = path
             self.sha1 = sha1
             self.size = size
             self.url = url
         }
+        
+        public required init(from decoder: any Decoder) throws {
+            let container: KeyedDecodingContainer<ClientManifest.Artifact.CodingKeys> = try decoder.container(keyedBy: ClientManifest.Artifact.CodingKeys.self)
+            self.path = try container.decode(String.self, forKey: ClientManifest.Artifact.CodingKeys.path)
+            self.sha1 = try container.decodeIfPresent(String.self, forKey: ClientManifest.Artifact.CodingKeys.sha1)
+            self.size = try container.decodeIfPresent(Int.self, forKey: ClientManifest.Artifact.CodingKeys.size)
+            self.url = try? container.decodeIfPresent(URL.self, forKey: ClientManifest.Artifact.CodingKeys.url)
+        }
+        
+        public func downloadItem(destinationDirectory: URL) -> DownloadItem? {
+            return url.map { DownloadItem(url: $0, destination: destinationDirectory.appending(path: path), sha1: sha1) }
+        }
     }
     
-    public class AssetIndex: Decodable {
+    public class AssetIndex: Codable {
         public let id: String
         public let sha1: String
         public let size: Int
@@ -173,7 +195,7 @@ public class ClientManifest: Decodable {
         public let isNativesLibrary: Bool
         
         private enum CodingKeys: String, CodingKey {
-            case name, downloads, natives, rules
+            case name, downloads, natives, rules, url, sha1, size
         }
         
         private enum DownloadsCodingKeys: String, CodingKey {
@@ -200,19 +222,24 @@ public class ClientManifest: Decodable {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             self.name = try container.decode(String.self, forKey: .name)
             self.isNativesLibrary = container.contains(.natives)
-            let downloadsContainer = try? container.nestedContainer(keyedBy: DownloadsCodingKeys.self, forKey: .downloads)
-            if !isNativesLibrary {
-                self.artifact = try downloadsContainer.unwrap("该支持库没有 artifact。").decode(Artifact.self, forKey: .artifact)
-            } else {
-                let natives: [String: String] = try container.decode([String: String].self, forKey: .natives)
-                if let key = natives["osx"] {
-                    let classifiers: [String: Artifact] = try downloadsContainer.unwrap().decode([String: Artifact].self, forKey: .classifiers)
+            self.rules = try container.decodeIfPresent([Rule].self, forKey: .rules) ?? []
+            getArtifact: if let downloadsContainer = try? container.nestedContainer(keyedBy: DownloadsCodingKeys.self, forKey: .downloads) {
+                if isNativesLibrary {
+                    let natives: [String: String] = try container.decode([String: String].self, forKey: .natives)
+                    guard let key: String = natives["osx"] else {
+                        self.artifact = nil
+                        break getArtifact
+                    }
+                    let classifiers: [String: Artifact] = try downloadsContainer.decode([String: Artifact].self, forKey: .classifiers)
                     self.artifact = try classifiers[key].unwrap()
                 } else {
-                    self.artifact = nil
+                    self.artifact = try downloadsContainer.decode(Artifact.self, forKey: .artifact)
                 }
+            } else {
+                let url: URL = try container.decodeIfPresent(URL.self, forKey: .url) ?? .init(string: "https://libraries.minecraft.net")!
+                let path: String = MavenCoordinateUtils.path(of: name)
+                self.artifact = .init(path: path, sha1: nil, size: nil, url: url.appending(path: path))
             }
-            self.rules = try container.decodeIfPresent([Rule].self, forKey: .rules) ?? []
         }
     }
     
@@ -328,6 +355,115 @@ public class ClientManifest: Decodable {
     
     /// 创建一个新清单，继承本清单的所有属性，并使用指定的 libraries。
     public func setLibraries(to libraries: [Library]) -> ClientManifest {
-        return .init(gameArguments: gameArguments, jvmArguments: jvmArguments, assetIndex: assetIndex, downloads: downloads, id: id, javaVersion: javaVersion, libraries: libraries, logging: logging, mainClass: mainClass, type: type, inheritsFrom: inheritsFrom)
+        return .init(gameArguments: gameArguments, jvmArguments: jvmArguments, assetIndex: assetIndex, downloads: downloads, id: id, javaVersion: javaVersion, libraries: libraries, logging: logging, mainClass: mainClass, type: type, inheritsFrom: inheritsFrom, version: version)
+    }
+}
+
+
+// MARK: - Modded 实例处理
+
+public extension ClientManifest {
+    func merge(to baseManifest: ClientManifest) -> ClientManifest {
+        let isOldVersion: Bool = baseManifest.jvmArguments.contains { $0.value.contains(Self.oldVersionFlag) }
+        var librarySet: Set<HashableLibrary> = []
+        let libraries: [Library] = (libraries + baseManifest.libraries)
+            .filter { $0.isRulesSatisfied && librarySet.insert(.init(from: $0)).inserted }
+        librarySet.removeAll()
+        
+        return .init(
+            gameArguments: (isOldVersion ? [] : baseManifest.gameArguments) + gameArguments,
+            jvmArguments: (isOldVersion ? [] : baseManifest.jvmArguments) + jvmArguments,
+            assetIndex: baseManifest.assetIndex,
+            downloads: baseManifest.downloads,
+            id: id,
+            javaVersion: baseManifest.javaVersion,
+            libraries: libraries,
+            logging: baseManifest.logging,
+            mainClass: mainClass,
+            type: baseManifest.type,
+            inheritsFrom: nil,
+            version: version
+        )
+    }
+    
+    private struct HashableLibrary: Hashable {
+        private let groupId: String
+        private let artifactId: String
+        private let classifier: String?
+        private let isNativesLibrary: Bool
+        
+        public init(from library: Library) {
+            self.groupId = library.groupId
+            self.artifactId = library.artifactId
+            self.classifier = library.classifier
+            self.isNativesLibrary = library.isNativesLibrary
+        }
+    }
+    
+    enum LoadError: LocalizedError {
+        case fileNotFound
+        case formatError
+        case missingParentManifest
+        case failedToRead(underlying: Error)
+        
+        public var errorDescription: String? {
+            switch self {
+            case .fileNotFound:
+                "客户端清单文件不存在。"
+            case .formatError:
+                "客户端清单格式错误。"
+            case .missingParentManifest:
+                "未找到客户端清单的父清单。"
+            case .failedToRead(let underlying):
+                "读取客户端清单失败：\(underlying.localizedDescription)"
+            }
+        }
+    }
+    
+    /// 从磁盘加载 `ClientManifest`。
+    /// - Parameters:
+    ///   - url: 客户端清单文件 `URL`。
+    ///   - loadParent: 是否加载父清单（`inhertsFrom`）。如果此参数为 `false`，且清单中包含 `inheritsFrom` 键，会抛出 `LoadError.missingParentManifest` 错误。
+    /// - Returns: 一个 `ClientManifest`。
+    /// - Throws: `LoadError`
+    static func load(at url: URL, loadParent: Bool = true) throws -> (ClientManifest, ModLoader?) {
+        guard FileManager.default.fileExists(atPath: url.path) else { throw LoadError.fileNotFound }
+        let data: Data
+        do {
+            data = try .init(contentsOf: url)
+        } catch {
+            throw LoadError.failedToRead(underlying: error)
+        }
+        
+        let modLoader: ModLoader?
+        guard let str: String = .init(data: data, encoding: .utf8) else { throw LoadError.formatError }
+        if str.contains("neoforge") {
+            modLoader = nil // unsupported
+        } else if str.contains("forge") {
+            modLoader = .forge
+        } else if str.contains("fabric") {
+            modLoader = .fabric
+        } else {
+            modLoader = nil
+        }
+        
+        let manifest: ClientManifest = try .load(from: data)
+        if let inheritsFrom: String = manifest.inheritsFrom {
+            guard loadParent else { throw LoadError.missingParentManifest }
+            let parentURL: URL = url.deletingLastPathComponent().appending(path: ".parent/\(inheritsFrom).json")
+            guard FileManager.default.fileExists(atPath: parentURL.path) else { throw LoadError.missingParentManifest }
+            let parentManifest: ClientManifest = try .load(at: parentURL, loadParent: false).0
+            return (manifest.merge(to: parentManifest), modLoader)
+        }
+        return (manifest, modLoader)
+    }
+    
+    static func load(from data: Data) throws -> ClientManifest {
+        do {
+            return try JSONDecoder.shared.decode(ClientManifest.self, from: data)
+        } catch let error as DecodingError {
+            err("解析失败：\(error)")
+            throw LoadError.formatError
+        }
     }
 }

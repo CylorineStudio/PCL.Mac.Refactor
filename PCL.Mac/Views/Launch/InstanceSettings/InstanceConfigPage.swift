@@ -9,9 +9,12 @@ import SwiftUI
 import Core
 
 struct InstanceConfigPage: View {
-    @EnvironmentObject private var instanceVM: InstanceViewModel
+    @EnvironmentObject private var instanceVM: InstanceManager
     @StateObject private var loadingVM: MyLoadingViewModel = .init(text: "加载中")
     @State private var instance: MinecraftInstance?
+    
+    @State private var jvmHeapSize: String = ""
+    
     private let id: String
     
     init(id: String) {
@@ -34,6 +37,7 @@ struct InstanceConfigPage: View {
                 let instance: MinecraftInstance = try instanceVM.loadInstance(id)
                 await MainActor.run {
                     self.instance = instance
+                    self.jvmHeapSize = instance.config.jvmHeapSize.description
                 }
             } catch {
                 await MainActor.run {
@@ -48,9 +52,10 @@ struct InstanceConfigPage: View {
         MyCard("JVM 设置", foldable: false) {
             VStack {
                 configLine(label: "内存分配") {
-                    MyTextField(initial: instance.config.jvmHeapSize, parse: { .init($0) }) { value in
-                        instance.setJVMHeapSize(value)
-                    }
+                    MyTextField(text: $jvmHeapSize)
+                        .onChange(of: jvmHeapSize) { newValue in
+                            if let jvmHeapSize: UInt64 = .init(newValue) { instance.setJVMHeapSize(jvmHeapSize) }
+                        }
                     MyText("MB")
                 }
             }

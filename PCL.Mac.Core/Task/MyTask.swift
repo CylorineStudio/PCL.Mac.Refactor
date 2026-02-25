@@ -31,12 +31,14 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
     public let name: String
     public let subTasks: [SubTask]
     private let model: Model
+    private let failureHandler: ((Error) -> Void)?
     private var cancellables: [AnyCancellable] = []
     
-    private init(name: String, model: Model, _ subTasks: [SubTask]) {
+    public init(name: String, model: Model, _ subTasks: [SubTask], failureHandler: ((Error) -> Void)? = nil) {
         self.name = name
         self.model = model
         self.subTasks = subTasks
+        self.failureHandler = failureHandler
         cancellables = subTasks.map { subTask in
             subTask.objectWillChange.sink { [weak self] _ in
                 self?.objectWillChange.send()
@@ -49,8 +51,9 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
     ///   - name: 任务名。
     ///   - model: 任务模型，用于在子任务间共享数据。
     ///   - subTasks: 该任务的子任务列表。
-    public convenience init(name: String, model: Model, _ subTasks: SubTask...) {
-        self.init(name: name, model: model, subTasks)
+    ///   - failureHandler: 任务失败回调。
+    public convenience init(name: String, model: Model, _ subTasks: SubTask..., failureHandler: ((Error) -> Void)? = nil) {
+        self.init(name: name, model: model, subTasks, failureHandler: failureHandler)
     }
     
     /// 开始按顺序执行任务。
@@ -90,6 +93,11 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
                 try await execute(taskList: subTaskList)
             } catch let error as CancellationError {
                 log("任务 \(name) 被中断")
+                failureHandler?(error)
+                throw error
+            } catch {
+                err("任务 \(name) 执行失败：\(error.localizedDescription)")
+                failureHandler?(error)
                 throw error
             }
         }
@@ -182,8 +190,9 @@ extension MyTask where Model == EmptyModel {
     /// - Parameters:
     ///   - name: 任务名。
     ///   - subTasks: 子任务列表。
-    public convenience init(name: String, _ subTasks: SubTask...) {
-        self.init(name: name, model: EmptyModel(), subTasks)
+    ///   - failureHandler: 任务失败回调。
+    public convenience init(name: String, _ subTasks: SubTask..., failureHandler: ((Error) -> Void)? = nil) {
+        self.init(name: name, model: EmptyModel(), subTasks, failureHandler: failureHandler)
     }
 }
 

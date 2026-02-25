@@ -36,6 +36,7 @@ public enum TaskError: Error, Equatable {
 public enum MinecraftError: LocalizedError {
     case missingManifest
     case unknownManifestFormat
+    case incomplete
     
     public var errorDescription: String? {
         switch self {
@@ -43,6 +44,8 @@ public enum MinecraftError: LocalizedError {
             "未找到客户端清单文件。"
         case .unknownManifestFormat:
             "未知的客户端清单格式，可能是由外部安装的实例。"
+        case .incomplete:
+            "这个实例还未完成安装进程。"
         }
     }
 }

@@ -26,7 +26,7 @@ public struct VersionManifest: Decodable {
         self.versions = try container.decode([Version].self, forKey: .versions)
     }
     
-    public struct Version: Decodable {
+    public struct Version: Decodable, Hashable {
         public let id: String
         public let type: MinecraftVersion.VersionType
         public let url: URL

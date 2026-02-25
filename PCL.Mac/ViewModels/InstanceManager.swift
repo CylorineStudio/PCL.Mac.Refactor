@@ -1,5 +1,5 @@
 //
-//  InstanceViewModel.swift
+//  InstanceManager.swift
 //  PCL.Mac
 //
 //  Created by 温迪 on 2025/12/30.
@@ -8,13 +8,14 @@
 import SwiftUI
 import Core
 
-class InstanceViewModel: ObservableObject {
+class InstanceManager: ObservableObject {
+    public static let shared: InstanceManager = .init()
     @Published public var repositories: [MinecraftRepository]
     @Published public var currentRepository: MinecraftRepository?
     @Published public var currentInstance: MinecraftInstance?
     @Published public var reloadErrorMessage: String?
     
-    public init() {
+    private init() {
         self.repositories = LauncherConfig.shared.minecraftRepositories
         if let currentRepository: Int = LauncherConfig.shared.currentRepository {
             self.currentRepository = LauncherConfig.shared.minecraftRepositories[currentRepository]
@@ -111,7 +112,7 @@ class InstanceViewModel: ObservableObject {
     }
     
     /// 启动游戏。
-    /// 
+    ///
     /// - Parameters:
     ///   - instance: 目标游戏实例。
     ///   - account: 使用的账号。

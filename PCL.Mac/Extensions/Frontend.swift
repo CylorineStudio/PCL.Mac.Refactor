@@ -36,7 +36,7 @@ extension SubTaskState {
         case .waiting: "TaskWaiting"
         case .executing: ""
         case .finished: "TaskFinished"
-        case .failed: ""
+        case .failed: "TaskWaiting"
         }
     }
 }

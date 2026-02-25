@@ -67,11 +67,9 @@ struct MessageBoxView: View {
             case .text(let text):
                 MyText(text)
             case .list(let items):
-                MyList(items: items, onSelect: { self.selectedItemIndex = $0 })
-            case .input(let initial, let placeholder):
-                MyTextField(initial: initial ?? "", placeholder: placeholder ?? "", immediately: true) { newValue in
-                    inputText = newValue
-                }
+                MyList(items, onSelect: { self.selectedItemIndex = $0 })
+            case .input(_, let placeholder):
+                MyTextField(text: $inputText, placeholder: placeholder ?? "")
             }
         }
     }

@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct MyCard<Content: View>: View {
-    @Environment(\.cardIndex) private var index: Int?
+    @Environment(\.cardIndex) private var index: Int
+    @Environment(\.disableCardAppearAnimation) private var disableCardAppearAnimation: Bool
+    @Environment(\.disableHoverAnimation) private var disableHoverAnimation: Bool
     /// 带动画
     @State private var appeared: Bool = false
     /// 无动画，在 `appeared` 动画结束后变更
@@ -23,14 +25,25 @@ struct MyCard<Content: View>: View {
     @State private var lastClick: Date = .distantPast
     private let title: String
     private let foldable: Bool
+    private let initialFolded: Bool?
     private let titled: Bool
     private let limitHeight: Bool
     private let padding: CGFloat
     private let content: () -> Content
     
-    init(_ title: String, foldable: Bool = true, titled: Bool = true, limitHeight: Bool = true, padding: CGFloat = 18, @ViewBuilder _ content: @escaping () -> Content) {
+    /// 创建一个卡片视图。
+    /// - Parameters:
+    ///   - title: 卡片的标题。在 `titled` 为 `false` 时，该参数会被忽略。
+    ///   - foldable: 卡片是否可被折叠。当 `folded` 未被指定时，卡片默认不会被折叠。
+    ///   - folded: 卡片的初始折叠状态。
+    ///   - titled: 卡片是否拥有标题栏。当 `folded` 未被指定时，卡片默认不会被折叠。
+    ///   - limitHeight: 是否限制卡片高度。若该参数为 `false`，请手动设置卡片高度。
+    ///   - padding: 卡片的内边距。
+    ///   - content: 卡片内容。
+    init(_ title: String, foldable: Bool = true, folded: Bool? = nil, titled: Bool = true, limitHeight: Bool = true, padding: CGFloat = 18, @ViewBuilder _ content: @escaping () -> Content) {
         self.title = title
         self.foldable = foldable && titled
+        self.initialFolded = folded
         self.titled = titled
         self.limitHeight = limitHeight
         self.padding = padding
@@ -53,7 +66,7 @@ struct MyCard<Content: View>: View {
                     }
                 }
             }
-            .foregroundStyle(appearFinished && hovered ? Color.color2 : .color1)
+            .foregroundStyle(appearFinished && !disableHoverAnimation && hovered ? Color.color2 : .color1)
             .frame(height: titled ? 12 : 0)
             .frame(maxWidth: .infinity)
             .padding(titled ? 12 : padding / 2)
@@ -67,6 +80,9 @@ struct MyCard<Content: View>: View {
                     folded = false
                     showContent = true
                     withAnimation(.linear(duration: 0.2)) {
+                        internalContentHeight = min(1000, contentHeight)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         internalContentHeight = contentHeight
                     }
                 } else {
@@ -75,7 +91,7 @@ struct MyCard<Content: View>: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         showContent = false
                     }
-                    internalContentHeight = min(2000, contentHeight) // 控制回弹上限
+                    internalContentHeight = min(1000, contentHeight) // 控制回弹上限
                     withAnimation(.spring(response: 0.35)) {
                         internalContentHeight = 0
                     }
@@ -84,6 +100,7 @@ struct MyCard<Content: View>: View {
             VStack {
                 content()
             }
+            .disableHoverAnimation(!appearFinished)
             .padding(EdgeInsets(top: 0, leading: padding, bottom: padding, trailing: padding))
             .background {
                 GeometryReader { proxy in
@@ -113,37 +130,29 @@ struct MyCard<Content: View>: View {
         .offset(y: appeared ? 0 : -25)
         .opacity(appeared ? 1 : 0)
         .animation(.easeInOut(duration: 0.2), value: hovered)
-        .animation(.spring(response: 0.4, dampingFraction: 0.5), value: appeared)
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index ?? 0) * 0.04) {
+            if disableCardAppearAnimation {
                 appeared = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index ?? 0) * 0.04 + 0.4) {
                 appearFinished = true
+            } else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.04) {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) { appeared = true }
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.04 + 0.4) {
+                    appearFinished = true
+                }
             }
-            if !foldable || !titled {
-                folded = false
-                showContent = true
-                internalContentHeight = contentHeight
+            
+            if let initialFolded {
+                folded = initialFolded
+            } else {
+                if !foldable || !titled {
+                    folded = false
+                    showContent = true
+                    internalContentHeight = contentHeight
+                }
             }
         }
-    }
-}
-
-private struct CardIndexKey: EnvironmentKey {
-    static let defaultValue: Int? = nil
-}
-
-extension EnvironmentValues {
-    var cardIndex: Int? {
-        get { self[CardIndexKey.self] }
-        set { self[CardIndexKey.self] = newValue }
-    }
-}
-
-extension View {
-    func cardIndex(_ index: Int) -> some View {
-        environment(\.cardIndex, index)
     }
 }
 

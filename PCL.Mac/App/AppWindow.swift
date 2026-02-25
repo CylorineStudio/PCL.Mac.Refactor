@@ -27,7 +27,7 @@ class AppWindow: NSWindow {
             rootView: ContentView()
                 .ignoresSafeArea(.container, edges: .top)
                 .frame(minWidth: 1000, minHeight: 550)
-                .environmentObject(InstanceViewModel())
+                .environmentObject(InstanceManager.shared)
                 .environmentObject(MinecraftDownloadPageViewModel())
                 .environmentObject(InstanceListViewModel())
                 .environmentObject(MultiplayerViewModel())

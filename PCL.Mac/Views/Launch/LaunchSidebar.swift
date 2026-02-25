@@ -9,7 +9,7 @@ import SwiftUI
 import Core
 
 struct LaunchSidebar: Sidebar {
-    @EnvironmentObject private var instanceViewModel: InstanceViewModel
+    @EnvironmentObject private var instanceViewModel: InstanceManager
     @ObservedObject private var launchManager: MinecraftLaunchManager = .shared
     @StateObject private var accountViewModel: AccountViewModel = .init()
     @State private var showingAccountEditor: Bool = false

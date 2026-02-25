@@ -9,7 +9,7 @@ import SwiftUI
 import Core
 
 struct InstanceListSidebar: Sidebar {
-    @EnvironmentObject private var instanceViewModel: InstanceViewModel
+    @EnvironmentObject private var instanceViewModel: InstanceManager
     @EnvironmentObject private var viewModel: InstanceListViewModel
     
     let width: CGFloat = 300

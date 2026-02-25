@@ -19,7 +19,7 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     case instanceConfig(id: String)
     
     // 下载页面的子页面
-    case minecraftDownload, downloadPage2, downloadPage3
+    case minecraftDownload, minecraftInstallOptions(version: VersionManifest.Version), downloadPage2, downloadPage3
     
     // 联机页面的子页面
     case multiplayerSub, multiplayerSettings
@@ -50,6 +50,8 @@ class AppRouter: ObservableObject {
             LaunchPage()
         case .minecraftDownload:
             MinecraftDownloadPage()
+        case .minecraftInstallOptions(let version):
+            MinecraftInstallOptionsPage(version: version)
         case .downloadPage2:
             DownloadPage2()
         case .downloadPage3:
@@ -93,6 +95,7 @@ class AppRouter: ObservableObject {
         case .tasks: return true
         case .instanceList, .noInstanceRepository: return true
         case .instanceSettings, .instanceConfig: return true
+        case .minecraftInstallOptions: return true
         default: return false
         }
     }
@@ -103,6 +106,7 @@ class AppRouter: ObservableObject {
         case .tasks: "任务列表"
         case .instanceList, .noInstanceRepository: "实例列表"
         case .instanceSettings(let id), .instanceConfig(let id): "实例设置 - \(id)"
+        case .minecraftInstallOptions(let version): "游戏安装 - \(version.id)"
         default: "错误：当前页面没有标题，请报告此问题！"
         }
     }

@@ -8,12 +8,13 @@
 import Foundation
 import SwiftyJSON
 
-public class MinecraftInstance {
+public class MinecraftInstance: Equatable {
     private static let configFileName: String = ".clconfig.json"
     public let runningDirectory: URL
     public let version: MinecraftVersion
     public let manifest: ClientManifest
     public let config: Config
+    public let modLoader: ModLoader?
     
     public var name: String { runningDirectory.lastPathComponent }
     public var manifestURL: URL { runningDirectory.appending(path: "\(name).json") }
@@ -26,11 +27,13 @@ public class MinecraftInstance {
     ///   - version: 实例的 Minecraft 版本。
     ///   - manifest: 客户端清单。
     ///   - config: 实例配置。
-    public init(runningDirectory: URL, version: MinecraftVersion, manifest: ClientManifest, config: Config) {
+    ///   - modLoader: 实例安装的模组加载器。
+    public init(runningDirectory: URL, version: MinecraftVersion, manifest: ClientManifest, config: Config, modLoader: ModLoader?) {
         self.runningDirectory = runningDirectory
         self.version = version
         self.manifest = manifest
         self.config = config
+        self.modLoader = modLoader
         VersionCache.add(version: version, for: self)
         if config.javaURL == nil {
             setJava(url: searchJava().map(\.executableURL))
@@ -114,16 +117,13 @@ public class MinecraftInstance {
     ///   - version: （可选）缓存的版本号。
     /// - Returns: 实例对象。
     public static func load(from runningDirectory: URL) throws -> MinecraftInstance {
+        if FileManager.default.fileExists(atPath: runningDirectory.appending(path: ".incomplete").path) {
+            throw MinecraftError.incomplete
+        }
         // 加载客户端清单
         let manifestURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
         guard FileManager.default.fileExists(atPath: manifestURL.path) else { throw MinecraftError.missingManifest }
-        let manifest: ClientManifest
-        do {
-            manifest = try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: manifestURL))
-        } catch {
-            err("加载客户端清单失败：\(error)")
-            throw MinecraftError.unknownManifestFormat
-        }
+        let (manifest, modLoader): (ClientManifest, ModLoader?) = try ClientManifest.load(at: manifestURL)
         // 获取版本
         let version: MinecraftVersion
         if let cachedVersion = VersionCache.version(of: manifestURL) {
@@ -135,6 +135,8 @@ public class MinecraftInstance {
                let json: JSON = try? JSON(data: ArchiveUtils.getEntry(url: jarURL, path: "version.json")) {
                 log("成功解析 version.json")
                 version = .init(json["id"].stringValue)
+            } else if let clVersion: String = manifest.version {
+                version = .init(clVersion)
             } else {
                 warn("\(jarURL.lastPathComponent)!/version.json 不存在或解析失败，使用客户端清单中的 id 作为版本号")
                 version = .init(manifest.id)
@@ -156,11 +158,15 @@ public class MinecraftInstance {
             runningDirectory: runningDirectory,
             version: version,
             manifest: manifest,
-            config: config ?? .init()
+            config: config ?? .init(),
+            modLoader: modLoader
         )
         return instance
     }
     
+    public static func == (lhs: MinecraftInstance, rhs: MinecraftInstance) -> Bool {
+        lhs.runningDirectory == rhs.runningDirectory
+    }
     
     public class Config: Codable {
         public var jvmHeapSize: UInt64

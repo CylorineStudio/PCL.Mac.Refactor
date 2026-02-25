@@ -73,6 +73,15 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
                 err("加载实例失败：不支持的客户端清单格式。")
                 errorInstances.append(.init(name: content.lastPathComponent, message: "不支持的客户端清单格式。"))
                 continue
+            } catch MinecraftError.incomplete {
+                log("实例未完成安装，正在尝试自动删除")
+                do {
+                    try FileManager.default.removeItem(at: content)
+                } catch {
+                    err("删除失败：\(error.localizedDescription)")
+                    errorInstances.append(.init(name: content.lastPathComponent, message: "该实例未完成安装，且自动删除失败。"))
+                }
+                continue
             } catch {
                 err("加载实例失败：\(error.localizedDescription)")
                 continue
