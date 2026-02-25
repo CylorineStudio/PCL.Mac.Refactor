@@ -100,7 +100,7 @@ public class ForgeInstallService {
         let manifestURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
         let parentURL: URL = runningDirectory.appending(path: ".parent/\(minecraftVersion).json")
         if !FileManager.default.fileExists(atPath: parentURL.path) {
-            try FileManager.default.createDirectory(at: runningDirectory.appending(path: ".parent"), withIntermediateDirectories: false)
+            try FileManager.default.createDirectory(at: runningDirectory.appending(path: ".parent"), withIntermediateDirectories: true)
             try FileManager.default.moveItem(at: manifestURL, to: parentURL)
         }
         if FileManager.default.fileExists(atPath: manifestURL.path) {

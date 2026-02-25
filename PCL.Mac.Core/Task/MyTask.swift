@@ -53,7 +53,7 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
     ///   - subTasks: 该任务的子任务列表。
     ///   - failureHandler: 任务失败回调。
     public convenience init(name: String, model: Model, _ subTasks: SubTask..., failureHandler: ((Error) -> Void)? = nil) {
-        self.init(name: name, model: model, subTasks)
+        self.init(name: name, model: model, subTasks, failureHandler: failureHandler)
     }
     
     /// 开始按顺序执行任务。
