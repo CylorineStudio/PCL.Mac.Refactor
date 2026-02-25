@@ -13,7 +13,8 @@ struct MoreSidebar: Sidebar {
     var body: some View {
         VStack {
             MyNavigationList(
-                .init(.about, "IconAbout", "关于与鸣谢")
+                .init(.about, "IconAbout", "关于与鸣谢"),
+                .init(.toolbox, "IconBox", "百宝箱")
             )
             Spacer()
         }

@@ -25,7 +25,7 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     case multiplayerSub, multiplayerSettings
     
     // 更多页面的子页面
-    case about
+    case about, toolbox
     
     var id: String { stringValue }
     
@@ -68,6 +68,8 @@ class AppRouter: ObservableObject {
             MultiplayerSettingsPage()
         case .about:
             AboutPage()
+        case .toolbox:
+            ToolboxPage()
         case .instanceConfig(let id):
             InstanceConfigPage(id: id)
         default:
@@ -83,7 +85,7 @@ class AppRouter: ObservableObject {
         case .instanceSettings(let id), .instanceConfig(let id): InstanceSettingsSidebar(id: id)
         case .minecraftDownload, .downloadPage2, .downloadPage3: DownloadSidebar()
         case .multiplayer, .multiplayerSub, .multiplayerSettings: MultiplayerSidebar()
-        case .more, .about: MoreSidebar()
+        case .more, .about, .toolbox: MoreSidebar()
         case .tasks: TasksSidebar()
         default: EmptySidebar()
         }
