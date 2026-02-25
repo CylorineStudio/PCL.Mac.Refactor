@@ -94,7 +94,7 @@ private struct ModLoaderCard: View {
     private let type: ModLoader
     private let minecraftVersion: String
     
-    init(_ type: ModLoader, _ minecraftVersion: String, _ currentLoader: Binding<MinecraftInstallTask.Loader?>, ) {
+    init(_ type: ModLoader, _ minecraftVersion: String, _ currentLoader: Binding<MinecraftInstallTask.Loader?>) {
         self.type = type
         self.minecraftVersion = minecraftVersion
         self._currentLoader = currentLoader
@@ -153,8 +153,10 @@ private struct ModLoaderCard: View {
                 try await Requests.get("https://bmclapi2.bangbang93.com/forge/minecraft/\(minecraftVersion)").json().arrayValue
                     .map { .init(id: $0["version"].stringValue) }
             }
-            self.versions = versions.sorted { $0.id.compare($1.id, options: .numeric) == .orderedDescending }
-            loadState = versions.isEmpty ? .noUsableVersion : .finished
+            await MainActor.run {
+                self.versions = versions.sorted { $0.id.compare($1.id, options: .numeric) == .orderedDescending }
+                loadState = versions.isEmpty ? .noUsableVersion : .finished
+            }
         } catch {
             err("加载 \(type) 版本列表失败：\(error.localizedDescription)")
             await MainActor.run {
