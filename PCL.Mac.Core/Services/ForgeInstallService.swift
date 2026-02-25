@@ -7,6 +7,7 @@
 
 import Foundation
 import ZIPFoundation
+import SwiftyJSON
 
 public class ForgeInstallService {
     public init(
@@ -52,7 +53,11 @@ public class ForgeInstallService {
     public func downloadFiles(progressHandler: @MainActor @escaping (Double) -> Void) async throws {
         let progressHandler: ConcurrentProgressHandler = .init(totalHandler: progressHandler)
         progressHandler.startCalculate()
-        try await downloadInstaller(progressHandler: progressHandler.handler(withMultiplier: 0.3))
+        guard try await downloadInstaller(progressHandler: progressHandler.handler(withMultiplier: 0.3)) else {
+            await progressHandler.stopCalculate()
+            return
+        }
+        try copyLibraries()
         try await downloadInstallerDependencies(progressHandler: progressHandler.handler(withMultiplier: 0.7))
         self.values = makeValueDict()
         await progressHandler.stopCalculate()
@@ -61,6 +66,10 @@ public class ForgeInstallService {
     /// 执行安装器。
     /// - Parameter progressHandler: 进度回调。
     public func executeProcessors(progressHandler: @MainActor @escaping (Double) -> Void) async throws {
+        guard let installProfile else {
+            await progressHandler(1)
+            return
+        }
         let processors: [ForgeInstallProfile.Processor] = installProfile.processors.filter { $0.sides?.contains(.client) ?? true }
         var progress: Double = 0
         let progressStep: Double = 1.0 / Double(processors.count)
@@ -80,15 +89,14 @@ public class ForgeInstallService {
     }
     
     /// 下载安装器本体并解析。
-    private func downloadInstaller(progressHandler: @MainActor @escaping (Double) -> Void) async throws {
+    /// - Returns: 是否是新版本安装器，且需要继续执行后续步骤。
+    private func downloadInstaller(progressHandler: @MainActor @escaping (Double) -> Void) async throws -> Bool {
         let destination: URL = tempDirectory.appending(path: "installer.jar")
         let url: URL = .init(string: "https://bmclapi2.bangbang93.com/forge/download?mcversion=\(minecraftVersion)&version=\(version)&category=installer&format=jar")!
         try await SingleFileDownloader.download(url: url, destination: destination, sha1: nil, replaceMethod: .skip, progressHandler: progressHandler)
         _ = try FileManager.default.unzipItem(at: destination, to: installerURL)
         
-        let profileURL: URL = installerURL.appending(path: "install_profile.json")
-        self.installProfile = try JSONDecoder.shared.decode(ForgeInstallProfile.self, from: .init(contentsOf: profileURL))
-        
+        // 处理客户端清单
         let manifestURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
         let parentURL: URL = runningDirectory.appending(path: ".parent/\(minecraftVersion).json")
         if !FileManager.default.fileExists(atPath: parentURL.path) {
@@ -98,7 +106,26 @@ public class ForgeInstallService {
         if FileManager.default.fileExists(atPath: manifestURL.path) {
             try FileManager.default.removeItem(at: manifestURL)
         }
-        try FileManager.default.moveItem(at: installerURL.appending(path: "version.json"), to: manifestURL)
+        // 此时 manifestURL 上没有文件
+        
+        let profileURL: URL = installerURL.appending(path: "install_profile.json")
+        let data: Data = try .init(contentsOf: profileURL)
+        let json: JSON = try .init(data: data)
+        if json["install"].exists() { // 旧版本安装器，只需拷贝一个文件即可完成安装
+            let forgeURL: URL = installerURL.appending(path: json["install"]["filePath"].stringValue)
+            let forgeDestination: URL = repository.librariesURL.appending(path: MavenCoordinateUtils.path(of: json["install"]["path"].stringValue))
+            if !FileManager.default.fileExists(atPath: forgeDestination.path) {
+                try FileManager.default.createDirectory(at: forgeDestination.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try FileManager.default.copyItem(at: forgeURL, to: forgeDestination)
+            }
+            
+            try json["versionInfo"].rawData().write(to: manifestURL)
+            return false
+        } else {
+            self.installProfile = try JSONDecoder.shared.decode(ForgeInstallProfile.self, from: data)
+            try FileManager.default.moveItem(at: installerURL.appending(path: "version.json"), to: manifestURL)
+            return true
+        }
     }
     
     private func makeValueDict() -> [String: String] {
@@ -125,6 +152,35 @@ public class ForgeInstallService {
             return String(value.dropFirst().dropLast())
         } else {
             return value
+        }
+    }
+    
+    private func copyLibraries() throws {
+        let sourceDirectory: URL = installerURL.appending(path: "maven")
+        guard FileManager.default.fileExists(atPath: sourceDirectory.path) else {
+            return
+        }
+        let baseComponents: [String] = sourceDirectory.pathComponents
+        
+        guard let enumerator: FileManager.DirectoryEnumerator = FileManager.default.enumerator(
+            at: sourceDirectory,
+            includingPropertiesForKeys: [.isRegularFileKey]
+        ) else {
+            throw SimpleError("创建 enumerator 失败。")
+        }
+        
+        for case let url as URL in enumerator {
+            guard let isRegularFile: Bool = try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile,
+                  isRegularFile else {
+                continue
+            }
+            let components: [String] = url.pathComponents
+            guard components.starts(with: baseComponents) else { continue }
+            let relativePath: String = components.dropFirst(baseComponents.count).joined(separator: "/")
+            let destination: URL = repository.librariesURL.appending(path: relativePath)
+            if FileManager.default.fileExists(atPath: destination.path) { continue }
+            try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try FileManager.default.moveItem(at: url, to: destination)
         }
     }
     

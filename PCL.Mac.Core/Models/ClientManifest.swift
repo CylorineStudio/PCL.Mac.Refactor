@@ -10,6 +10,8 @@ import SwiftyJSON
 
 /// https://zh.minecraft.wiki/w/客户端清单文件格式
 public class ClientManifest: Decodable {
+    private static let oldVersionFlag: String = "-Dorg.ceciliastudio.cl.OldVersionFlag=1"
+    
     public let gameArguments: [Argument]
     public let jvmArguments: [Argument]
     public let assetIndex: AssetIndex!
@@ -70,6 +72,7 @@ public class ClientManifest: Decodable {
         if container.contains(.minecraftArguments) { // 1.12-
             self.gameArguments = try container.decode(String.self, forKey: .minecraftArguments).split(separator: " ").map { .init(value: [String($0)], rules: []) }
             self.jvmArguments = [
+                Self.oldVersionFlag,
                 "-XX:+UnlockExperimentalVMOptions", "-XX:+UseG1GC", "-XX:-UseAdaptiveSizePolicy", "-XX:-OmitStackTraceInFastThrow",
                 "-Djava.library.path=${natives_directory}",
                 "-Dorg.lwjgl.system.SharedLibraryExtractPath=${natives_directory}",
@@ -79,8 +82,8 @@ public class ClientManifest: Decodable {
             ].map { .init(value: [$0], rules: []) }
         } else {
             let argumentsContainer = try container.nestedContainer(keyedBy: ArgumentsCodingKeys.self, forKey: .arguments)
-            self.gameArguments = try argumentsContainer.decode([Argument].self, forKey: .game)
-            self.jvmArguments = try argumentsContainer.decode([Argument].self, forKey: .jvm)
+            self.gameArguments = try argumentsContainer.decodeIfPresent([Argument].self, forKey: .game) ?? []
+            self.jvmArguments = try argumentsContainer.decodeIfPresent([Argument].self, forKey: .jvm) ?? []
         }
         self.assetIndex = try container.decodeIfPresent(AssetIndex.self, forKey: .assetIndex)
         self.downloads = try container.decodeIfPresent(Downloads.self, forKey: .downloads)
@@ -219,29 +222,24 @@ public class ClientManifest: Decodable {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             self.name = try container.decode(String.self, forKey: .name)
             self.isNativesLibrary = container.contains(.natives)
-            let downloadsContainer = try? container.nestedContainer(keyedBy: DownloadsCodingKeys.self, forKey: .downloads)
-            if !isNativesLibrary {
-                if let url: URL = try container.decodeIfPresent(URL.self, forKey: .url) {
-                    let path: String = MavenCoordinateUtils.path(of: name)
-                    self.artifact = .init(
-                        path: path,
-                        sha1: try container.decodeIfPresent(String.self, forKey: .sha1),
-                        size: try container.decodeIfPresent(Int.self, forKey: .size),
-                        url: url.appending(path: path)
-                    )
-                } else {
-                    self.artifact = try downloadsContainer.unwrap("该支持库没有 artifact。").decode(Artifact.self, forKey: .artifact)
-                }
-            } else {
-                let natives: [String: String] = try container.decode([String: String].self, forKey: .natives)
-                if let key = natives["osx"] {
-                    let classifiers: [String: Artifact] = try downloadsContainer.unwrap().decode([String: Artifact].self, forKey: .classifiers)
+            self.rules = try container.decodeIfPresent([Rule].self, forKey: .rules) ?? []
+            getArtifact: if let downloadsContainer = try? container.nestedContainer(keyedBy: DownloadsCodingKeys.self, forKey: .downloads) {
+                if isNativesLibrary {
+                    let natives: [String: String] = try container.decode([String: String].self, forKey: .natives)
+                    guard let key: String = natives["osx"] else {
+                        self.artifact = nil
+                        break getArtifact
+                    }
+                    let classifiers: [String: Artifact] = try downloadsContainer.decode([String: Artifact].self, forKey: .classifiers)
                     self.artifact = try classifiers[key].unwrap()
                 } else {
-                    self.artifact = nil
+                    self.artifact = try downloadsContainer.decode(Artifact.self, forKey: .artifact)
                 }
+            } else {
+                let url: URL = try container.decodeIfPresent(URL.self, forKey: .url) ?? .init(string: "https://libraries.minecraft.net")!
+                let path: String = MavenCoordinateUtils.path(of: name)
+                self.artifact = .init(path: path, sha1: nil, size: nil, url: url.appending(path: path))
             }
-            self.rules = try container.decodeIfPresent([Rule].self, forKey: .rules) ?? []
         }
     }
     
@@ -366,14 +364,15 @@ public class ClientManifest: Decodable {
 
 public extension ClientManifest {
     func merge(to baseManifest: ClientManifest) -> ClientManifest {
+        let isOldVersion: Bool = baseManifest.jvmArguments.contains { $0.value.contains(Self.oldVersionFlag) }
         var librarySet: Set<HashableLibrary> = []
         let libraries: [Library] = (libraries + baseManifest.libraries)
-            .filter { librarySet.insert(.init(from: $0)).inserted }
+            .filter { $0.isRulesSatisfied && librarySet.insert(.init(from: $0)).inserted }
         librarySet.removeAll()
         
         return .init(
-            gameArguments: baseManifest.gameArguments + gameArguments,
-            jvmArguments: baseManifest.jvmArguments + jvmArguments,
+            gameArguments: (isOldVersion ? [] : baseManifest.gameArguments) + gameArguments,
+            jvmArguments: (isOldVersion ? [] : baseManifest.jvmArguments) + jvmArguments,
             assetIndex: baseManifest.assetIndex,
             downloads: baseManifest.downloads,
             id: id,

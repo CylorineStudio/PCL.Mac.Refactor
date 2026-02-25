@@ -56,7 +56,7 @@ public class ConcurrentProgressHandler {
     
     @MainActor
     private func calculateProgress() -> Double {
-        progressMap.values.reduce(0) { $0 + $1.currentProgress * $1.multiplier }
+        min(max(progressMap.values.reduce(0) { $0 + $1.currentProgress * $1.multiplier }, 0), 1)
     }
     
     private class Progress {

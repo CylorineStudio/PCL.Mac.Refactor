@@ -57,18 +57,11 @@ public class MinecraftLauncher {
         arguments = arguments.map { Utils.replace($0, withValues: values) }
         process.arguments = arguments
         
-        // accessToken 打码
-        // arguments 不会再被使用了，可以直接修改
-        if let accessTokenIndex: Int = arguments.firstIndex(of: "--accessToken"),
-           accessTokenIndex + 1 < arguments.count {
-            arguments[accessTokenIndex + 1] = "🥚"
-        }
-        
         let pipe: Pipe = .init()
         process.standardOutput = pipe
         process.standardError = pipe
         
-        log("正在使用以下参数启动 Minecraft：\(arguments)")
+        log("正在使用以下参数启动 Minecraft：\(arguments.map { $0 == options.accessToken ? "🥚" : $0 })")
         try process.run()
         Self.gameLogQueue.async {
             FileManager.default.createFile(atPath: self.logURL.path, contents: nil)
@@ -92,8 +85,8 @@ public class MinecraftLauncher {
     
     private func buildClasspath() -> String {
         var urls: [URL] = []
-        for library in manifest.libraries {
-            if library.isRulesSatisfied, let artifact = library.artifact {
+        for library in manifest.getLibraries() {
+            if let artifact = library.artifact {
                 urls.append(librariesURL.appending(path: artifact.path))
             }
         }
