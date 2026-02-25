@@ -34,6 +34,10 @@ public enum MinecraftInstallTask {
             repository: repository
         )
         var subTasks: [SubTask] = [
+            .init(0, "__pre", display: false) { _, model in
+                try FileManager.default.createDirectory(at: model.runningDirectory, withIntermediateDirectories: true)
+                FileManager.default.createFile(atPath: model.runningDirectory.appending(path: ".incomplete").path, contents: nil)
+            },
             .init(0, "下载客户端 JSON 文件") { task, model in
                 guard let versionManifest = CoreState.versionManifest else {
                     err("CoreState.versionManifest 为空")
@@ -105,6 +109,7 @@ public enum MinecraftInstallTask {
                     config: .init()
                 )
                 repository.instances?.append(instance)
+                try? FileManager.default.removeItem(at: model.runningDirectory.appending(path: ".incomplete"))
                 await MainActor.run {
                     completion?(instance)
                 }
@@ -147,7 +152,9 @@ public enum MinecraftInstallTask {
             }
         }
         
-        return .init(name: "\(name) 安装", model: model, subTasks)
+        return .init(name: "\(name) 安装", model: model, subTasks) { _ in
+            try? FileManager.default.removeItem(at: repository.versionsURL.appending(path: name))
+        }
     }
     
     /// 补全实例资源文件。

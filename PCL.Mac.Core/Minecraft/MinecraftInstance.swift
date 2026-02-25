@@ -114,6 +114,9 @@ public class MinecraftInstance {
     ///   - version: （可选）缓存的版本号。
     /// - Returns: 实例对象。
     public static func load(from runningDirectory: URL) throws -> MinecraftInstance {
+        if FileManager.default.fileExists(atPath: runningDirectory.appending(path: ".incomplete").path) {
+            throw MinecraftError.incomplete
+        }
         // 加载客户端清单
         let manifestURL: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
         guard FileManager.default.fileExists(atPath: manifestURL.path) else { throw MinecraftError.missingManifest }
