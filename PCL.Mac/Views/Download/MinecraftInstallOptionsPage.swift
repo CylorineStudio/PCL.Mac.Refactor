@@ -36,11 +36,13 @@ struct MinecraftInstallOptionsPage: View {
                     }
                 }
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.bottom, 40)
-                ModLoaderCard(.fabric, viewModel.version.id, $viewModel.loader)
-                    .cardIndex(1)
-                ModLoaderCard(.forge, viewModel.version.id, $viewModel.loader)
-                    .cardIndex(2)
+                .padding(.bottom, 15)
+                VStack(spacing: 6) {
+                    ModLoaderCard(.fabric, viewModel.version.id, $viewModel.loader)
+                        .cardIndex(1)
+                    ModLoaderCard(.forge, viewModel.version.id, $viewModel.loader)
+                        .cardIndex(2)
+                }
                 Spacer()
             }
             .padding(EdgeInsets(top: 10, leading: 25, bottom: 25, trailing: 25))
