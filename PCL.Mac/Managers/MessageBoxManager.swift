@@ -2,7 +2,7 @@
 //  MessageBoxManager.swift
 //  PCL.Mac
 //
-//  Created by 温迪 on 2026/1/20.
+//  Created by AnemoFlower on 2026/1/20.
 //
 
 import Foundation

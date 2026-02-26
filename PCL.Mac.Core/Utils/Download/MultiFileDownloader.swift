@@ -2,7 +2,7 @@
 //  MultiFileDownloader.swift
 //  PCL.Mac
 //
-//  Created by 温迪 on 2025/11/24.
+//  Created by AnemoFlower on 2025/11/24.
 //
 
 import Foundation

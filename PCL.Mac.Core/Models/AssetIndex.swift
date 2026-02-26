@@ -2,7 +2,7 @@
 //  AssetIndex.swift
 //  PCL.Mac
 //
-//  Created by 温迪 on 2025/12/4.
+//  Created by AnemoFlower on 2025/12/4.
 //
 
 import Foundation

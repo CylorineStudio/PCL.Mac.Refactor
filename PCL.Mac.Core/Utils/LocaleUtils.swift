@@ -2,7 +2,7 @@
 //  LocaleUtils.swift
 //  PCL.Mac
 //
-//  Created by 温迪 on 2026/2/4.
+//  Created by AnemoFlower on 2026/2/4.
 //
 
 import Foundation
