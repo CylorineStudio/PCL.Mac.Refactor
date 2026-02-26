@@ -10,11 +10,13 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject private var hintManager: HintManager = .shared
     @ObservedObject private var router: AppRouter = .shared
+    @ObservedObject private var easterEggManager: EasterEggManager = .shared
     @State private var sidebarWidth: CGFloat = AppRouter.shared.sidebar.width
     
     var body: some View {
         VStack(spacing: 0) {
             TitleBarView()
+                .zIndex(10)
             HStack(spacing: 0) {
                 Rectangle()
                     .fill(.white)
@@ -25,6 +27,7 @@ struct ContentView: View {
                             sidebarWidth = newValue
                         }
                     }
+                    .zIndex(10)
                 router.content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(0xC0DEF5))
@@ -44,6 +47,8 @@ struct ContentView: View {
             .animation(.easeOut(duration: 0.2), value: hintManager.hints)
             .padding(.bottom, 100)
         }
+        .rotation3DEffect(easterEggManager.rotationAngle, axis: easterEggManager.rotationAxis)
+        .contrast(easterEggManager.modifyColor ? -1 : 1)
     }
 }
 

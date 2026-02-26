@@ -26,6 +26,21 @@ struct ToolboxPage: View {
                         }
                     }
                     .frame(width: 100)
+                    
+                    MyButton("千万别点", type: .red) {
+                        Task {
+                            _ = await MessageBoxManager.shared.showText(
+                                title: "警告",
+                                content: "PCL.Mac 作者不会受理由于点击千万别点造成的任何 Bug。\n这是最后的警告，是否继续操作？",
+                                level: .error,
+                                .init(id: 0, label: "确定", type: .red),
+                                .init(id: 1, label: "确定", type: .normal),
+                                .init(id: 2, label: "确定", type: .normal)
+                            )
+                            viewModel.executeEasterEgg()
+                        }
+                    }
+                    .frame(width: 100)
                     Spacer()
                 }
                 .frame(height: 40)

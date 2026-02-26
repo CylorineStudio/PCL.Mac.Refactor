@@ -45,6 +45,8 @@ struct AboutPage: View {
     }
     
     private struct ProfileView: View {
+        @ObservedObject private var easterEggManager: EasterEggManager = .shared
+        
         private let image: String
         private let nickname: String
         private let description: String
@@ -65,6 +67,7 @@ struct AboutPage: View {
                         .scaledToFit()
                         .frame(width: 32, height: 32)
                         .clipShape(.circle)
+                        .contrast(easterEggManager.modifyColor ? -1 : 1) // 防止“千万别点”颜色反转影响到头像
                     VStack(alignment: .leading) {
                         MyText(nickname)
                         MyText(description, color: .colorGray3)
@@ -81,6 +84,7 @@ struct AboutPage: View {
                                 .onTapGesture {
                                     NSWorkspace.shared.open(link.url)
                                 }
+                                .contrast(easterEggManager.modifyColor ? -1 : 1)
                         }
                     }
                     .padding(.trailing, 2)

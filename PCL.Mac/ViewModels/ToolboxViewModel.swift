@@ -76,4 +76,39 @@ class ToolboxViewModel: ObservableObject {
             return "\(value)…（是百分制哦）"
         }
     }
+    
+    /// 执行“千万别点”彩蛋。
+    @MainActor
+    public func executeEasterEgg() {
+        let value: Int = .random(in: 0..<4)
+        let easterEggManager: EasterEggManager = .shared
+        switch value {
+        case 0:
+            NSWorkspace.shared.open(.init(string: "https://www.bilibili.com/video/BV1GJ411x7h7")!)
+        case 1:
+            guard easterEggManager.enable() else { break }
+            easterEggManager.rotationAxis = (0, 0, 1)
+            withAnimation(.linear(duration: 0.5)) {
+                easterEggManager.rotationAngle = .degrees(180)
+            }
+        case 2:
+            guard easterEggManager.enable() else { break }
+            easterEggManager.rotationAxis = (0, 1, 0)
+            easterEggManager.rotateTask?.cancel()
+            easterEggManager.rotateTask = Task { @MainActor in
+                var degrees: Double = 0
+                while !Task.isCancelled {
+                    degrees += 45
+                    withAnimation(.linear(duration: 0.2)) {
+                        easterEggManager.rotationAngle = .degrees(degrees)
+                    }
+                    try await Task.sleep(seconds: 0.19)
+                }
+            }
+        case 3:
+            easterEggManager.modifyColor = true
+        default:
+            break
+        }
+    }
 }
