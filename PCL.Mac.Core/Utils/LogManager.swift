@@ -2,7 +2,7 @@
 //  LogManager.swift
 //  PCL.Mac
 //
-//  Created by 温迪 on 2025/11/8.
+//  Created by AnemoFlower on 2025/11/8.
 //
 
 import Foundation

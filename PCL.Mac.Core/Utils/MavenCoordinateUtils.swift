@@ -2,7 +2,7 @@
 //  MavenCoordinateUtils.swift
 //  PCL.Mac
 //
-//  Created by 温迪 on 2026/2/10.
+//  Created by AnemoFlower on 2026/2/10.
 //
 
 import Foundation

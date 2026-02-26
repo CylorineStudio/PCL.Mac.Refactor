@@ -2,7 +2,7 @@
 //  Metadata.swift
 //  PCL.Mac
 //
-//  Created by 温迪 on 2026/1/17.
+//  Created by AnemoFlower on 2026/1/17.
 //
 
 import Foundation

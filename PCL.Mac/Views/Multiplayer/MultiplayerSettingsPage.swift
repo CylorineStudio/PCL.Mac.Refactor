@@ -2,7 +2,7 @@
 //  MultiplayerSettingsPage.swift
 //  PCL.Mac
 //
-//  Created by 温迪 on 2026/2/1.
+//  Created by AnemoFlower on 2026/2/1.
 //
 
 import SwiftUI

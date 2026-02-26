@@ -2,7 +2,7 @@
 //  SingleFileDownloader.swift
 //  PCL.Mac
 //
-//  Created by 温迪 on 2025/11/22.
+//  Created by AnemoFlower on 2025/11/22.
 //
 
 import Foundation
