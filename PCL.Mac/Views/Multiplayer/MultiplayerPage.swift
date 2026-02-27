@@ -14,6 +14,12 @@ struct MultiplayerPage: View {
     @StateObject private var loadingViewModel: MyLoadingViewModel = .init(text: "创建房间中")
     @State private var isEasyTierInstalled: Bool = true
     
+    private static let dateFormatter: DateFormatter = {
+        let formatter: DateFormatter = .init()
+        formatter.dateFormat = "yyyy/MM/dd HH:mm"
+        return formatter
+    }()
+    
     var body: some View {
         CardContainer {
             switch viewModel.state {
@@ -30,6 +36,17 @@ struct MultiplayerPage: View {
             }
         }
         .onAppear {
+            Task {
+                let status: CLAPIClient.EasyTierStatus = try await CLAPIClient.shared.getEasyTierStatus()
+                if case .unavailable(let message, let date) = status {
+                    _ = await MessageBoxManager.shared.showText(
+                        title: "联机功能不可用",
+                        content: "很抱歉，联机功能暂时不可用。\n详细信息：\(message)\n状态更新时间：\(Self.dateFormatter.string(from: date))",
+                        level: .error
+                    )
+                    AppRouter.shared.setRoot(.launch)
+                }
+            }
             isEasyTierInstalled = EasyTierManager.shared.isInstalled()
             if viewModel.state == .creatingRoom {
                 loadingViewModel.text = "创建房间中"

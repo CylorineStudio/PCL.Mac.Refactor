@@ -12,9 +12,22 @@ public class CLAPIClient {
     public static let shared: CLAPIClient = .init()
     
     private let apiRoot: URL = .init(string: "https://api.ceciliastudio.top")!
+    private let iso8601DateFormatter: ISO8601DateFormatter = .init()
     
     public func getCaveMessages() async throws -> [String] {
         try await get("/cave").arrayValue.map(\.stringValue)
+    }
+    
+    public func getEasyTierStatus() async throws -> EasyTierStatus {
+        let json: JSON = try await get("/easytier/status")
+        if json["available"].boolValue {
+            return .available
+        } else {
+            guard let date: Date = iso8601DateFormatter.date(from: json["time"].stringValue) else {
+                throw Error.responseFormatError
+            }
+            return .unavailable(message: json["message"].string ?? "无", date: date)
+        }
     }
     
     private init() {}
@@ -53,6 +66,7 @@ public class CLAPIClient {
     public enum Error: LocalizedError {
         case apiError(code: Int, message: String)
         case missingData
+        case responseFormatError
         
         public var errorDescription: String? {
             switch self {
@@ -60,7 +74,13 @@ public class CLAPIClient {
                 "调用 API 失败：(\(code)) \(message)"
             case .missingData:
                 "API 未返回需要的数据。"
+            case .responseFormatError:
+                "API 响应格式错误。"
             }
         }
+    }
+    
+    public enum EasyTierStatus {
+        case available, unavailable(message: String, date: Date)
     }
 }
