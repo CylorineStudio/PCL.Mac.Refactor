@@ -6,13 +6,16 @@
 //
 
 import Foundation
+import Combine
 import Core
 
 public class TaskManager: ObservableObject {
     public static let shared: TaskManager = .init()
     
     @Published public private(set) var tasks: [AnyMyTask] = []
+    @Published public private(set) var downloadSpeed: Int64 = 0
     private var executorTasks: [UUID: Task<Void, Never>] = [:]
+    private var cancellables: [AnyCancellable] = []
     
     /// 开始执行一个任务。
     /// - Parameters:
@@ -63,5 +66,10 @@ public class TaskManager: ObservableObject {
         executorTasks.removeValue(forKey: id)
     }
     
-    private init() {}
+    private init() {
+        DownloadSpeedManager.shared.$currentSpeed
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.downloadSpeed, on: self)
+            .store(in: &cancellables)
+    }
 }

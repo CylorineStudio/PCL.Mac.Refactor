@@ -30,19 +30,23 @@ class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
     
     private var contexts: [Int: DownloadContext] = [:]
     
-    public func register(task: URLSessionDownloadTask,
-                         destination: URL,
-                         continuation: CheckedContinuation<Void, Error>,
-                         progressHandler: (@MainActor (Double) -> Void)?) {
+    public func register(
+        task: URLSessionDownloadTask,
+        destination: URL,
+        continuation: CheckedContinuation<Void, Error>,
+        progressHandler: (@MainActor (Double) -> Void)?
+    ) {
         let context: DownloadContext = .init(destination: destination, continuation: continuation, progressHandler: progressHandler)
         Self.queue.addOperation {
             self.contexts[task.taskIdentifier] = context
         }
     }
     
-    func urlSession(_ session: URLSession,
-                    downloadTask: URLSessionDownloadTask,
-                    didFinishDownloadingTo location: URL) {
+    func urlSession(
+        _ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didFinishDownloadingTo location: URL
+    ) {
         guard let context: DownloadContext = contexts[downloadTask.taskIdentifier] else {
             return
         }
@@ -65,18 +69,24 @@ class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
         resume(task: downloadTask, with: .success(()))
     }
     
-    func urlSession(_ session: URLSession,
-                    task: URLSessionTask,
-                    didCompleteWithError error: (any Error)?) {
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didCompleteWithError error: (any Error)?
+    ) {
         resume(task: task, with: .failure(error ?? DownloadError.unknownError))
     }
     
-    func urlSession(_ session: URLSession,
-                    downloadTask: URLSessionDownloadTask,
-                    didWriteData bytesWritten: Int64,
-                    totalBytesWritten: Int64,
-                    totalBytesExpectedToWrite: Int64) {
-        DownloadSpeedManager.shared.addBytes(bytesWritten)
+    func urlSession(
+        _ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didWriteData bytesWritten: Int64,
+        totalBytesWritten: Int64,
+        totalBytesExpectedToWrite: Int64
+    ) {
+        DispatchQueue.main.async {
+            DownloadSpeedManager.shared.addBytes(bytesWritten)
+        }
         if totalBytesExpectedToWrite > 0 {
             updateProgress(for: downloadTask, with: Double(totalBytesWritten) / Double(totalBytesExpectedToWrite))
         }

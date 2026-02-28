@@ -7,30 +7,30 @@
 
 import Foundation
 
-public class DownloadSpeedManager {
+public class DownloadSpeedManager: ObservableObject {
     public static let shared: DownloadSpeedManager = .init()
     
-    private var totalBytes: Int64 = 0
-    private var lastResetTime: TimeInterval = Date().timeIntervalSince1970
+    @Published public private(set) var currentSpeed: Int64 = 0
+    private var tickerTask: Task<Void, Error>?
+    @MainActor private var bytes: Int64 = 0
     
     private init() {
-    }
-    
-    public func addBytes(_ bytes: Int64) {
-        self.totalBytes += bytes
-    }
-    
-    public func reset() {
-        self.totalBytes = 0
-        self.lastResetTime = Date().timeIntervalSince1970
-    }
-    
-    public func currentSpeed() -> Double {
-        let now: TimeInterval = Date().timeIntervalSince1970
-        let deltaTime: TimeInterval = now - lastResetTime
-        guard deltaTime > 0 else {
-            return 0.0
+        self.tickerTask = .init(priority: .background) {
+            while !Task.isCancelled {
+                try await Task.sleep(seconds: 1)
+                await updateSpeed()
+            }
         }
-        return Double(totalBytes) / deltaTime
+    }
+    
+    @MainActor
+    private func updateSpeed() {
+        currentSpeed = bytes
+        bytes = 0
+    }
+    
+    @MainActor
+    public func addBytes(_ bytes: Int64) {
+        self.bytes += bytes
     }
 }
