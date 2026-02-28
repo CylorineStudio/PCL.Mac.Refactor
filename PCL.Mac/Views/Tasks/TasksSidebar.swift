@@ -8,13 +8,14 @@
 import SwiftUI
 
 struct TasksSidebar: Sidebar {
+    @ObservedObject private var taskManager: TaskManager = .shared
     let width: CGFloat = 220
     
     var body: some View {
         VStack(spacing: 40) {
-            PanelView("总进度", "100.0 %")
+            PanelView("剩余任务数", "\(taskManager.tasks.count)")
             PanelView("下载速度", "12345.6 MB/s")
-            PanelView("剩余文件", "0")
+            PanelView("缓存命中率", "80.00 %")
         }
     }
 }

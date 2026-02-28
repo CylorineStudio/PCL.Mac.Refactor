@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct MyCard<Content: View>: View {
+struct MyCard<Content: View, Action: View>: View {
     @Environment(\.cardIndex) private var index: Int
     @Environment(\.disableCardAppearAnimation) private var disableCardAppearAnimation: Bool
     @Environment(\.disableHoverAnimation) private var disableHoverAnimation: Bool
@@ -30,6 +30,7 @@ struct MyCard<Content: View>: View {
     private let limitHeight: Bool
     private let padding: CGFloat
     private let content: () -> Content
+    private let action: () -> Action
     
     /// 创建一个卡片视图。
     /// - Parameters:
@@ -40,7 +41,17 @@ struct MyCard<Content: View>: View {
     ///   - limitHeight: 是否限制卡片高度。若该参数为 `false`，请手动设置卡片高度。
     ///   - padding: 卡片的内边距。
     ///   - content: 卡片内容。
-    init(_ title: String, foldable: Bool = true, folded: Bool? = nil, titled: Bool = true, limitHeight: Bool = true, padding: CGFloat = 18, @ViewBuilder _ content: @escaping () -> Content) {
+    ///   - action: 显示在右上角的内容。如果 `foldable` 为 `true`，此参数会被忽略。
+    init(
+        _ title: String,
+        foldable: Bool = true,
+        folded: Bool? = nil,
+        titled: Bool = true,
+        limitHeight: Bool = true,
+        padding: CGFloat = 18,
+        @ViewBuilder _ content: @escaping () -> Content,
+        @ViewBuilder action: @escaping () -> Action = { EmptyView() }
+    ) {
         self.title = title
         self.foldable = foldable && titled
         self.initialFolded = folded
@@ -48,6 +59,7 @@ struct MyCard<Content: View>: View {
         self.limitHeight = limitHeight
         self.padding = padding
         self.content = content
+        self.action = action
     }
     
     var body: some View {
@@ -63,6 +75,8 @@ struct MyCard<Content: View>: View {
                             .frame(width: 10, height: 6)
                             .rotationEffect(.degrees(folded ? 0 : -180), anchor: .center)
                             .animation(.spring(response: 0.35), value: folded)
+                    } else {
+                        action()
                     }
                 }
             }
