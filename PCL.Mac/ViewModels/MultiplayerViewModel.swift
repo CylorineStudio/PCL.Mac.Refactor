@@ -19,8 +19,7 @@ class MultiplayerViewModel: ObservableObject {
     private var server: ScaffoldingServer?
     private var client: ScaffoldingClient?
     private var serverCheckTask: Task<Void, Swift.Error>?
-    private var heartbeatTask: Task<Void, Swift.Error>?
-    private let vendor: String = "PCL.Mac \(Metadata.appVersion), SwiftScaffolding 0.1.1, EasyTier v2.5.0"
+    private let vendor: String = "PCL.Mac \(Metadata.appVersion), SwiftScaffolding 0.2.0, EasyTier v2.5.0"
     
     /// 创建并启动一个 Scaffolding 联机中心。
     /// - Parameter serverPort: Minecraft 服务器的端口。
@@ -38,13 +37,11 @@ class MultiplayerViewModel: ObservableObject {
             }
             state = .creatingRoom
             let code: String = RoomCode.generate()
-            let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Anonymous"
             let server: ScaffoldingServer = .init(
                 easyTier: EasyTierManager.shared.easyTier,
                 roomCode: code,
-                playerName: playerName,
-                vendor: vendor,
-                serverPort: serverPort
+                serverPort: serverPort,
+                hostInfo: playerInfo()
             )
             registerCustomProtocols(to: server)
             Task.detached {
@@ -108,11 +105,9 @@ class MultiplayerViewModel: ObservableObject {
     ///   - playerName: 房客玩家名。
     @MainActor
     public func join(roomCode: String) {
-        let playerName: String = AccountViewModel().currentAccount?.profile.name ?? "Anonymous"
         let client: ScaffoldingClient = .init(
             easyTier: EasyTierManager.shared.easyTier,
-            playerName: playerName,
-            vendor: vendor
+            playerInfo: playerInfo()
         )
         state = .joiningRoom
         Task.detached {
@@ -123,13 +118,6 @@ class MultiplayerViewModel: ObservableObject {
                         self.handleEasyTierExit(process)
                     }
                 })
-                
-                self.heartbeatTask = Task { [weak client] in
-                    while !Task.isCancelled {
-                        guard let client else { return }
-                        try await self.heartbeat(client)
-                    }
-                }
                 await MainActor.run {
                     self.client = client
                     self.state = .memberReady
@@ -138,6 +126,12 @@ class MultiplayerViewModel: ObservableObject {
                     NSPasteboard.general.setString("127.0.0.1:\(client.room.serverPort)", forType: .string)
                 }
                 log("加入房间成功，本地端口：\(client.room.serverPort)")
+                log("正在启动心跳任务")
+                do {
+                    try client.startHeartbeatTask(failureHandler: self.handleHeartbeatFailure(_:))
+                } catch {
+                    throw SimpleError("启动心跳任务失败：\(error.localizedDescription)")
+                }
             } catch {
                 err("加入房间失败：\(error.localizedDescription)")
                 await self.showErrorAsync(title: "加入房间失败", body: error.localizedDescription)
@@ -149,8 +143,6 @@ class MultiplayerViewModel: ObservableObject {
     /// 退出房间。
     @MainActor
     public func leave() {
-        heartbeatTask?.cancel()
-        heartbeatTask = nil
         room = nil
         client?.stop()
         client = nil
@@ -201,23 +193,18 @@ class MultiplayerViewModel: ObservableObject {
         server = nil
     }
     
-    private func heartbeat(_ client: ScaffoldingClient) async throws {
-        try await Task.sleep(seconds: 5)
-        do {
-            try Task.checkCancellation()
-            try await client.heartbeat()
-        } catch is CancellationError {
-        } catch RoomError.roomClosed {
+    private func handleHeartbeatFailure(_ error: Swift.Error) async {
+        switch error {
+        case RoomError.roomClosed:
             _ = await MessageBoxManager.shared.showText(
                 title: "房间已被关闭",
-                content: "房间连接中断，可能是由于房间被关闭或网络不稳定"
+                content: "房间连接中断，可能是由于房间被关闭或网络不稳定。"
             )
-            await leave()
-        } catch {
+        default:
             log("发送心跳包失败：\(error.localizedDescription)")
             await showError(title: "发生未知错误", body: "同步数据失败：\(error.localizedDescription)")
-            await leave()
         }
+        await leave()
     }
     
     private func registerCustomProtocols(to server: ScaffoldingServer) {
@@ -248,12 +235,19 @@ class MultiplayerViewModel: ObservableObject {
             Task {
                 await self.stopHost()
                 _ = await MessageBoxManager.shared.showText(
-                    title: "房间被管理员强制关闭",
-                    content: "房间被强制关闭。\n原因：\(parts[1])"
+                    title: "房间被强制关闭",
+                    content: "房间被管理员强制关闭。\n原因：\(parts[1])"
                 )
             }
             return .init(status: 0, data: Data())
         }
+    }
+    
+    private func playerInfo() -> PlayerInfo {
+        return .init(
+            name: AccountViewModel().currentAccount?.profile.name ?? "Anonymous",
+            vendor: vendor
+        )
     }
     
     public enum State: Equatable {
