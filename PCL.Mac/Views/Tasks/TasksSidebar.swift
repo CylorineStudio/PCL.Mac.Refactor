@@ -13,9 +13,8 @@ struct TasksSidebar: Sidebar {
     
     var body: some View {
         VStack(spacing: 40) {
-            PanelView("剩余任务数", "\(taskManager.tasks.count)")
+            PanelView("剩余任务", "\(taskManager.tasks.count)")
             PanelView("下载速度", formatSpeed(taskManager.downloadSpeed))
-            PanelView("缓存命中率", "80.00 %")
         }
     }
     
@@ -45,11 +44,11 @@ private struct PanelView: View {
     
     var body: some View {
         VStack {
-            MyText(title, size: 16, color: .color2)
+            MyText(title, size: 14, color: .color2)
             Rectangle()
                 .fill(Color.color2)
                 .frame(width: 180, height: 2)
-            MyText(value, size: 16)
+            MyText(value, size: 20)
         }
     }
 }
