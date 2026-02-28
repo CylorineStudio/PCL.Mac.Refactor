@@ -83,6 +83,7 @@ public enum MinecraftLaunchTask {
             do {
                 try await model.account.refresh()
                 log("刷新 accessToken 成功")
+            } catch is CancellationError {
             } catch {
                 err("刷新 accessToken 失败")
                 if await MessageBoxManager.shared.showText(
@@ -205,6 +206,7 @@ public enum MinecraftLaunchTask {
             await MainActor.run {
                 model.onProcessStarted(launcher, process)
             }
+        } catch is CancellationError {
         } catch {
             err("启动游戏失败：\(error.localizedDescription)")
             _ = await MessageBoxManager.shared.showText(

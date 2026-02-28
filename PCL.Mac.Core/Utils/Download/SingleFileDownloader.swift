@@ -44,10 +44,14 @@ public enum SingleFileDownloader {
         request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         request.setValue("PCL-Mac/\(Metadata.appVersion)", forHTTPHeaderField: "User-Agent")
         
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            let task: URLSessionDownloadTask = session.downloadTask(with: request)
-            DownloadDelegate.shared.register(task: task, destination: destination, continuation: continuation, progressHandler: progressHandler)
-            task.resume()
+        let task: URLSessionDownloadTask = session.downloadTask(with: request)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                DownloadDelegate.shared.register(task: task, destination: destination, continuation: continuation, progressHandler: progressHandler)
+                task.resume()
+            }
+        } onCancel: {
+            task.cancel()
         }
         
         // 验证 SHA-1
