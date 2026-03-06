@@ -22,7 +22,8 @@ struct MyCard<Content: View, Action: View>: View {
     @State private var contentHeight: CGFloat = 0
     /// `content()` 的高度限制。
     @State private var internalContentHeight: CGFloat = 0
-    @State private var lastClick: Date = .distantPast
+    @State private var foldWorkItem: DispatchWorkItem?
+    
     private let title: String
     private let foldable: Bool
     private let initialFolded: Bool?
@@ -87,8 +88,7 @@ struct MyCard<Content: View, Action: View>: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 guard foldable else { return }
-                guard Date().timeIntervalSince(lastClick) > 0.2 else { return }
-                lastClick = Date()
+                self.foldWorkItem?.cancel()
                 if folded {
                     // 展开卡片
                     folded = false
@@ -96,15 +96,19 @@ struct MyCard<Content: View, Action: View>: View {
                     withAnimation(.linear(duration: 0.2)) {
                         internalContentHeight = min(1000, contentHeight)
                     }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    let foldWorkItem: DispatchWorkItem = .init {
                         internalContentHeight = contentHeight
                     }
+                    self.foldWorkItem = foldWorkItem
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: foldWorkItem)
                 } else {
                     // 折叠卡片
                     folded = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    let foldWorkItem: DispatchWorkItem = .init {
                         showContent = false
                     }
+                    self.foldWorkItem = foldWorkItem
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: foldWorkItem)
                     internalContentHeight = min(1000, contentHeight) // 控制回弹上限
                     withAnimation(.spring(response: 0.35)) {
                         internalContentHeight = 0
