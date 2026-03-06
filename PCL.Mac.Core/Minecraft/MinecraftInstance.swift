@@ -52,9 +52,7 @@ public class MinecraftInstance: Equatable {
     public func setJava(url: URL?) {
         config.javaURL = url
         saveConfig()
-        if url != nil {
-            cachedJavaRuntime = nil
-        }
+        cachedJavaRuntime = nil
     }
     
     /// 搜索最适合的 Java。
@@ -91,7 +89,9 @@ public class MinecraftInstance: Equatable {
             return cachedJavaRuntime
         }
         do {
-            return try JavaSearcher.load(from: javaURL)
+            let runtime: JavaRuntime = try JavaSearcher.load(from: javaURL)
+            cachedJavaRuntime = runtime
+            return runtime
         } catch {
             err("加载 Java 失败")
             setJava(url: nil)

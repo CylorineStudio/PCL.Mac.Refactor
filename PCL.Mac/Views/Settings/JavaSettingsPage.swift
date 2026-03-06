@@ -14,7 +14,7 @@ struct JavaSettingsPage: View {
     var body: some View {
         CardContainer {
             MyCard("Java 列表", folded: false) {
-                MyList(viewModel.javaList)
+                MyList(items: viewModel.javaList)
             }
         }
     }

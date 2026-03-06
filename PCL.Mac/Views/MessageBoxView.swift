@@ -68,7 +68,7 @@ struct MessageBoxView: View {
                 MyText(text)
             case .list(let items):
                 ScrollView {
-                    MyList(items, onSelect: { self.selectedItemIndex = $0 })
+                    MyList(items: items, onSelect: { self.selectedItemIndex = $0 })
                         .padding(.horizontal, 4)
                 }
                 .frame(maxHeight: 240)

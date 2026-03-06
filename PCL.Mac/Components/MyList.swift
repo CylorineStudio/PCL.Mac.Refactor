@@ -8,18 +8,20 @@
 import SwiftUI
 
 struct MyList: View {
-    private let items: [ListItem]
-    private let onSelect: ((Int?) -> Void)?
     @State private var selected: Int?
     
-    init(_ items: [ListItem], onSelect: ((Int?) -> Void)? = nil) {
+    private let items: [ListItem]
+    private let selectable: Bool
+    private let onSelect: ((Int?) -> Void)?
+    
+    init(items: [ListItem], selectable: Bool = false, onSelect: ((Int?) -> Void)? = nil) {
         self.items = items
+        self.selectable = onSelect != nil || selectable
         self.onSelect = onSelect
     }
     
-    init(_ items: ListItem..., onSelect: ((Int?) -> Void)? = nil) {
-        self.items = items
-        self.onSelect = onSelect
+    init(_ items: ListItem..., selectable: Bool = false, onSelect: ((Int?) -> Void)? = nil) {
+        self.init(items: items, selectable: selectable, onSelect: onSelect)
     }
     
     var body: some View {
@@ -27,9 +29,9 @@ struct MyList: View {
             ForEach(0..<items.count, id: \.self) { index in
                 MyListItem(items[index], selected: selected == index)
                     .onTapGesture {
-                        guard let onSelect else { return }
+                        guard selectable else { return }
                         selected = (selected == index ? nil : index)
-                        onSelect(selected)
+                        onSelect?(selected)
                     }
             }
         }

@@ -42,7 +42,7 @@ struct LaunchPage: View {
                         MyButton("红色按钮", subLabel: "但是两行文本", type: .red) {}
                     }
                     .frame(height: 60)
-                    MyList(listItems)
+                    MyList(items: listItems, selectable: true)
                 }
             }
             MyCard("不可折叠的卡片", foldable: false) {
