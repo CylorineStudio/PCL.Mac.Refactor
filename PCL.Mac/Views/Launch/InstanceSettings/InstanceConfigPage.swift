@@ -37,10 +37,6 @@ struct InstanceConfigPage: View {
                 }
             }
         }
-        .task {
-            try? await Task.sleep(seconds: 5)
-            debug(viewModel.loaded)
-        }
     }
     
     @ViewBuilder
