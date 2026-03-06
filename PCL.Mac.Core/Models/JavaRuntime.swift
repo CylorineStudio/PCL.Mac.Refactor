@@ -7,11 +7,11 @@
 
 import Foundation
 
-public struct JavaRuntime {
+public struct JavaRuntime: CustomStringConvertible {
     /// Java 版本号，如 `21.0.8`、`1.8.0_462`。
     public let version: String
     /// Java 主版本号，如 `21`、`8`。
-    public let versionNumber: Int
+    public let majorVersion: Int
     /// Java 类型。
     public let type: JavaType
     /// Java 架构。
@@ -30,5 +30,9 @@ public struct JavaRuntime {
             case .jre: "JRE"
             }
         }
+    }
+    
+    public var description: String {
+        "\(type) \(version) \(architecture) (\(implementor))"
     }
 }

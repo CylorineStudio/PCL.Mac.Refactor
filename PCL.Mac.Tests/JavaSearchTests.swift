@@ -13,7 +13,7 @@ struct JavaSearchTests {
     @Test func testSearch() throws {
         let runtimes = try JavaSearcher.search()
         for runtime in runtimes {
-            print("\(runtime.type) \(runtime.versionNumber) (\(runtime.version)) \(runtime.architecture) \(runtime.executableURL)")
+            print("\(runtime.type) \(runtime.majorVersion) (\(runtime.version)) \(runtime.architecture) \(runtime.executableURL)")
         }
     }
 }

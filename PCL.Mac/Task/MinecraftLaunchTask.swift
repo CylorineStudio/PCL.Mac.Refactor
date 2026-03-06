@@ -110,7 +110,7 @@ public enum MinecraftLaunchTask {
             case .javaVersionTooLow(let min):
                 _ = await MessageBoxManager.shared.showText(
                     title: "Java 版本过低",
-                    content: "你正在使用 Java \(model.options.javaRuntime.versionNumber) 启动游戏，但这个版本需要 \(min)！",
+                    content: "你正在使用 Java \(model.options.javaRuntime.majorVersion) 启动游戏，但这个版本需要 \(min)！",
                     level: .error
                 )
                 try task.cancel()

@@ -13,6 +13,15 @@ struct LaunchPage: View {
     private let listItems: [ListItem] = [
         .init(name: "name1", description: "desc1"),
         .init(name: "name2", description: "desc2"),
+        .init(name: "name3", description: "desc3"),
+        .init(name: "name1", description: "desc1"),
+        .init(name: "name2", description: "desc2"),
+        .init(name: "name3", description: "desc3"),
+        .init(name: "name1", description: "desc1"),
+        .init(name: "name2", description: "desc2"),
+        .init(name: "name3", description: "desc3"),
+        .init(name: "name1", description: "desc1"),
+        .init(name: "name2", description: "desc2"),
         .init(name: "name3", description: "desc3")
     ]
     
