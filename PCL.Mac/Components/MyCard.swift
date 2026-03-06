@@ -22,7 +22,6 @@ struct MyCard<Content: View, Action: View>: View {
     @State private var contentHeight: CGFloat = 0
     /// `content()` 的高度限制。
     @State private var internalContentHeight: CGFloat = 0
-    @State private var lastClick: Date = .distantPast
     @State private var foldWorkItem: DispatchWorkItem?
     
     private let title: String
@@ -89,8 +88,6 @@ struct MyCard<Content: View, Action: View>: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 guard foldable else { return }
-//                guard Date().timeIntervalSince(lastClick) > 0.2 else { return }
-                lastClick = Date()
                 self.foldWorkItem?.cancel()
                 if folded {
                     // 展开卡片
