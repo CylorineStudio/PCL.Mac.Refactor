@@ -83,7 +83,7 @@ public enum JavaSearcher {
         }
         return JavaRuntime(
             version: javaVersion,
-            versionNumber: versionMajor,
+            majorVersion: versionMajor,
             type: type,
             architecture: architecture,
             implementor: implementor,

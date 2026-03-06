@@ -40,8 +40,10 @@ struct MyListItem<Content: View>: View {
                         }
                         VStack(alignment: .leading) {
                             MyText(model.name)
+                                .lineLimit(1)
                             if let description = model.description {
                                 MyText(description, color: .colorGray3)
+                                    .lineLimit(1)
                             }
                         }
                     }

@@ -22,7 +22,7 @@ public enum LaunchPrecheck {
     private static func checkJava(instance: MinecraftInstance, currentJava: JavaRuntime) -> [Entry] {
         var entries: [Entry] = []
         let minVersion: Int = instance.manifest.javaVersion.majorVersion
-        let actualVersion: Int = currentJava.versionNumber
+        let actualVersion: Int = currentJava.majorVersion
         if actualVersion < minVersion {
             log("当前 Java 版本（\(actualVersion)）低于最低 Java 版本（\(minVersion)）")
             entries.append(.javaVersionTooLow(min: minVersion))

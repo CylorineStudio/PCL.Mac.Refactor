@@ -105,7 +105,7 @@ private struct ModLoaderCard: View {
             ZStack(alignment: .topLeading) {
                 MyCard(type.description, foldable: loadState == .finished, folded: true) {
                     if let versions {
-                        MyList(versions.map { ListItem(image: iconName, name: $0.id, description: $0.beta ? "测试版" : "稳定版") }) { index in
+                        MyList(items: versions.map { ListItem(image: iconName, name: $0.id, description: $0.beta ? "测试版" : "稳定版") }) { index in
                             if let index {
                                 currentLoader = MinecraftInstallTask.Loader(type: type, version: versions[index].id)
                             } else {

@@ -13,6 +13,15 @@ struct LaunchPage: View {
     private let listItems: [ListItem] = [
         .init(name: "name1", description: "desc1"),
         .init(name: "name2", description: "desc2"),
+        .init(name: "name3", description: "desc3"),
+        .init(name: "name1", description: "desc1"),
+        .init(name: "name2", description: "desc2"),
+        .init(name: "name3", description: "desc3"),
+        .init(name: "name1", description: "desc1"),
+        .init(name: "name2", description: "desc2"),
+        .init(name: "name3", description: "desc3"),
+        .init(name: "name1", description: "desc1"),
+        .init(name: "name2", description: "desc2"),
         .init(name: "name3", description: "desc3")
     ]
     
@@ -33,7 +42,7 @@ struct LaunchPage: View {
                         MyButton("红色按钮", subLabel: "但是两行文本", type: .red) {}
                     }
                     .frame(height: 60)
-                    MyList(listItems)
+                    MyList(items: listItems, selectable: true)
                 }
             }
             MyCard("不可折叠的卡片", foldable: false) {

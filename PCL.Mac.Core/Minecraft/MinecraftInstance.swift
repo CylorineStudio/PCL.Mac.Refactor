@@ -19,6 +19,8 @@ public class MinecraftInstance: Equatable {
     public var name: String { runningDirectory.lastPathComponent }
     public var manifestURL: URL { runningDirectory.appending(path: "\(name).json") }
     
+    private var cachedJavaRuntime: JavaRuntime?
+    
     /// 根据运行目录、版本与客户端清单创建实例对象。
     ///
     /// 如果只需要从磁盘加载实例，请使用 `MinecraftInstance.load(from:)`。
@@ -50,26 +52,19 @@ public class MinecraftInstance: Equatable {
     public func setJava(url: URL?) {
         config.javaURL = url
         saveConfig()
+        cachedJavaRuntime = nil
     }
     
     /// 搜索最适合的 Java。
     /// - Parameters:
     ///   - arch: 目标 Java 架构。
-    ///   - research: 是否重新构建 Java 列表。
     /// - Returns: 搜到的 Java。
     @discardableResult
-    public func searchJava(arch: Architecture? = nil, research: Bool = false) -> JavaRuntime? {
-        if research {
-            do {
-                try JavaManager.shared.research()
-            } catch {
-                err("重新搜索 Java 失败：\(error.localizedDescription)")
-            }
-        }
+    public func searchJava(arch: Architecture? = nil) -> JavaRuntime? {
         func getScore(of runtime: JavaRuntime) -> Int {
             var score: Int = 0
             if runtime.architecture == (version > .init("1.7.2") ? .systemArchitecture() : .x64) { score += 3 }
-            if runtime.versionNumber == manifest.javaVersion.majorVersion { score += 2 }
+            if runtime.majorVersion == manifest.javaVersion.majorVersion { score += 2 }
             if runtime.type == .jdk { score += 1 }
             if runtime.implementor.contains("Azul") { score += 1 }
             return score
@@ -77,7 +72,7 @@ public class MinecraftInstance: Equatable {
         
         if let runtime: JavaRuntime = JavaManager.shared.javaRuntimes
             .filter({ $0.architecture == (arch ?? $0.architecture) })
-            .filter({ $0.versionNumber >= manifest.javaVersion.majorVersion })
+            .filter({ $0.majorVersion >= manifest.javaVersion.majorVersion })
             .max(by: { getScore(of: $0) > getScore(of: $1) }) {
             return runtime
         }
@@ -90,8 +85,13 @@ public class MinecraftInstance: Equatable {
         guard let javaURL = config.javaURL else {
             return nil
         }
+        if let cachedJavaRuntime {
+            return cachedJavaRuntime
+        }
         do {
-            return try JavaSearcher.load(from: javaURL)
+            let runtime: JavaRuntime = try JavaSearcher.load(from: javaURL)
+            cachedJavaRuntime = runtime
+            return runtime
         } catch {
             err("加载 Java 失败")
             setJava(url: nil)

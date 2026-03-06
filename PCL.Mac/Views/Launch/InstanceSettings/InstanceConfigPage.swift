@@ -10,35 +10,27 @@ import Core
 
 struct InstanceConfigPage: View {
     @EnvironmentObject private var instanceVM: InstanceManager
+    @StateObject private var viewModel: InstanceConfigViewModel
     @StateObject private var loadingVM: MyLoadingViewModel = .init(text: "加载中")
-    @State private var instance: MinecraftInstance?
-    
-    @State private var jvmHeapSize: String = ""
-    
-    private let id: String
     
     init(id: String) {
-        self.id = id
+        self._viewModel = .init(wrappedValue: .init(id: id))
     }
     
     var body: some View {
         CardContainer {
-            if let instance {
+            if viewModel.loaded {
                 MyCard("", titled: false, padding: 10) {
-                    MyListItem(.init(image: "GrassBlock", name: instance.name, description: instance.version.id))
+                    MyListItem(.init(image: viewModel.iconName, name: viewModel.id, description: viewModel.description))
                 }
-                jvmCard(instance)
+                jvmCard
             } else {
                 MyLoading(viewModel: loadingVM)
             }
         }
-        .task(id: id) {
+        .task(id: viewModel.id) {
             do {
-                let instance: MinecraftInstance = try instanceVM.loadInstance(id)
-                await MainActor.run {
-                    self.instance = instance
-                    self.jvmHeapSize = instance.config.jvmHeapSize.description
-                }
+                try await viewModel.load()
             } catch {
                 await MainActor.run {
                     loadingVM.fail(with: "加载失败：\(error.localizedDescription)")
@@ -48,16 +40,49 @@ struct InstanceConfigPage: View {
     }
     
     @ViewBuilder
-    private func jvmCard(_ instance: MinecraftInstance) -> some View {
+    private var jvmCard: some View {
         MyCard("JVM 设置", foldable: false) {
             VStack {
+                configLine(label: "使用的 Java") {
+                    MyText(viewModel.javaDescription)
+                }
                 configLine(label: "内存分配") {
-                    MyTextField(text: $jvmHeapSize)
-                        .onChange(of: jvmHeapSize) { newValue in
-                            if let jvmHeapSize: UInt64 = .init(newValue) { instance.setJVMHeapSize(jvmHeapSize) }
+                    MyTextField(text: $viewModel.jvmHeapSize)
+                        .onChange(of: viewModel.jvmHeapSize) { newValue in
+                            if let jvmHeapSize: UInt64 = .init(newValue) { viewModel.setHeapSize(jvmHeapSize) }
                         }
                     MyText("MB")
                 }
+                HStack(spacing: 30) {
+                    MyButton("切换 Java") {
+                        let runtimes: [JavaRuntime] = viewModel.javaList()
+                        Task {
+                            if let index: Int = await MessageBoxManager.shared.showList(
+                                title: "切换 Java",
+                                items: runtimes.map { .init(name: $0.description, description: $0.executableURL.path) }
+                            ) {
+                                let runtime: JavaRuntime = runtimes[index]
+                                do {
+                                    try viewModel.switchJava(to: runtime)
+                                } catch let error as InstanceConfigViewModel.Error {
+                                    switch error {
+                                    case .invalidJavaVersion(let min):
+                                        _ = await MessageBoxManager.shared.showText(
+                                            title: "Java 版本不满足要求",
+                                            content: "这个实例需要 Java \(min) 才能启动，但你选择的是 Java \(runtime.version)！",
+                                            level: .error
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .frame(minWidth: 150)
+                    .fixedSize(horizontal: true, vertical: false)
+                    Spacer()
+                }
+                .frame(height: 35)
+                .padding(.top, 12)
             }
         }
     }
@@ -68,6 +93,7 @@ struct InstanceConfigPage: View {
             MyText(label)
                 .frame(width: 120, alignment: .leading)
             HStack {
+                Spacer(minLength: 0)
                 body()
             }
             .frame(maxWidth: .infinity, alignment: .leading)

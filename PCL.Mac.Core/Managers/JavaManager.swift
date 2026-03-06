@@ -7,11 +7,12 @@
 
 import Foundation
 
-public final class JavaManager {
+public final class JavaManager: ObservableObject {
     public static let shared: JavaManager = .init()
     
-    public private(set) var javaRuntimes: [JavaRuntime]
+    @Published public private(set) var javaRuntimes: [JavaRuntime]
     
+    @MainActor
     public func research() throws {
         self.javaRuntimes = try JavaSearcher.search()
     }

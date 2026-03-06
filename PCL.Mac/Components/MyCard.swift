@@ -141,7 +141,7 @@ struct MyCard<Content: View, Action: View>: View {
             self.hovered = hovered
         }
         .background {
-            RoundedRectangle(cornerRadius: 4)
+            RoundedRectangle(cornerRadius: 5)
                 .fill(Color.colorGray8)
                 .shadow(color: hovered ? .color3.opacity(0.6) : .black.opacity(0.1), radius: 6)
         }
@@ -163,6 +163,7 @@ struct MyCard<Content: View, Action: View>: View {
             
             if let initialFolded {
                 folded = initialFolded
+                showContent = !initialFolded
             } else {
                 if !foldable || !titled {
                     folded = false
