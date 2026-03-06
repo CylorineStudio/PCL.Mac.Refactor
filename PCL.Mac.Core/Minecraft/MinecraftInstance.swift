@@ -60,17 +60,9 @@ public class MinecraftInstance: Equatable {
     /// 搜索最适合的 Java。
     /// - Parameters:
     ///   - arch: 目标 Java 架构。
-    ///   - research: 是否重新构建 Java 列表。
     /// - Returns: 搜到的 Java。
     @discardableResult
-    public func searchJava(arch: Architecture? = nil, research: Bool = false) -> JavaRuntime? {
-        if research {
-            do {
-                try JavaManager.shared.research()
-            } catch {
-                err("重新搜索 Java 失败：\(error.localizedDescription)")
-            }
-        }
+    public func searchJava(arch: Architecture? = nil) -> JavaRuntime? {
         func getScore(of runtime: JavaRuntime) -> Int {
             var score: Int = 0
             if runtime.architecture == (version > .init("1.7.2") ? .systemArchitecture() : .x64) { score += 3 }

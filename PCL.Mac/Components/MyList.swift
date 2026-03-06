@@ -27,8 +27,9 @@ struct MyList: View {
             ForEach(0..<items.count, id: \.self) { index in
                 MyListItem(items[index], selected: selected == index)
                     .onTapGesture {
+                        guard let onSelect else { return }
                         selected = (selected == index ? nil : index)
-                        onSelect?(selected)
+                        onSelect(selected)
                     }
             }
         }
