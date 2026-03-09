@@ -169,7 +169,7 @@ public class MicrosoftAuthService {
                 "TokenType": "JWT"
             ]
         )
-        guard let uhs: String = json["DisplayClaims"]["xui"].arrayValue.first?["uhs"].stringValue else {
+        guard let uhs: String = json["DisplayClaims"]["xui"].arrayValue.first?["uhs"].string else {
             err("https://user.auth.xboxlive.com/user/authenticate 返回的响应体中没有 uhs")
             throw Error.internalError
         }
@@ -190,7 +190,7 @@ public class MicrosoftAuthService {
                 "TokenType": "JWT"
             ]
         )
-        guard let uhs: String = json["DisplayClaims"]["xui"].arrayValue.first?["uhs"].stringValue else {
+        guard let uhs: String = json["DisplayClaims"]["xui"].arrayValue.first?["uhs"].string else {
             err("https://xsts.auth.xboxlive.com/xsts/authorize 返回的响应体中没有 uhs")
             throw Error.internalError
         }

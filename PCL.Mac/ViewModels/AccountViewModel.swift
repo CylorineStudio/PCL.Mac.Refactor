@@ -117,21 +117,25 @@ class AccountViewModel: ObservableObject {
                     err("pollCount 或 pollInterval 未被设置")
                     throw MicrosoftAuthService.Error.internalError
                 }
-                for i in 0..<pollCount {
-                    try Task.checkCancellation()
-                    log("第 \(i + 1)/\(pollCount) 次轮询")
-                    try await Task.sleep(seconds: Double(pollInterval))
-                    if try await service.poll() {
-                        log("用户完成了授权")
-                        break
+                do {
+                    defer {
+                        DispatchQueue.main.async {
+                            NSApplication.shared.activate(ignoringOtherApps: true)
+                            MessageBoxManager.shared.complete(with: .button(id: 0))
+                        }
                     }
-                    if i == pollCount - 1 {
-                        throw SimpleError("授权超时。")
+                    for i in 0..<pollCount {
+                        try Task.checkCancellation()
+                        log("第 \(i + 1)/\(pollCount) 次轮询")
+                        try await Task.sleep(seconds: Double(pollInterval))
+                        if try await service.poll() {
+                            log("用户完成了授权")
+                            break
+                        }
+                        if i == pollCount - 1 {
+                            throw SimpleError("授权超时。")
+                        }
                     }
-                }
-                await MainActor.run {
-                    NSApplication.shared.activate(ignoringOtherApps: true)
-                    MessageBoxManager.shared.complete(with: .button(id: 0))
                 }
                 hint("授权成功！正在完成后续登录步骤……")
                 let response = try await service.authenticate()
@@ -169,12 +173,14 @@ class AccountViewModel: ObservableObject {
                 case .apiError(let description):
                     _ = await MessageBoxManager.shared.showText(
                         title: "添加正版账号失败",
-                        content: "响应体：\(description)"
+                        content: "响应体：\(description)",
+                        level: .error
                     )
                 case .internalError:
                     _ = await MessageBoxManager.shared.showText(
                         title: "添加正版账号失败",
-                        content: "发生内部错误。\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。"
+                        content: "发生内部错误。\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。",
+                        level: .error
                     )
                 case .notPurchased:
                     await showErrorMessageBox(
