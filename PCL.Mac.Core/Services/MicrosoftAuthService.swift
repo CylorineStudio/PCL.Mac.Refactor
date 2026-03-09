@@ -169,7 +169,11 @@ public class MicrosoftAuthService {
                 "TokenType": "JWT"
             ]
         )
-        return XboxLiveAuthResponse(token: json["Token"].stringValue, uhs: json["DisplayClaims"]["xui"].arrayValue[0]["uhs"].stringValue)
+        guard let uhs: String = json["DisplayClaims"]["xui"].arrayValue.first?["uhs"].stringValue else {
+            err("https://user.auth.xboxlive.com/user/authenticate 返回的响应体中没有 uhs")
+            throw Error.internalError
+        }
+        return XboxLiveAuthResponse(token: json["Token"].stringValue, uhs: uhs)
     }
     
     private func authorizeXSTS(with accessToken: String) async throws -> XboxLiveAuthResponse {
@@ -186,7 +190,11 @@ public class MicrosoftAuthService {
                 "TokenType": "JWT"
             ]
         )
-        return XboxLiveAuthResponse(token: json["Token"].stringValue, uhs: json["DisplayClaims"]["xui"].arrayValue[0]["uhs"].stringValue)
+        guard let uhs: String = json["DisplayClaims"]["xui"].arrayValue.first?["uhs"].stringValue else {
+            err("https://xsts.auth.xboxlive.com/xsts/authorize 返回的响应体中没有 uhs")
+            throw Error.internalError
+        }
+        return XboxLiveAuthResponse(token: json["Token"].stringValue, uhs: uhs)
     }
     
     private func loginMinecraft(with xstsAuthResponse: XboxLiveAuthResponse) async throws -> String {
