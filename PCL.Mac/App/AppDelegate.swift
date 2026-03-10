@@ -82,6 +82,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.window = AppWindow()
         self.window.makeKeyAndOrderFront(nil)
         log("成功创建窗口")
+        if !LauncherConfig.shared.hasEnteredLauncher {
+            Task {
+                _ = await MessageBoxManager.shared.showText(
+                    title: "欢迎使用 PCL.Mac！",
+                    content: "PCL.Mac 是 Plain Craft Launcher 的非官方衍生版，使用 SwiftUI 框架完全重构了 PCL 以支持 macOS。\n本启动器还处于开发阶段，有许多功能尚未完成，Bug 可能也比较多……\n若要获取帮助或查看更多信息，请访问 Cecilia Studio 官方网站！",
+                    level: .info,
+                    .init(id: 0, label: "打开 Cecilia Studio 官网", type: .highlight) {
+                        NSWorkspace.shared.open(URL(string: "https://ceciliastudio.top/projects/PCL.Mac.Refactor")!)
+                    },
+                    .init(id: 1, label: "开始使用", type: .normal)
+                )
+                LauncherConfig.shared.hasEnteredLauncher = true
+            }
+        }
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
