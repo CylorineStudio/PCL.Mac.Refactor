@@ -27,7 +27,9 @@ public enum JavaInstallTask {
                     case .file(let url, let sha1, _, let executable):
                         downloadItems.append(.init(url: url, destination: tempDirectory.appending(path: path), sha1: sha1, executable: executable))
                     case .link(let target):
-                        try FileManager.default.createSymbolicLink(at: tempDirectory.appending(path: path), withDestinationURL: tempDirectory.appending(path: target))
+                        let parent: URL = tempDirectory.appending(path: path).deletingLastPathComponent()
+                        try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
+                        try FileManager.default.createSymbolicLink(at: tempDirectory.appending(path: path), withDestinationURL: parent.appending(path: target).standardized)
                     }
                 }
                 try await MultiFileDownloader(items: downloadItems, concurrentLimit: 64, replaceMethod: .skip, progressHandler: task.setProgress(_:)).start()

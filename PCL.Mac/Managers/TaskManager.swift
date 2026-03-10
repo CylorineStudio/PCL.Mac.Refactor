@@ -23,6 +23,7 @@ public class TaskManager: ObservableObject {
     ///   - display: 是否显示与弹出 hint。
     ///   - completion: 任务完成回调。
     /// - Returns: 任务的 `id`。
+    @MainActor
     @discardableResult
     public func execute<Model>(task: MyTask<Model>, display: Bool = true, completion: ((Error?) -> Void)? = nil) -> UUID {
         let id: UUID = task.id

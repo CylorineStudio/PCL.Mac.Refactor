@@ -36,6 +36,7 @@ class MinecraftLaunchManager: ObservableObject {
     ///   - account: 使用的账号。
     ///   - repository: 实例所在的游戏仓库。
     /// - Returns: 一个布尔值，表示是否成功添加任务。
+    @MainActor
     public func launch(
         _ instance: MinecraftInstance,
         using account: Account,

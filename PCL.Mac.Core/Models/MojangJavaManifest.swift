@@ -59,11 +59,10 @@ public struct MojangJavaManifest: Decodable {
 }
 
 public struct MojangJavaList: Decodable {
-    public let entries: [String: [JavaDownload]]
+    public let entries: [String: [String: [JavaDownload]]]
     
     public init(from decoder: any Decoder) throws {
         self.entries = try decoder.singleValueContainer().decode([String: [String: [JavaDownload]]].self)
-            .mapValues { $0.compactMap(\.value.first) }
     }
     
     public struct JavaDownload: Decodable {

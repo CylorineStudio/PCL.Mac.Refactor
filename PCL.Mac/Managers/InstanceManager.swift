@@ -117,6 +117,7 @@ class InstanceManager: ObservableObject {
     ///   - instance: 目标游戏实例。
     ///   - account: 使用的账号。
     ///   - repository: 游戏仓库。
+    @MainActor
     public func launch(_ instance: MinecraftInstance, _ account: Account, in repository: MinecraftRepository) {
         if MinecraftLaunchManager.shared.launch(instance, using: account, in: repository) {
             log("正在启动游戏 \(instance.name)")

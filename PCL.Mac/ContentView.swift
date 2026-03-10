@@ -176,7 +176,7 @@ private struct ExtraButtonsOverlay: View {
         var body: some View {
             Circle()
                 .fill(hovered ? Color.color4 : .color3)
-                .frame(width: 40)
+                .frame(width: show ? 40 : 1)
                 .overlay {
                     Image(imageName)
                         .resizable()

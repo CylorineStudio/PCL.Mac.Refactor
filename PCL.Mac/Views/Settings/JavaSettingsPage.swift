@@ -25,9 +25,25 @@ struct JavaSettingsPage: View {
                         hint("刷新成功！", type: .finish)
                     }
                     .frame(width: 120)
+                    
                     MyButton("安装 Java") {
-                        
+                        Task {
+                            do {
+                                let downloads: [MojangJavaList.JavaDownload] = try await viewModel.javaDownloads()
+                                if let index: Int = await MessageBoxManager.shared.showList(
+                                    title: "选择 Java 版本",
+                                    items: downloads.map(viewModel.listItem(forJavaDownload:))
+                                ) {
+                                    TaskManager.shared.execute(task: JavaInstallTask.create(download: downloads[index]))
+                                    AppRouter.shared.append(.tasks)
+                                }
+                            } catch {
+                                err("拉取 Java 列表失败：\(error.localizedDescription)")
+                                hint("拉取 Java 列表失败：\(error.localizedDescription)", type: .critical)
+                            }
+                        }
                     }
+                    .frame(width: 120)
                     Spacer()
                 }
                 .frame(height: 40)
