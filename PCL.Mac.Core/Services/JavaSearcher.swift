@@ -59,7 +59,12 @@ public enum JavaSearcher {
         guard let versionMajor: Int = parseVersionNumber(javaVersion) else {
             throw JavaError.failedToParseVersionNumber(version: javaVersion)
         }
-        let implementor: String = release["IMPLEMENTOR"] ?? "Unknown"
+        let implementor: String?
+        if homeDirectory.deletingLastPathComponent().deletingLastPathComponent().lastPathComponent.starts(with: "mojang") {
+            implementor = "Microsoft"
+        } else {
+            implementor = release["IMPLEMENTOR"]
+        }
         
         // Java 类型判断
         var type: JavaRuntime.JavaType?

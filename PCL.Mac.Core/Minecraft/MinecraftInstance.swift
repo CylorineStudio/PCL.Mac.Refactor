@@ -66,7 +66,7 @@ public class MinecraftInstance: Equatable {
             if runtime.architecture == (version > .init("1.7.2") ? .systemArchitecture() : .x64) { score += 3 }
             if runtime.majorVersion == manifest.javaVersion.majorVersion { score += 2 }
             if runtime.type == .jdk { score += 1 }
-            if runtime.implementor.contains("Azul") { score += 1 }
+            if runtime.implementor?.contains("Azul") == true { score += 1 }
             return score
         }
         

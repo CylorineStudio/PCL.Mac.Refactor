@@ -16,8 +16,8 @@ public struct JavaRuntime: CustomStringConvertible {
     public let type: JavaType
     /// Java 架构。
     public let architecture: Architecture
-    /// Java 实现者，如 `Azul Systems, Inc.`。
-    public let implementor: String
+    /// Java 实现商，如 `Azul Systems, Inc.`。
+    public let implementor: String?
     /// `java` 可执行文件 URL。
     public let executableURL: URL
     
@@ -33,6 +33,9 @@ public struct JavaRuntime: CustomStringConvertible {
     }
     
     public var description: String {
-        "\(type) \(version) \(architecture) (\(implementor))"
+        if let implementor {
+            return "\(type) \(version) \(architecture) (\(implementor))"
+        }
+        return "\(type) \(version) \(architecture)"
     }
 }
