@@ -58,15 +58,13 @@ public enum MinecraftLaunchTask {
             } else {
                 if await MessageBoxManager.shared.showText(
                     title: "没有可用的 Java",
-                    content: "这个实例需要 Java \(model.instance.manifest.javaVersion.majorVersion) 才能启动，但你的电脑上没有安装。\nPCL.Mac.Refactor 暂时没有 Java 安装功能，但是可以帮你打开下载网页。",
+                    content: "这个实例需要 Java \(model.instance.manifest.javaVersion.majorVersion) 才能启动，但你的电脑上没有安装。\n点击下方按钮可以跳转到安装页面！",
                     level: .error,
                     .init(id: 0, label: "取消", type: .normal),
-                    .init(id: 1, label: "打开下载网页", type: .normal)
+                    .init(id: 1, label: "去安装", type: .normal)
                 ) == 1 {
-                    let version: String = "java-\(model.instance.manifest.javaVersion.majorVersion)-lts"
-                    let arch: String = Architecture.systemArchitecture() == .arm64 ? "arm-64-bit" : "x86-64-bit"
-                    let url: String = "https://www.azul.com/downloads/?version=\(version)&os=macos&architecture=\(arch)&package=jdk#zulu"
-                    NSWorkspace.shared.open(URL(string: url)!)
+                    await AppRouter.shared.setRoot(.settings)
+                    await AppRouter.shared.append(.javaSettings)
                 }
                 try task.cancel()
             }
