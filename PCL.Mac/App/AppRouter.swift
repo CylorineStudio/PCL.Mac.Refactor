@@ -128,7 +128,6 @@ class AppRouter: ObservableObject {
         return path[0]
     }
     
-    @MainActor
     func setRoot(_ newRoot: AppRoute) {
         path = [newRoot]
         // 各根页面的默认子页面
@@ -138,7 +137,6 @@ class AppRouter: ObservableObject {
         if newRoot == .more { append(.about) }
     }
     
-    @MainActor
     func append(_ route: AppRoute) {
         path.append(route)
         if case .instanceSettings(let id) = route { append(.instanceConfig(id: id)) }

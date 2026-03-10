@@ -12,9 +12,13 @@ public enum JavaInstallTask {
         download: MojangJavaList.JavaDownload
     ) -> MyTask<Model> {
         let tempDirectory: URL = URLConstants.tempURL.appending(path: "JavaInstall-\(UUID().uuidString)")
+        let bundleDestination: URL = FileManager.default.homeDirectoryForCurrentUser.appending(path: "Library/Java/JavaVirtualMachines/mojang-\(download.version).bundle")
         return .init(
             name: "Java 安装 - \(download.version)", model: .init(),
             .init(0, "获取 Java 清单") { _, model in
+                if FileManager.default.fileExists(atPath: bundleDestination.path) {
+                    throw SimpleError("已存在版本相同的 Mojang Java！")
+                }
                 model.manifest = try await Requests.get(download.manifestURL).decode(MojangJavaManifest.self)
             },
             .init(1, "下载文件") { task, model in
@@ -36,10 +40,12 @@ public enum JavaInstallTask {
             },
             .init(2, "__completion", display: false) { _, model in
                 let bundleRoot: URL = try FileManager.default.contentsOfDirectory(at: tempDirectory, includingPropertiesForKeys: nil)[0]
-                try FileManager.default.moveItem(at: bundleRoot, to: FileManager.default.homeDirectoryForCurrentUser.appending(path: "Library/Java/JavaVirtualMachines/mojang-\(download.version).bundle"))
+                try FileManager.default.moveItem(at: bundleRoot, to: bundleDestination)
                 try await JavaManager.shared.research()
             }
-        )
+        ) { _ in
+            try? FileManager.default.removeItem(at: tempDirectory)
+        }
     }
     
     public class Model: TaskModel {

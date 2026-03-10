@@ -13,7 +13,7 @@ class JavaSettingsViewModel: ObservableObject {
     private static let javaDownloadIds: [String] = ["java-runtime-epsilon", "java-runtime-delta", "java-runtime-gamma"]
     private static let dateFormatter: DateFormatter = {
         let formatter: DateFormatter = .init()
-        formatter.dateFormat = "yyyy/MM/dd HH:mm:SS"
+        formatter.dateFormat = "yyyy/MM/dd HH:mm:ss"
         return formatter
     }()
     
