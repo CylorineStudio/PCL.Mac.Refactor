@@ -23,7 +23,21 @@ struct InstanceConfigPage: View {
                 MyCard("", titled: false, padding: 10) {
                     MyListItem(.init(image: viewModel.iconName, name: viewModel.id, description: viewModel.description))
                 }
+                if let instance = viewModel.instance {
+                    MyCard("", titled: false) {
+                        HStack {
+                            MyButton("打开实例目录") {
+                                NSWorkspace.shared.open(instance.runningDirectory)
+                            }
+                            .frame(width: 120)
+                            Spacer()
+                        }
+                        .frame(height: 35)
+                    }
+                    .cardIndex(1)
+                }
                 jvmCard
+                    .cardIndex(2)
             } else {
                 MyLoading(viewModel: loadingVM)
             }
