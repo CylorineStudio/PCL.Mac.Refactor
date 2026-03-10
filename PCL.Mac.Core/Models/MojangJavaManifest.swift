@@ -62,8 +62,7 @@ public struct MojangJavaList: Decodable {
     public let entries: [String: [JavaDownload]]
     
     public init(from decoder: any Decoder) throws {
-        var container = try decoder.singleValueContainer()
-        self.entries = try container.decode([String: [String: [JavaDownload]]].self)
+        self.entries = try decoder.singleValueContainer().decode([String: [String: [JavaDownload]]].self)
             .mapValues { $0.compactMap(\.value.first) }
     }
     

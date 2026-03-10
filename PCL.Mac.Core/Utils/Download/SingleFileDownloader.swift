@@ -12,14 +12,17 @@ public enum SingleFileDownloader {
     public static let session: URLSession = .init(configuration: .default, delegate: DownloadDelegate.shared, delegateQueue: DownloadDelegate.queue)
     
     public static func download(_ item: DownloadItem, replaceMethod: ReplaceMethod, progressHandler: (@MainActor (Double) -> Void)? = nil) async throws {
-        try await download(url: item.url, destination: item.destination, sha1: item.sha1, replaceMethod: replaceMethod, progressHandler: progressHandler)
+        try await download(url: item.url, destination: item.destination, sha1: item.sha1, executable: item.executable, replaceMethod: replaceMethod, progressHandler: progressHandler)
     }
     
-    public static func download(url: URL,
-                                destination: URL,
-                                sha1: String?,
-                                replaceMethod: ReplaceMethod,
-                                progressHandler: (@MainActor (Double) -> Void)? = nil) async throws {
+    public static func download(
+        url: URL,
+        destination: URL,
+        sha1: String?,
+        executable: Bool = false,
+        replaceMethod: ReplaceMethod,
+        progressHandler: (@MainActor (Double) -> Void)? = nil
+    ) async throws {
         // 文件已存在处理
         if FileManager.default.fileExists(atPath: destination.path) {
             if let sha1, try FileUtils.sha1(of: destination) != sha1 {
@@ -60,6 +63,9 @@ public enum SingleFileDownloader {
                 try FileManager.default.removeItem(at: destination)
                 throw DownloadError.checksumMismatch
             }
+        }
+        if executable {
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: destination.path)
         }
     }
 }
