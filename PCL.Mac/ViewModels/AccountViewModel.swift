@@ -117,16 +117,24 @@ class AccountViewModel: ObservableObject {
                     err("pollCount 或 pollInterval 未被设置")
                     throw MicrosoftAuthService.Error.internalError
                 }
-                for i in 0..<pollCount {
-                    try Task.checkCancellation()
-                    log("第 \(i + 1)/\(pollCount) 次轮询")
-                    try await Task.sleep(seconds: Double(pollInterval))
-                    if try await service.poll() {
-                        log("用户完成了授权")
-                        break
+                do {
+                    defer {
+                        DispatchQueue.main.async {
+                            NSApplication.shared.activate(ignoringOtherApps: true)
+                            MessageBoxManager.shared.complete(with: .button(id: 0))
+                        }
                     }
-                    if i == pollCount - 1 {
-                        throw SimpleError("授权超时。")
+                    for i in 0..<pollCount {
+                        try Task.checkCancellation()
+                        log("第 \(i + 1)/\(pollCount) 次轮询")
+                        try await Task.sleep(seconds: Double(pollInterval))
+                        if try await service.poll() {
+                            log("用户完成了授权")
+                            break
+                        }
+                        if i == pollCount - 1 {
+                            throw SimpleError("授权超时。")
+                        }
                     }
                 }
                 hint("授权成功！正在完成后续登录步骤……")
@@ -138,12 +146,55 @@ class AccountViewModel: ObservableObject {
                     LauncherConfig.shared.hasMicrosoftAccount = true
                     addAccount(account)
                 }
+            } catch is CancellationError {
+            } catch let error as MicrosoftAuthService.Error {
+                switch error {
+                case .xboxAuthenticationFailed(let code):
+                    switch code {
+                    case 2148916238:
+                        await showErrorMessageBox(
+                            "Xbox 验证失败",
+                            "当前账户为未成年账户，无法通过 Xbox Live 认证。\n请点击下方的“确定”按钮，更改账户年龄后再次尝试登录。",
+                            "https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a"
+                        )
+                    case 2148916233:
+                        await showErrorMessageBox(
+                            "Xbox 验证失败",
+                            "该微软账户没有关联 Xbox 账户。\n请点击下方的“确定”按钮，关联 Xbox 账户后再次尝试登录。",
+                            "https://www.minecraft.net/msaprofile/mygames/editprofile"
+                        )
+                    default:
+                        _ = await MessageBoxManager.shared.showText(
+                            title: "Xbox 验证失败",
+                            content: "发生未知错误。错误代码：\(code)",
+                            level: .error
+                        )
+                    }
+                case .apiError(let description):
+                    _ = await MessageBoxManager.shared.showText(
+                        title: "添加正版账号失败",
+                        content: "响应体：\(description)",
+                        level: .error
+                    )
+                case .internalError:
+                    _ = await MessageBoxManager.shared.showText(
+                        title: "添加正版账号失败",
+                        content: "发生内部错误。\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。",
+                        level: .error
+                    )
+                case .notPurchased:
+                    await showErrorMessageBox(
+                        "添加正版账号失败",
+                        "看起来你还没有购买 Minecraft。\n如果你已购买 Minecraft，请点击下方的“确定”按钮，创建档案后再次尝试登录。",
+                        "https://www.minecraft.net/msaprofile/mygames/editprofile"
+                    )
+                }
             } catch {
-                err("添加正版账号失败：\(error.localizedDescription)")
+                _ = await MessageBoxManager.shared.showText(
+                    title: "添加正版账号失败",
+                    content: "\(error.localizedDescription)\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。"
+                )
                 hint("登录失败：\(error.localizedDescription)", type: .critical)
-            }
-            await MainActor.run {
-                MessageBoxManager.shared.complete(with: .button(id: 0))
             }
         }
         
@@ -159,6 +210,18 @@ class AccountViewModel: ObservableObject {
         ) == 1 {
             log("用户取消了授权")
             authTask.cancel()
+        }
+    }
+    
+    private func showErrorMessageBox(_ title: String, _ content: String, _ link: String) async {
+        if await MessageBoxManager.shared.showText(
+            title: title,
+            content: content,
+            level: .error,
+            .init(id: 0, label: "取消", type: .normal),
+            .init(id: 1, label: "确定", type: .highlight)
+        ) == 1 {
+            NSWorkspace.shared.open(link.url!)
         }
     }
     

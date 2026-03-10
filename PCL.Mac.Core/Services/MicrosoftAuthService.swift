@@ -118,21 +118,11 @@ public class MicrosoftAuthService {
         public let refreshToken: String
     }
     
-    public enum Error: LocalizedError {
+    public enum Error: Swift.Error {
+        case xboxAuthenticationFailed(code: UInt32)
         case apiError(description: String)
         case internalError
         case notPurchased
-        
-        public var errorDescription: String? {
-            switch self {
-            case .apiError(let description):
-                "调用 API 失败：\(description)"
-            case .internalError:
-                "发生内部错误。"
-            case .notPurchased:
-                "你还没有购买 Minecraft！"
-            }
-        }
     }
     
     
@@ -144,11 +134,24 @@ public class MicrosoftAuthService {
     private func post(_ url: URLConvertible, _ body: [String: Any], encodeMethod: Requests.EncodeMethod = .json) async throws -> JSON {
         let response = try await Requests.post(url, body: body, using: encodeMethod)
         let json: JSON = try response.json()
-        if let error: String = json["error"].string,
-           error != "authorization_pending" && error != "slow_down" {
+        guard let string: String = .init(data: response.data, encoding: .utf8) else { throw Error.internalError }
+        
+        if let error: String = json["error"].string {
+            if error == "authorization_pending" || error == "slow_down" {
+                return json
+            }
+            
             let description: String = json["error_description"].string ?? json["errorMessage"].stringValue
             err("调用 API 失败：\(response.statusCode) \(error)，错误描述：\(description)")
             throw Error.apiError(description: description)
+        }
+        if let xerr: UInt32 = json["XErr"].uInt32 {
+            err("Xbox Live 验证失败，错误代码：\(xerr)，响应体：\(string)")
+            throw Error.xboxAuthenticationFailed(code: xerr)
+        }
+        if !(200..<300).contains(response.statusCode) {
+            err("调用 API 失败：发生未知错误：\(String(data: response.data, encoding: .utf8) ?? "解析失败")")
+            throw Error.apiError(description: string)
         }
         return json
     }
@@ -166,7 +169,11 @@ public class MicrosoftAuthService {
                 "TokenType": "JWT"
             ]
         )
-        return XboxLiveAuthResponse(token: json["Token"].stringValue, uhs: json["DisplayClaims"]["xui"].arrayValue[0]["uhs"].stringValue)
+        guard let uhs: String = json["DisplayClaims"]["xui"].arrayValue.first?["uhs"].string else {
+            err("https://user.auth.xboxlive.com/user/authenticate 返回的响应体中没有 uhs")
+            throw Error.internalError
+        }
+        return XboxLiveAuthResponse(token: json["Token"].stringValue, uhs: uhs)
     }
     
     private func authorizeXSTS(with accessToken: String) async throws -> XboxLiveAuthResponse {
@@ -183,7 +190,11 @@ public class MicrosoftAuthService {
                 "TokenType": "JWT"
             ]
         )
-        return XboxLiveAuthResponse(token: json["Token"].stringValue, uhs: json["DisplayClaims"]["xui"].arrayValue[0]["uhs"].stringValue)
+        guard let uhs: String = json["DisplayClaims"]["xui"].arrayValue.first?["uhs"].string else {
+            err("https://xsts.auth.xboxlive.com/xsts/authorize 返回的响应体中没有 uhs")
+            throw Error.internalError
+        }
+        return XboxLiveAuthResponse(token: json["Token"].stringValue, uhs: uhs)
     }
     
     private func loginMinecraft(with xstsAuthResponse: XboxLiveAuthResponse) async throws -> String {
