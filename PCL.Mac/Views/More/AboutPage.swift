@@ -14,34 +14,34 @@ struct AboutPage: View {
             MyCard("关于", foldable: false) {
                 VStack(spacing: 0) {
                     ProfileView("LTCatt", "龙腾猫跃", "Plain Craft Launcher 的作者！",
-                                .init("GitHub", URL(string: "https://github.com/LTCatt")!),
-                                .init("Afdian", URL(string: "https://afdian.com/a/LTCat")!))
+                                .init("GitHub 主页", "https://github.com/LTCatt"),
+                                .init("前往赞助", "https://afdian.com/a/LTCat"))
                     
                     ProfileView("AnemoFlower", "风花AnemoFlower", "PCL.Mac 的作者",
-                                .init("GitHub", URL(string: "https://github.com/AnemoFlower")!),
-                                .init("Bilibili", URL(string: "https://space.bilibili.com/3461564927576750")!),
-                                .init("Afdian", URL(string: "https://afdian.com/a/AnemoFlower")!))
+                                .init("GitHub 主页", "https://github.com/AnemoFlower"),
+                                .init("Bilibili 主页", "https://space.bilibili.com/3461564927576750"),
+                                .init("前往赞助", "https://afdian.com/a/AnemoFlower"))
                     
                     ProfileView("CeciliaStudio", "Cecilia Studio", "PCL.Mac 的开发团队",
-                                .init("GitHub", URL(string: "https://github.com/CeciliaStudio")!),
-                                .init("CeciliaStudio", URL(string: "https://ceciliastudio.top")!))
+                                .init("GitHub 主页", "https://github.com/CeciliaStudio"),
+                                .init("官方网站", "https://ceciliastudio.top"))
                     
                     ProfileView("PCL.Mac", "PCL.Mac.Refactor", "当前版本：\(Metadata.appVersion)",
-                                .init("GitHub", URL(string: "https://github.com/CeciliaStudio/PCL.Mac.Refactor")!),
-                                .init("CeciliaStudio", URL(string: "https://ceciliastudio.top/projects/PCL.Mac.Refactor")!))
+                                .init("GitHub 仓库", "https://github.com/CeciliaStudio/PCL.Mac.Refactor"),
+                                .init("官网页面", "https://ceciliastudio.top/projects/PCL.Mac.Refactor"))
                 }
             }
             
             MyCard("特别鸣谢", foldable: false) {
                 VStack(spacing: 0) {
                     ProfileView("PCL-Community", "PCL Community", "Plain Craft Launcher 非官方社区",
-                                .init("GitHub", URL(string: "https://github.com/PCL-Community")!))
+                                .init("GitHub 主页", "https://github.com/PCL-Community"))
                     
                     ProfileView("PCL.Proto", "PCL.Proto", "以 PCL2 和 PCL2-CE 为蓝本，旨在为各 PCL 分支版本提供一个标准化的原型样本。",
-                                .init("GitHub", URL(string: "https://github.com/PCL-Community/PCL.Proto")!))
+                                .init("GitHub 仓库", "https://github.com/PCL-Community/PCL.Proto"))
                     
-                    ProfileView("bangbang93", "bangbang93", "提供 BMCLAPI 镜像源和 Forge 安装工具，详见 https://bmclapi.bangbang93.com",
-                                .init("Afdian", URL(string: "https://afdian.com/a/bangbang93")!))
+                    ProfileView("bangbang93", "bangbang93", "提供 BMCLAPI 镜像源，详见 https://bmclapi.bangbang93.com",
+                                .init("前往赞助", "https://afdian.com/a/bangbang93"))
                 }
             }
         }
@@ -78,16 +78,12 @@ struct AboutPage: View {
                     Spacer()
                     HStack {
                         ForEach(links, id: \.url) { link in
-                            Image(link.image)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 28, height: 28)
-                                .clipShape(.circle)
-                                .contentShape(.rect)
-                                .onTapGesture {
-                                    NSWorkspace.shared.open(link.url)
+                            MyButton(link.buttonName) {
+                                if let url: URL = .init(string: link.url) {
+                                    NSWorkspace.shared.open(url)
                                 }
-                                .contrast(easterEggManager.modifyColor ? -1 : 1)
+                            }
+                            .frame(width: 100)
                         }
                     }
                     .padding(.trailing, 2)
@@ -97,11 +93,11 @@ struct AboutPage: View {
         }
         
         struct Link {
-            let image: String
-            let url: URL
+            let buttonName: String
+            let url: String
             
-            init(_ image: String, _ url: URL) {
-                self.image = image
+            init(_ buttonName: String, _ url: String) {
+                self.buttonName = buttonName
                 self.url = url
             }
         }
