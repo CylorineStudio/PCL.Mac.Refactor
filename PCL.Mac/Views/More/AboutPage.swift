@@ -39,6 +39,9 @@ struct AboutPage: View {
                     
                     ProfileView("PCL.Proto", "PCL.Proto", "以 PCL2 和 PCL2-CE 为蓝本，旨在为各 PCL 分支版本提供一个标准化的原型样本。",
                                 .init("GitHub", URL(string: "https://github.com/PCL-Community/PCL.Proto")!))
+                    
+                    ProfileView("bangbang93", "bangbang93", "提供 BMCLAPI 镜像源和 Forge 安装工具，详见 https://bmclapi.bangbang93.com",
+                                .init("Afdian", URL(string: "https://afdian.com/a/bangbang93")!))
                 }
             }
         }
