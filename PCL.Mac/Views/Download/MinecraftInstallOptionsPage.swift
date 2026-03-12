@@ -19,6 +19,8 @@ struct MinecraftInstallOptionsPage: View {
     var body: some View {
         CardContainer {
             VStack {
+                MyTip(text: "Forge 版本列表与安装器由 BMCLAPI 提供。", theme: .blue)
+                    .padding(.bottom, 10)
                 MyCard("", titled: false, limitHeight: false) {
                     HStack {
                         Image(icon)
