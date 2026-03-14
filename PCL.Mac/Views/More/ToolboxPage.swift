@@ -46,7 +46,7 @@ struct ToolboxPage: View {
                 .frame(height: 40)
             }
             MyCard("回声洞", foldable: false, limitHeight: false) {
-                MyTip(text: "回声洞里的消息目前还比较有限，所以很可能会重复……\n欢迎前往 https://github.com/CeciliaStudio/PCL.Mac.Refactor/discussions/43 进行投稿！", theme: .blue)
+                MyTip(text: "回声洞里的消息目前还比较有限，所以很可能会重复……\n欢迎前往 https://github.com/CylorineStudio/PCL.Mac.Refactor/discussions/43 进行投稿！", theme: .blue)
                     .padding(.bottom, 10)
                 Color.clear
                     .modifier(CaveMessageModifier(text: viewModel.currentCaveMessage, progress: viewModel.revealProgress))

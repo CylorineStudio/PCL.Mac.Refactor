@@ -22,13 +22,13 @@ struct AboutPage: View {
                                 .init("Bilibili", URL(string: "https://space.bilibili.com/3461564927576750")!),
                                 .init("Afdian", URL(string: "https://afdian.com/a/AnemoFlower")!))
                     
-                    ProfileView("CeciliaStudio", "Cecilia Studio", "PCL.Mac 的开发团队",
-                                .init("GitHub", URL(string: "https://github.com/CeciliaStudio")!),
-                                .init("CeciliaStudio", URL(string: "https://ceciliastudio.top")!))
+                    ProfileView("", "Cylorine Studio", "PCL.Mac 的开发团队",
+                                .init("GitHub", URL(string: "https://github.com/CylorineStudio")!),
+                                .init("", URL(string: "https://cylorine.studio")!))
                     
                     ProfileView("PCL.Mac", "PCL.Mac.Refactor", "当前版本：\(Metadata.appVersion)",
-                                .init("GitHub", URL(string: "https://github.com/CeciliaStudio/PCL.Mac.Refactor")!),
-                                .init("CeciliaStudio", URL(string: "https://ceciliastudio.top/projects/PCL.Mac.Refactor")!))
+                                .init("GitHub", URL(string: "https://github.com/CylorineStudio/PCL.Mac.Refactor")!),
+                                .init("", URL(string: "https://cylorine.studio/projects/PCL.Mac.Refactor")!))
                 }
             }
             

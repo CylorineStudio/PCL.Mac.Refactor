@@ -10,7 +10,7 @@ import SwiftyJSON
 
 /// https://zh.minecraft.wiki/w/客户端清单文件格式
 public class ClientManifest: Decodable {
-    private static let oldVersionFlag: String = "-Dorg.ceciliastudio.cl.OldVersionFlag=1"
+    private static let oldVersionFlag: String = "-Dtop.cylorinestudio.cl.OldVersionFlag=1"
     
     public let gameArguments: [Argument]
     public let jvmArguments: [Argument]
