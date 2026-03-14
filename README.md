@@ -2,12 +2,12 @@
   <img alt="Logo" src="/.github/assets/icon.png" width="180">
   <h1>PCL.Mac</h1>
   <img src="https://img.shields.io/badge/macOS-12.0+-81AD18" alt="Minimum OS Version">
-  <img src="https://img.shields.io/github/stars/CeciliaStudio/PCL.Mac.Refactor?style=flat" alt="Stars">
-  <img src="https://img.shields.io/github/commit-activity/y/CeciliaStudio/PCL.Mac.Refactor?color=FF6C57" alt="Activity">
-  <img src="https://img.shields.io/github/contributors/CeciliaStudio/PCL.Mac.Refactor" alt="Contributors">
+  <img src="https://img.shields.io/github/stars/CylorineStudio/PCL.Mac.Refactor?style=flat" alt="Stars">
+  <img src="https://img.shields.io/github/commit-activity/y/CylorineStudio/PCL.Mac.Refactor?color=FF6C57" alt="Activity">
+  <img src="https://img.shields.io/github/contributors/CylorineStudio/PCL.Mac.Refactor" alt="Contributors">
 </div>
 
-PCL.Mac.Refactor 是 [PCL.Mac](https://github.com/CeciliaStudio/PCL.Mac) 的重构版，重构了 PCL.Mac 以获得更高的质量。
+PCL.Mac.Refactor 是 [PCL.Mac](https://github.com/CylorineStudio/PCL.Mac) 的重构版，重构了 PCL.Mac 以获得更高的质量。
 
 ---
 
@@ -15,7 +15,7 @@ PCL.Mac 是 [Plain Craft Launcher](https://github.com/Hex-Dragon/PCL2) 的非官
 系统版本要求：`macOS 12.0` 及以上。
 
 ## 下载
-你可以在 [Releases](https://github.com/CeciliaStudio/PCL.Mac.Refactor/releases) 中下载 PCL.Mac.Refactor 的测试版（Universal）。<br>
+你可以在 [Releases](https://github.com/CylorineStudio/PCL.Mac.Refactor/releases) 中下载 PCL.Mac.Refactor 的测试版（Universal）。<br>
 正式可用的版本预计会在 2026 年 3 月发布！
 > [!WARNING]
 > 由于 App 未签名，直接打开可能会出现“已损坏”等提示。请：
