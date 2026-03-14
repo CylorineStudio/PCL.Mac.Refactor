@@ -22,7 +22,7 @@ struct AboutPage: View {
                                 .init("Bilibili", URL(string: "https://space.bilibili.com/3461564927576750")!),
                                 .init("Afdian", URL(string: "https://afdian.com/a/AnemoFlower")!))
                     
-                    ProfileView("", "Cylorine Studio", "PCL.Mac 的开发团队",
+                    ProfileView("https://cylorine.studio/img/cylorine-studio.png", "Cylorine Studio", "PCL.Mac 的开发团队",
                                 .init("GitHub", URL(string: "https://github.com/CylorineStudio")!),
                                 .init("", URL(string: "https://cylorine.studio")!))
                     
@@ -49,14 +49,21 @@ struct AboutPage: View {
     
     private struct ProfileView: View {
         @ObservedObject private var easterEggManager: EasterEggManager = .shared
+        @Environment(\.disableHoverAnimation) private var cardAppearAnimationPlaying: Bool
         
         private let image: String
+        private let imageURL: URL?
         private let nickname: String
         private let description: String
         private let links: [Link]
         
         init(_ image: String, _ nickname: String, _ description: String, _ links: Link...) {
             self.image = image
+            if let url: URL = .init(string: image), url.scheme == "https" {
+                self.imageURL = url
+            } else {
+                self.imageURL = nil
+            }
             self.nickname = nickname
             self.description = description
             self.links = links
@@ -65,12 +72,23 @@ struct AboutPage: View {
         var body: some View {
             MyListItem {
                 HStack {
-                    Image(image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 32, height: 32)
-                        .clipShape(.circle)
-                        .contrast(easterEggManager.modifyColor ? -1 : 1) // 防止“千万别点”颜色反转影响到头像
+                    Group {
+                        if let imageURL {
+                            AsyncImage(url: imageURL) { phase in
+                                if case .success(let image) = phase, !cardAppearAnimationPlaying {
+                                    image
+                                        .resizable()
+                                }
+                            }
+                        } else {
+                            Image(image)
+                                .resizable()
+                        }
+                    }
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
+                    .clipShape(.circle)
+                    .contrast(easterEggManager.modifyColor ? -1 : 1) // 防止“千万别点”颜色反转影响到头像
                     VStack(alignment: .leading) {
                         MyText(nickname)
                         MyText(description, color: .colorGray3)
