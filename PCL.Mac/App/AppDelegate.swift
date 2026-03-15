@@ -12,6 +12,7 @@ import SwiftScaffolding
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: AppWindow!
+    private lazy var isUnderTesting: Bool = ProcessInfo.processInfo.environment["PCL_MAC_TESTING"] != nil
     
     private func executeTask(_ name: String, silent: Bool = false, _ start: @escaping () throws -> Void) {
         do {
@@ -44,21 +45,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         executeTask("开启 SwiftScaffolding 日志", silent: true) {
             try SwiftScaffolding.Logger.enableLogging(url: URLConstants.logsDirectoryURL.appending(path: "swift-scaffolding.log"))
         }
-        _ = LauncherConfig.shared
-        _ = JavaManager.shared
         executeTask("清理临时文件") {
             for url in try FileManager.default.contentsOfDirectory(at: URLConstants.tempURL, includingPropertiesForKeys: nil) {
                 try FileManager.default.removeItem(at: url)
             }
-        }
-        executeTask("加载版本缓存") {
-            try VersionCache.load()
-        }
-        executeTask("加载字体") {
-            let fontURL: URL = URLConstants.resourcesURL.appending(path: "PCL.ttf")
-            var error: Unmanaged<CFError>?
-            CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, &error)
-            if let error = error?.takeUnretainedValue() { throw error }
         }
         executeTask("从缓存中加载版本列表") {
             let cacheURL: URL = URLConstants.cacheURL.appending(path: "version_manifest.json")
@@ -75,9 +65,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+        
+        if !isUnderTesting {
+            _ = LauncherConfig.shared
+            _ = JavaManager.shared
+            executeTask("加载字体") {
+                let fontURL: URL = URLConstants.resourcesURL.appending(path: "PCL.ttf")
+                var error: Unmanaged<CFError>?
+                CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, &error)
+                if let error = error?.takeUnretainedValue() { throw error }
+            }
+            executeTask("加载版本缓存") {
+                try VersionCache.load()
+            }
+        }
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if isUnderTesting { return }
         log("App 启动完成")
         self.window = AppWindow()
         self.window.makeKeyAndOrderFront(nil)

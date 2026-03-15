@@ -1,0 +1,35 @@
+{
+  "configurations" : [
+    {
+      "id" : "E20BA48C-2FD0-4676-814E-733E4486D9B1",
+      "name" : "Test Scheme Action",
+      "options" : {
+        "environmentVariableEntries" : [
+          {
+            "key" : "PCL_MAC_TESTING",
+            "value" : "1"
+          }
+        ]
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:PCL.Mac.xcodeproj",
+      "identifier" : "ECC26BC22EBEDD67002B7E3E",
+      "name" : "PCL.Mac"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:PCL.Mac.xcodeproj",
+        "identifier" : "EC71A32C2EC034AA006E496F",
+        "name" : "PCL.Mac.Tests"
+      }
+    }
+  ],
+  "version" : 1
+}

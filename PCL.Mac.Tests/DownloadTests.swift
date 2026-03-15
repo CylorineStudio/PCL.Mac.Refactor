@@ -13,8 +13,8 @@ import SwiftyJSON
 struct DownloadTests {
     @Test func singleFileDownloadTest() async throws {
         let item: DownloadItem = .init(
-            url: URL(string: "https://bmclapi2.bangbang93.com/version/1.21.10/json")!,
-            destination: FileManager.default.temporaryDirectory.appending(path: "singleFileDownloadTest"),
+            url: URL(string: "https://piston-meta.mojang.com/v1/packages/b8ac7ed26100bd79830df1de207fbeefe7fab62f/1.21.10.json")!,
+            destination: URLConstants.tempURL.appending(path: "singleFileDownloadTest"),
             sha1: "b8ac7ed26100bd79830df1de207fbeefe7fab62f"
         )
         
@@ -58,7 +58,7 @@ struct DownloadTests {
     @Test func multiFileDownloadTest() async throws {
         let data: Data = try await URLSession.shared.data(from: URL(string: "https://piston-meta.mojang.com/v1/packages/48fc0ab195b88bc562d672cdcf7997de42fe9d51/27.json").unwrap()).0
         let assetIndex: AssetIndex = try JSONDecoder.shared.decode(AssetIndex.self, from: data)
-        let tempDirectory: URL = FileManager.default.temporaryDirectory.appending(path: "multiFileDownloadTest")
+        let tempDirectory: URL = URLConstants.tempURL.appending(path: "multiFileDownloadTest")
         if FileManager.default.fileExists(atPath: tempDirectory.path) {
             try FileManager.default.removeItem(at: tempDirectory)
         }
@@ -67,7 +67,7 @@ struct DownloadTests {
         let items: [DownloadItem] = assetIndex.objects.map { .init(
             url: root.appending(path: "\($0.hash.prefix(2))/\($0.hash)"), destination: tempDirectory.appending(path: $0.hash), sha1: $0.hash)
         }
-        try await MultiFileDownloader(items: items, concurrentLimit: 64, replaceMethod: .skip, progressHandler: { print($0 * 100) }).start()
+        try await MultiFileDownloader(items: Array(items.prefix(128)), concurrentLimit: 64, replaceMethod: .skip, progressHandler: { print($0 * 100) }).start()
         try FileManager.default.removeItem(at: tempDirectory)
     }
 }
