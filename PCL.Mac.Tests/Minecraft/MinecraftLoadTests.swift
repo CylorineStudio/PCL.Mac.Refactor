@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import Core
+@testable import Core
 import Testing
 
 struct MinecraftLoadTests {
@@ -19,8 +19,20 @@ struct MinecraftLoadTests {
             try MinecraftInstance.load(from: directory)
         }
         FileManager.default.createFile(atPath: directory.appending(path: "testLoad.json").path, contents: "{}".data(using: .utf8)!)
-        #expect(throws: MinecraftError.unknownManifestFormat) {
+        #expect(throws: ClientManifest.LoadError.formatError) {
             try MinecraftInstance.load(from: directory)
+        }
+    }
+}
+
+extension ClientManifest.LoadError: @retroactive Equatable {
+    public static func == (lhs: Core.ClientManifest.LoadError, rhs: Core.ClientManifest.LoadError) -> Bool {
+        switch (lhs, rhs) {
+        case (.fileNotFound, .fileNotFound): true
+        case (.formatError, .formatError): true
+        case (.missingParentManifest, .missingParentManifest): true
+        case (.failedToRead(_), .failedToRead(_)): true
+        default: false
         }
     }
 }
