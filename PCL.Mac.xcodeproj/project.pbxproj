@@ -711,7 +711,7 @@
 		};
 		ECA694202F52FB6E00F3DEDC /* XCRemoteSwiftPackageReference "SwiftScaffolding" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/CeciliaStudio/SwiftScaffolding";
+			repositoryURL = "https://github.com/CylorineStudio/SwiftScaffolding";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 0.2.0;

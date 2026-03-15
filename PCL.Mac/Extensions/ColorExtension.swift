@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension Color {
-    // https://github.com/CeciliaStudio/PCL.Mac.Refactor/issues/13
+    // https://github.com/CylorineStudio/PCL.Mac.Refactor/issues/13
     // https://github.com/PCL-Community/PCL2-CE/blob/cf2ddb8cbd2a3edc00ebd9ebf7533b0ba7b7de10/Plain%20Craft%20Launcher%202/Application.xaml#L28-L84
     static let color1: Color = .init(0x343d4a)
     static let color2: Color = .init(0x0b5bcb)

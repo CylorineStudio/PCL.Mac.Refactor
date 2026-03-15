@@ -22,13 +22,13 @@ struct AboutPage: View {
                                 .init("Bilibili 主页", "https://space.bilibili.com/3461564927576750"),
                                 .init("前往赞助", "https://afdian.com/a/AnemoFlower"))
                     
-                    ProfileView("CeciliaStudio", "Cecilia Studio", "PCL.Mac 的开发团队",
-                                .init("GitHub 主页", "https://github.com/CeciliaStudio"),
-                                .init("官方网站", "https://ceciliastudio.top"))
+                    ProfileView("https://cylorine.studio/img/cylorine-studio.png", "Cylorine Studio", "PCL.Mac 的开发团队",
+                                .init("GitHub 主页", "https://github.com/CylorineStudio"),
+                                .init("官方网站", "https://cylorine.studio"))
                     
                     ProfileView("PCL.Mac", "PCL.Mac.Refactor", "当前版本：\(Metadata.appVersion)",
-                                .init("GitHub 仓库", "https://github.com/CeciliaStudio/PCL.Mac.Refactor"),
-                                .init("官网页面", "https://ceciliastudio.top/projects/PCL.Mac.Refactor"))
+                                .init("GitHub 仓库", "https://github.com/CylorineStudio/PCL.Mac.Refactor"),
+                                .init("官网页面", "https://cylorine.studio/projects/PCL.Mac.Refactor"))
                 }
             }
             
@@ -49,14 +49,21 @@ struct AboutPage: View {
     
     private struct ProfileView: View {
         @ObservedObject private var easterEggManager: EasterEggManager = .shared
+        @Environment(\.disableHoverAnimation) private var cardAppearAnimationPlaying: Bool
         
         private let image: String
+        private let imageURL: URL?
         private let nickname: String
         private let description: String
         private let links: [Link]
         
         init(_ image: String, _ nickname: String, _ description: String, _ links: Link...) {
             self.image = image
+            if let url: URL = .init(string: image), url.scheme == "https" {
+                self.imageURL = url
+            } else {
+                self.imageURL = nil
+            }
             self.nickname = nickname
             self.description = description
             self.links = links
@@ -65,12 +72,23 @@ struct AboutPage: View {
         var body: some View {
             MyListItem {
                 HStack {
-                    Image(image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 32, height: 32)
-                        .clipShape(.circle)
-                        .contrast(easterEggManager.modifyColor ? -1 : 1) // 防止“千万别点”颜色反转影响到头像
+                    Group {
+                        if let imageURL {
+                            AsyncImage(url: imageURL) { phase in
+                                if case .success(let image) = phase, !cardAppearAnimationPlaying {
+                                    image
+                                        .resizable()
+                                }
+                            }
+                        } else {
+                            Image(image)
+                                .resizable()
+                        }
+                    }
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
+                    .clipShape(.circle)
+                    .contrast(easterEggManager.modifyColor ? -1 : 1) // 防止“千万别点”颜色反转影响到头像
                     VStack(alignment: .leading) {
                         MyText(nickname)
                         MyText(description, color: .colorGray3)
