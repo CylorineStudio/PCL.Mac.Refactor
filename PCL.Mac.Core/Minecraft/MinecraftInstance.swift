@@ -73,7 +73,7 @@ public class MinecraftInstance: Equatable {
         if let runtime: JavaRuntime = JavaManager.shared.javaRuntimes
             .filter({ $0.architecture == (arch ?? $0.architecture) })
             .filter({ $0.majorVersion >= manifest.javaVersion.majorVersion })
-            .max(by: { getScore(of: $0) > getScore(of: $1) }) {
+            .max(by: { getScore(of: $0) < getScore(of: $1) }) {
             return runtime
         }
         warn("未找到 \(version) 可用的 Java")
