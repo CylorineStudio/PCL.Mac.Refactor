@@ -76,7 +76,29 @@ public class ModrinthAPIClient {
     public func version(_ id: String) async throws -> Version {
         return try await Requests.get(apiRoot.appending(path: "/v2/version/\(id)")).decode(Version.self)
     }
-
+    
+    /// 根据文件的 SHA-1 哈希值查询 `Version`。
+    /// - Parameter hash: 文件的 SHA-1 哈希值。
+    /// - Returns: 如果找到则返回对应的 `Version`，否则返回 `nil`。
+    public func version(ofHash hash: String) async throws -> Version? {
+        let response = try await Requests.get(apiRoot.appending(path: "/v2/version_file/\(hash)"))
+        if response.statusCode == 404 { return nil }
+        return try response.decode(Version.self)
+    }
+    
+    /// 批量根据文件的 SHA-1 查询 `Version`。
+    /// - Parameter hashes: 所有文件的 SHA-1 哈希值（`[String]`）。
+    /// - Returns: 包含所有找到的 `Version` 的 dict。
+    public func versions(ofHashes hashes: [String]) async throws -> [String: Version] {
+        return try await Requests.post(
+            apiRoot.appending(path: "/v2/version_files"),
+            body: [
+                "hashes": hashes,
+                "algorithm": "sha1"
+            ],
+            using: .json
+        ).decode([String: Version].self)
+    }
     
     // MARK: - 数据模型
     
