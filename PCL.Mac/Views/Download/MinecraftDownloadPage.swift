@@ -59,7 +59,7 @@ struct MinecraftDownloadPage: View {
     @ViewBuilder
     func categoryCard(_ category: MinecraftVersion.VersionType) -> some View {
         let versions: [VersionManifest.Version] = viewModel.versionMap[category] ?? []
-        MyCard("\(category.name)（\(versions.count)）") {
+        MyCard("\(category.localizedName)（\(versions.count)）") {
             LazyVStack(spacing: 0) {
                 ForEach(versions, id: \.id) { version in
                     VersionView(version)

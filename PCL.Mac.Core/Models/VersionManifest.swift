@@ -41,9 +41,9 @@ public struct VersionManifest: Decodable {
         return versions.firstIndex(where: { $0.id == id }) ?? -1
     }
     
-    /// 获取版本号对应的 `Version` 对象。
+    /// 获取版本号对应的 `ModrinthVersion` 对象。
     /// - Parameter id: 版本号。
-    /// - Returns: `Version` 对象。
+    /// - Returns: `ModrinthVersion` 对象。
     public func version(for id: String) -> Version? {
         return versions.first(where: { $0.id == id })
     }

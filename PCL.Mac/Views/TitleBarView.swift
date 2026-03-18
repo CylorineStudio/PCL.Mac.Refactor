@@ -29,8 +29,8 @@ struct TitleBarView: View {
                             .scaledToFit()
                             .foregroundStyle(.white)
                             .frame(height: 19)
-                        Badge("Mac")
-                        Badge("Dev", labelColor: .color1, backgroundColor: Color(0x9BF00B))
+                        MyTag("Mac", labelColor: .color2)
+                        MyTag("Dev", backgroundColor: Color(0x9BF00B))
                     }
                     HStack {
                         Spacer()
@@ -46,27 +46,6 @@ struct TitleBarView: View {
             .padding(.leading, 65)
         }
         .frame(height: 48)
-    }
-    
-    struct Badge: View {
-        private let label: String
-        private let labelColor: Color
-        private let backgroundColor: Color
-        
-        init(_ label: String, labelColor: Color = .color2, backgroundColor: Color = .white) {
-            self.label = label
-            self.labelColor = labelColor
-            self.backgroundColor = backgroundColor
-        }
-        
-        var body: some View {
-            MyText(label, color: labelColor)
-                .padding(2)
-                .background {
-                    RoundedRectangle(cornerRadius: 5)
-                        .fill(backgroundColor)
-                }
-        }
     }
 }
 

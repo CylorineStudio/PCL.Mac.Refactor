@@ -17,11 +17,13 @@ class MyLoadingViewModel: ObservableObject {
         self.initialText = text
     }
     
+    @MainActor
     func fail(with message: String) {
         isFailed = true
         text = message
     }
     
+    @MainActor
     func reset() {
         text = initialText
         isFailed = false

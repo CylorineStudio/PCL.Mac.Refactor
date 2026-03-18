@@ -19,7 +19,7 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     case instanceConfig(id: String)
     
     // 下载页面的子页面
-    case minecraftDownload, minecraftInstallOptions(version: VersionManifest.Version), downloadPage2, downloadPage3
+    case minecraftDownload, minecraftInstallOptions(version: VersionManifest.Version), modDownload, resourcepackDownload
     
     // 联机页面的子页面
     case multiplayerSub, multiplayerSettings
@@ -56,10 +56,10 @@ class AppRouter: ObservableObject {
             MinecraftDownloadPage()
         case .minecraftInstallOptions(let version):
             MinecraftInstallOptionsPage(version: version)
-        case .downloadPage2:
-            DownloadPage2()
-        case .downloadPage3:
-            DownloadPage3()
+        case .modDownload:
+            ResourcesDownloadPage(type: .mod)
+        case .resourcepackDownload:
+            ResourcesDownloadPage(type: .resourcepack)
         case .tasks:
             TasksPage()
         case .instanceList(let repository):
@@ -89,7 +89,7 @@ class AppRouter: ObservableObject {
         case .launch: LaunchSidebar()
         case .instanceList, .noInstanceRepository: InstanceListSidebar()
         case .instanceSettings(let id), .instanceConfig(let id): InstanceSettingsSidebar(id: id)
-        case .minecraftDownload, .downloadPage2, .downloadPage3: DownloadSidebar()
+        case .minecraftDownload, .modDownload, .resourcepackDownload: DownloadSidebar()
         case .multiplayer, .multiplayerSub, .multiplayerSettings: MultiplayerSidebar()
         case .settings, .javaSettings, .otherSettings: SettingsSidebar()
         case .more, .about, .toolbox: MoreSidebar()
