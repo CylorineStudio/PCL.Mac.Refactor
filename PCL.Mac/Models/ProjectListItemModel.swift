@@ -13,7 +13,7 @@ struct ProjectListItemModel: Identifiable {
     public let description: String
     public let iconURL: URL?
     public let tags: [String]
-    public let supportedGameVersions: String
+    public let supportDescription: String
     public let downloads: String
     public let lastUpdate: String
 }

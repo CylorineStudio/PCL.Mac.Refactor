@@ -21,8 +21,9 @@ public struct ModrinthProject: Decodable, Identifiable {
         case clientSide = "client_side"
         case iconURL = "icon_url"
         case gameVersions = "game_versions"
+        case dateModified = "date_modified"
         
-        case id, slug, title, description, downloads, versions, categories, loaders
+        case id, slug, title, description, downloads, updated, versions, categories, loaders
     }
     
     public let id: String
@@ -32,6 +33,7 @@ public struct ModrinthProject: Decodable, Identifiable {
     public let description: String
     public let iconURL: URL?
     public let downloads: Int
+    public let lastUpdate: Date
     public let categories: [String]
     public let clientCompatibility: Compatibility
     public let versions: [String]?
@@ -47,6 +49,7 @@ public struct ModrinthProject: Decodable, Identifiable {
         self.description = try container.decode(String.self, forKey: .description)
         self.iconURL = try container.decodeIfPresent(String.self, forKey: .iconURL).flatMap(URL.init(string:))
         self.downloads = try container.decode(Int.self, forKey: .downloads)
+        self.lastUpdate = try container.decodeIfPresent(Date.self, forKey: .dateModified) ?? container.decode(Date.self, forKey: .updated)
         self.categories = try container.decode([String].self, forKey: .categories)
         self.clientCompatibility = try container.decode(Compatibility.self, forKey: .clientSide)
         if let gameVersions: [String] = try container.decodeIfPresent([String].self, forKey: .gameVersions) {

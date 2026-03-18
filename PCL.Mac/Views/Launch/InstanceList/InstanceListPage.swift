@@ -60,7 +60,7 @@ struct InstanceListPage: View {
         if lhs.modLoader == rhs.modLoader {
             return lhs.version > rhs.version
         }
-        return (lhs.modLoader?.rawValue ?? -1) > (rhs.modLoader?.rawValue ?? -1)
+        return (lhs.modLoader?.index ?? -1) > (rhs.modLoader?.index ?? -1)
     }
     
     @ViewBuilder

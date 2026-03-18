@@ -82,6 +82,7 @@ struct MinecraftInstallOptionsPage: View {
             return switch loader.type {
             case .fabric: "Fabric"
             case .forge: "Forge"
+            case .neoforge: "Neoforge"
             }
         } else {
             return viewModel.version.type == .snapshot ? "Dirt" : "GrassBlock"
@@ -142,6 +143,7 @@ private struct ModLoaderCard: View {
         switch type {
         case .fabric: "Fabric"
         case .forge: "Forge"
+        case .neoforge: "Neoforge"
         }
     }
     
@@ -154,6 +156,7 @@ private struct ModLoaderCard: View {
             case .forge:
                 try await Requests.get("https://bmclapi2.bangbang93.com/forge/minecraft/\(minecraftVersion)").json().arrayValue
                     .map { .init(id: $0["version"].stringValue) }
+            case .neoforge: []
             }
             await MainActor.run {
                 self.versions = versions.sorted { $0.id.compare($1.id, options: .numeric) == .orderedDescending }

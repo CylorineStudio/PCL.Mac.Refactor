@@ -83,24 +83,54 @@ private struct ProjectListItem: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .frame(width: 48, height: 48)
-                .padding(.leading, 6)
+                .padding(.leading, 4)
                 
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 2) {
                     MyText(model.title, size: 16)
                         .lineLimit(1)
                     HStack {
                         ForEach(model.tags, id: \.self) { tag in
-                            MyTag(tag, backgroundColor: .init(0x000000, alpha: 17 / 255), size: 12)
+                            MyTag(tag, labelColor: .colorGray2, backgroundColor: .init(0x000000, alpha: 17 / 255), size: 12)
                         }
                         MyText(model.description, color: .colorGray3)
                             .lineLimit(1)
                     }
-                    .padding(.top, -6)
-                    MyText("111")
+                    
+                    HStack {
+                        InformationView(icon: "SettingsPageIcon", text: model.supportDescription, width: 200)
+                        InformationView(icon: "DownloadPageIcon", text: model.downloads, width: 150)
+                        InformationView(icon: "IconUpload", text: model.lastUpdate, width: 150)
+                        Spacer()
+                    }
+                    
                     Spacer(minLength: 0)
                 }
                 Spacer(minLength: 0)
             }
+        }
+    }
+    
+    private struct InformationView: View {
+        private let icon: String
+        private let text: String
+        private let width: CGFloat
+        
+        init(icon: String, text: String, width: CGFloat) {
+            self.icon = icon
+            self.text = text
+            self.width = width
+        }
+        
+        var body: some View {
+            HStack(spacing: 6) {
+                Image(icon)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14)
+                    .foregroundStyle(Color.colorGray3)
+                MyText(text, size: 12, color: .colorGray3)
+            }
+            .frame(width: width, alignment: .leading)
         }
     }
 }

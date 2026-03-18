@@ -150,6 +150,7 @@ public enum MinecraftInstallTask {
                     },
                     at: 4
                 )
+            default: break
             }
         }
         
