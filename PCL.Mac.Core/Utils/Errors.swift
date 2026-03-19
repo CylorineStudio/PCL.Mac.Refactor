@@ -22,7 +22,7 @@ public enum LaunchError: Error {
     case missingRepository
 }
 
-public enum URLError: Error {
+public enum RequestError: Error {
     case invalidURL
     case invalidType
     case badResponse

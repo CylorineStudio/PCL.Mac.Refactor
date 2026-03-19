@@ -25,7 +25,7 @@ struct MySearchBox: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16, height: 16)
-                    .foregroundStyle(Color.colorGray3)
+                    .foregroundStyle(Color.color1)
                 
                 ZStack(alignment: .leading) {
                     TextField("", text: $query)

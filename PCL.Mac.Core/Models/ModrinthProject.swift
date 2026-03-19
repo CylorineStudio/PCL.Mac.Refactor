@@ -38,7 +38,7 @@ public struct ModrinthProject: Decodable, Identifiable {
     public let clientCompatibility: Compatibility
     public let versions: [String]?
     public let gameVersions: [String]?
-    public let loaders: [String]?
+    public let loaders: [ModLoader]?
     
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -59,7 +59,7 @@ public struct ModrinthProject: Decodable, Identifiable {
             self.gameVersions = try container.decodeIfPresent([String].self, forKey: .versions)
             self.versions = nil
         }
-        self.loaders = try container.decodeIfPresent([String].self, forKey: .loaders)
+        self.loaders = try container.decodeIfPresent([String].self, forKey: .loaders)?.compactMap(ModLoader.init(rawValue:))
     }
 }
 
@@ -106,7 +106,7 @@ public struct ModrinthVersion: Decodable, Identifiable {
     }
     
     private enum CodingKeys: String, CodingKey {
-        case projectId = "project_id", versionNumber = "version_number", gameVersions = "game_versions", type = "version_type"
+        case projectId = "project_id", versionNumber = "version_number", gameVersions = "game_versions", type = "version_type", datePublished = "date_published"
         case id, name, downloads, dependencies, loaders, files
     }
     
@@ -115,10 +115,11 @@ public struct ModrinthVersion: Decodable, Identifiable {
     public let name: String
     public let versionNumber: String
     public let downloads: Int
+    public let datePublished: Date
     public let dependencies: [Dependency]
     public let type: VersionType
     public let gameVersions: [String]
-    public let loaders: [String]
+    public let loaders: [ModLoader]
     public let files: [File]
     
     public init(from decoder: any Decoder) throws {
@@ -128,10 +129,11 @@ public struct ModrinthVersion: Decodable, Identifiable {
         self.name = try container.decode(String.self, forKey: .name)
         self.versionNumber = try container.decode(String.self, forKey: .versionNumber)
         self.downloads = try container.decode(Int.self, forKey: .downloads)
+        self.datePublished = try container.decode(Date.self, forKey: .datePublished)
         self.dependencies = try container.decode([Dependency].self, forKey: .dependencies)
         self.type = try container.decode(VersionType.self, forKey: .type)
         self.gameVersions = try container.decode([String].self, forKey: .gameVersions)
-        self.loaders = try container.decode([String].self, forKey: .loaders)
+        self.loaders = try container.decode([String].self, forKey: .loaders).compactMap(ModLoader.init(rawValue:))
         self.files = try container.decode([File].self, forKey: .files)
     }
 }

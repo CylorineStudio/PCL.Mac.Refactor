@@ -20,6 +20,7 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     
     // 下载页面的子页面
     case minecraftDownload, minecraftInstallOptions(version: VersionManifest.Version), modDownload, resourcepackDownload
+    case projectInstall(project: ProjectListItemModel)
     
     // 联机页面的子页面
     case multiplayerSub, multiplayerSettings
@@ -57,9 +58,11 @@ class AppRouter: ObservableObject {
         case .minecraftInstallOptions(let version):
             MinecraftInstallOptionsPage(version: version)
         case .modDownload:
-            ResourcesDownloadPage(type: .mod)
+            ResourcesSearchPage(type: .mod)
         case .resourcepackDownload:
-            ResourcesDownloadPage(type: .resourcepack)
+            ResourcesSearchPage(type: .resourcepack)
+        case .projectInstall(let project):
+            ResourceInstallPage(project: project)
         case .tasks:
             TasksPage()
         case .instanceList(let repository):
@@ -101,11 +104,12 @@ class AppRouter: ObservableObject {
     /// 当前页面是不是子页面（需要显示返回键和标题，隐藏导航按钮）
     var isSubPage: Bool {
         switch getLast() {
-        case .tasks: return true
-        case .instanceList, .noInstanceRepository: return true
-        case .instanceSettings, .instanceConfig: return true
-        case .minecraftInstallOptions: return true
-        default: return false
+        case .tasks: true
+        case .instanceList, .noInstanceRepository: true
+        case .instanceSettings, .instanceConfig: true
+        case .minecraftInstallOptions: true
+        case .projectInstall: true
+        default: false
         }
     }
     
@@ -116,6 +120,7 @@ class AppRouter: ObservableObject {
         case .instanceList, .noInstanceRepository: "实例列表"
         case .instanceSettings(let id), .instanceConfig(let id): "实例设置 - \(id)"
         case .minecraftInstallOptions(let version): "游戏安装 - \(version.id)"
+        case .projectInstall(let project): "资源下载 - \(project.title)"
         default: "错误：当前页面没有标题，请报告此问题！"
         }
     }

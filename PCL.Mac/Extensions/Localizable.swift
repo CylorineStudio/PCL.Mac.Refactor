@@ -64,3 +64,13 @@ extension ModrinthProjectType: Localizable {
         }
     }
 }
+
+extension ModrinthVersion.VersionType: Localizable {
+    var localizedName: String {
+        switch self {
+        case .release: "正式版"
+        case .beta: "测试版"
+        case .alpha: "早期测试版"
+        }
+    }
+}

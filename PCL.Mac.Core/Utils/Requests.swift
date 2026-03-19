@@ -72,10 +72,10 @@ public enum Requests {
         using encodeMethod: EncodeMethod,
         noCache: Bool
     ) async throws -> Response {
-        guard let url = url.url else { throw URLError.invalidURL }
+        guard let url = url.url else { throw RequestError.invalidURL }
         guard let scheme = url.scheme?.lowercased(),
               scheme == "http" || scheme == "https"
-        else { throw URLError.invalidType }
+        else { throw RequestError.invalidType }
         
         let headers: [String: String]? = headers?.compactMapValues(\.self)
         let body: [String: Any]? = body?.compactMapValues(\.self)
@@ -101,9 +101,14 @@ public enum Requests {
             }
         }
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch let error as URLError where error.code == .cancelled {
+            throw CancellationError()
+        }
         guard let response = response as? HTTPURLResponse else {
-            throw URLError.badResponse
+            throw RequestError.badResponse
         }
         return Response(data: data, response: response)
     }

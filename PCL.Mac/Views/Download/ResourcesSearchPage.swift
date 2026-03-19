@@ -1,5 +1,5 @@
 //
-//  ResourcesDownloadPage.swift
+//  ResourcesSearchPage.swift
 //  PCL.Mac
 //
 //  Created by AnemoFlower on 2026/3/16.
@@ -8,8 +8,8 @@
 import SwiftUI
 import Core
 
-struct ResourcesDownloadPage: View {
-    @StateObject private var viewModel: ResourcesViewModel
+struct ResourcesSearchPage: View {
+    @StateObject private var viewModel: ResourcesSearchViewModel
     
     init(type: ModrinthProjectType) {
         self._viewModel = StateObject(wrappedValue: .init(type: type))
@@ -34,8 +34,11 @@ struct ResourcesDownloadPage: View {
             if !viewModel.searchResults.isEmpty {
                 MyCard("", titled: false) {
                     LazyVStack(spacing: 0) {
-                        ForEach(viewModel.searchResults) { model in
-                            ProjectListItem(model: model)
+                        ForEach(viewModel.searchResults) { project in
+                            ProjectListItemView(project: project)
+                                .onTapGesture {
+                                    AppRouter.shared.append(.projectInstall(project: project))
+                                }
                         }
                     }
                 }
@@ -46,6 +49,7 @@ struct ResourcesDownloadPage: View {
         .task {
             do {
                 try await viewModel.search("")
+            } catch is CancellationError {
             } catch {
                 err("搜索\(viewModel.type.localizedName)失败：\(error.localizedDescription)")
                 await MainActor.run {
@@ -56,18 +60,18 @@ struct ResourcesDownloadPage: View {
     }
 }
 
-private struct ProjectListItem: View {
-    private let model: ProjectListItemModel
+struct ProjectListItemView: View {
+    private let project: ProjectListItemModel
     
-    init(model: ProjectListItemModel) {
-        self.model = model
+    init(project: ProjectListItemModel) {
+        self.project = project
     }
     
     var body: some View {
         MyListItem {
             HStack {
                 Group {
-                    if let iconURL: URL = model.iconURL {
+                    if let iconURL: URL = project.iconURL {
                         NetworkImage(url: iconURL)
                     } else {
                         Color.clear
@@ -78,20 +82,20 @@ private struct ProjectListItem: View {
                 .padding(.leading, 4)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    MyText(model.title, size: 16)
+                    MyText(project.title, size: 16)
                         .lineLimit(1)
                     HStack {
-                        ForEach(model.tags, id: \.self) { tag in
+                        ForEach(project.tags, id: \.self) { tag in
                             MyTag(tag, labelColor: .colorGray2, backgroundColor: .init(0x000000, alpha: 17 / 255), size: 12)
                         }
-                        MyText(model.description, color: .colorGray3)
+                        MyText(project.description, color: .colorGray3)
                             .lineLimit(1)
                     }
                     
                     HStack {
-                        InformationView(icon: "SettingsPageIcon", text: model.supportDescription, width: 200)
-                        InformationView(icon: "DownloadPageIcon", text: model.downloads, width: 150)
-                        InformationView(icon: "IconUpload", text: model.lastUpdate, width: 150)
+                        InformationView(icon: "SettingsPageIcon", text: project.supportDescription, width: 200)
+                        InformationView(icon: "DownloadPageIcon", text: project.downloads, width: 150)
+                        InformationView(icon: "IconUpload", text: project.lastUpdate, width: 150)
                         Spacer()
                     }
                     
