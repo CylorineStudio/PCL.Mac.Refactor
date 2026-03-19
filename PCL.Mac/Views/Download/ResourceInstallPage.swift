@@ -25,6 +25,21 @@ struct ResourceInstallPage: View {
             if viewModel.loaded, let versionList = viewModel.versionList {
                 PaginatedContainer(versionList, id: \.0, currentPage: $currentPage, viewsPerPage: 10) { versions in
                     MyCard(versions.0.description) {
+                        let dependencies: [ProjectVersionModel.Dependency] = versions.1[0].requiredDependencies
+                        if !dependencies.isEmpty {
+                            VStack(alignment: .leading) {
+                                MyText("前置资源")
+                                VStack(spacing: 0) {
+                                    ForEach(dependencies) { dependency in
+                                        ProjectListItemView(project: dependency.project)
+                                            .onTapGesture {
+                                                AppRouter.shared.append(.projectInstall(project: dependency.project))
+                                            }
+                                    }
+                                }
+                                MyText("版本列表")
+                            }
+                        }
                         VStack(spacing: 0) {
                             ForEach(versions.1) { version in
                                 VersionListItemView(version: version)

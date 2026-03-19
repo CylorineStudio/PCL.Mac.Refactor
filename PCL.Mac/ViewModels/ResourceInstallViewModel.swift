@@ -25,13 +25,24 @@ class ResourceInstallViewModel: ObservableObject {
         
         var versionMap: [VersionMapKey: [ProjectVersionModel]] = [:]
         for version in versions {
+            var dependencies: [ProjectVersionModel.Dependency] = []
+            for dependency in version.dependencies {
+                guard let id: String = dependency.id,
+                      let projectId: String = dependency.projectId,
+                      dependency.isRequired else {
+                    continue
+                }
+                let project: ModrinthProject = try await ModrinthAPIClient.shared.project(projectId)
+                dependencies.append(.init(id: id, project: .init(project)))
+            }
+            
             let value: ProjectVersionModel = .init(
                 id: version.id,
                 name: version.name,
                 version: version.versionNumber,
                 downloads: ProjectListItemModel.formatDownloads(version.downloads),
                 datePublished: ProjectListItemModel.formatLastUpdate(version.datePublished),
-                requiredDependencies: [],
+                requiredDependencies: dependencies,
                 type: version.type,
                 primaryFile: version.files.filter(\.primary).first
             )
@@ -42,7 +53,7 @@ class ResourceInstallViewModel: ObservableObject {
                    type != .release {
                     continue
                 }
-                if version.loaders.isEmpty {
+                if version.loaders.isEmpty && project.type != .mod {
                     keys.append(.init(loader: nil, version: .init(gameVersion)))
                     continue
                 }

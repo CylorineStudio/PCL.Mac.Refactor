@@ -63,6 +63,7 @@ class AppRouter: ObservableObject {
             ResourcesSearchPage(type: .resourcepack)
         case .projectInstall(let project):
             ResourceInstallPage(project: project)
+                .id(project)
         case .tasks:
             TasksPage()
         case .instanceList(let repository):
