@@ -112,7 +112,9 @@ public enum JavaSearcher {
     
     private static func parseVersionNumber(_ version: String) -> Int? {
         let components: [String] = version.split(separator: ".").map(String.init)
-        if components.count > 1 {
+        if components.count == 1 {
+            return Int(components[0])
+        } else if components.count > 1 {
             if components[0] == "1" {
                 return Int(components[1])
             } else {
