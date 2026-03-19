@@ -36,18 +36,25 @@ class ResourceInstallViewModel: ObservableObject {
                 primaryFile: version.files.filter(\.primary).first
             )
             
+            var keys: [VersionMapKey] = []
             for gameVersion in version.gameVersions {
                 if let type = CoreState.versionManifest.version(for: gameVersion)?.type,
                    type != .release {
                     continue
                 }
-                for loader in version.loaders {
-                    let key: VersionMapKey = .init(loader: loader, version: .init(gameVersion))
-                    if !versionMap.keys.contains(key) {
-                        versionMap[key] = []
-                    }
-                    versionMap[key]?.append(value)
+                if version.loaders.isEmpty {
+                    keys.append(.init(loader: nil, version: .init(gameVersion)))
+                    continue
                 }
+                for loader in version.loaders {
+                    keys.append(.init(loader: loader, version: .init(gameVersion)))
+                }
+            }
+            for key in keys {
+                if !versionMap.keys.contains(key) {
+                    versionMap[key] = []
+                }
+                versionMap[key]?.append(value)
             }
         }
         
