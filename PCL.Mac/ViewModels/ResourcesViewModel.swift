@@ -71,7 +71,7 @@ class ResourcesViewModel: ObservableObject {
         }
         let releaseVersions: [String] = gameVersions.filter { CoreState.versionManifest.version(for: $0)?.type == .release }
         guard !releaseVersions.isEmpty else {
-            return description + "仅快照版本"
+            return description + (modLoaders.count == 1 ? "" : "仅") + "快照版本"
         }
         description += generateGameVersionDescription(releaseVersions, latestVersion: CoreState.versionManifest.latestRelease)
         
@@ -111,7 +111,7 @@ class ResourcesViewModel: ObservableObject {
             }
         }
         ranges.append(rangeDescription(start: start, end: end))
-        return ranges.joined(separator: ", ")
+        return ranges.reversed().joined(separator: ", ")
     }
     
     private struct VersionPair: Hashable, Equatable, Comparable, CustomStringConvertible {
