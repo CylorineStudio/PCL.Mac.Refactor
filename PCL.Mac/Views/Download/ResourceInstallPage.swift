@@ -11,6 +11,7 @@ import Core
 struct ResourceInstallPage: View {
     @StateObject private var viewModel: ResourceInstallViewModel
     @State private var disableCardAppearAnimation: Bool = false
+    @State private var currentPage: Int = 0
     
     init(project: ProjectListItemModel) {
         self._viewModel = StateObject(wrappedValue: .init(project: project))
@@ -22,16 +23,13 @@ struct ResourceInstallPage: View {
                 ProjectListItemView(project: viewModel.project)
             }
             if viewModel.loaded, let versionList = viewModel.versionList {
-                LazyVStack(spacing: 20) {
-                    ForEach(versionList, id: \.0) { versions in
-                        MyCard(versions.0.description) {
-                            VStack(spacing: 0) {
-                                ForEach(versions.1) { version in
-                                    VersionListItemView(version: version)
-                                }
+                PaginatedContainer(versionList, id: \.0, currentPage: $currentPage, viewsPerPage: 10) { versions in
+                    MyCard(versions.0.description) {
+                        VStack(spacing: 0) {
+                            ForEach(versions.1) { version in
+                                VersionListItemView(version: version)
                             }
                         }
-                        .disableCardAppearAnimation(disableCardAppearAnimation)
                     }
                 }
                 .onAppear {

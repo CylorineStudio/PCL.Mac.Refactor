@@ -10,6 +10,7 @@ import Core
 
 struct ResourcesSearchPage: View {
     @StateObject private var viewModel: ResourcesSearchViewModel
+    @State private var currentPage: Int = 0
     
     init(type: ModrinthProjectType) {
         self._viewModel = StateObject(wrappedValue: .init(type: type))
@@ -18,10 +19,11 @@ struct ResourcesSearchPage: View {
     var body: some View {
         CardContainer {
             MySearchBox(placeholder: "搜索\(viewModel.type.localizedName)") { query in
+                currentPage = 0
                 Task {
                     do {
-                        viewModel.loadingVM.reset()
                         try await viewModel.search(query)
+                    } catch is CancellationError {
                     } catch {
                         err("搜索\(viewModel.type.localizedName)失败：\(error.localizedDescription)")
                         await MainActor.run {
@@ -32,13 +34,28 @@ struct ResourcesSearchPage: View {
             }
             
             if !viewModel.searchResults.isEmpty {
-                MyCard("", titled: false) {
-                    LazyVStack(spacing: 0) {
-                        ForEach(viewModel.searchResults) { project in
-                            ProjectListItemView(project: project)
-                                .onTapGesture {
-                                    AppRouter.shared.append(.projectInstall(project: project))
-                                }
+                PaginatedContainer(currentPage: $currentPage, pageCount: viewModel.totalPages) { _ in
+                    MyCard("", titled: false) {
+                        LazyVStack(spacing: 0) {
+                            ForEach(viewModel.searchResults) { project in
+                                ProjectListItemView(project: project)
+                                    .onTapGesture {
+                                        AppRouter.shared.append(.projectInstall(project: project))
+                                    }
+                            }
+                        }
+                    }
+                }
+                .onChange(of: currentPage) { newValue in
+                    Task {
+                        do {
+                            try await viewModel.changePage(newValue)
+                        } catch is CancellationError {
+                        } catch {
+                            err("搜索\(viewModel.type.localizedName)失败：\(error.localizedDescription)")
+                            await MainActor.run {
+                                viewModel.loadingVM.fail(with: "搜索\(viewModel.type.localizedName)失败：\(error.localizedDescription)")
+                            }
                         }
                     }
                 }
