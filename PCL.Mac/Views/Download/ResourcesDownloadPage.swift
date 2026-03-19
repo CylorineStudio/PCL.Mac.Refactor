@@ -33,7 +33,7 @@ struct ResourcesDownloadPage: View {
             
             if !viewModel.searchResults.isEmpty {
                 MyCard("", titled: false) {
-                    VStack(spacing: 0) {
+                    LazyVStack(spacing: 0) {
                         ForEach(viewModel.searchResults) { model in
                             ProjectListItem(model: model)
                         }
@@ -68,15 +68,7 @@ private struct ProjectListItem: View {
             HStack {
                 Group {
                     if let iconURL: URL = model.iconURL {
-                        AsyncImage(url: iconURL) { phase in
-                            if case .success(let image) = phase {
-                                image
-                                    .resizable()
-                                    .scaledToFit()
-                            } else {
-                                Color.clear
-                            }
-                        }
+                        NetworkImage(url: iconURL)
                     } else {
                         Color.clear
                     }

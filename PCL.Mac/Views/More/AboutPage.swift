@@ -74,12 +74,7 @@ struct AboutPage: View {
                 HStack {
                     Group {
                         if let imageURL {
-                            AsyncImage(url: imageURL) { phase in
-                                if case .success(let image) = phase, !cardAppearAnimationPlaying {
-                                    image
-                                        .resizable()
-                                }
-                            }
+                            NetworkImage(url: imageURL)
                         } else {
                             Image(image)
                                 .resizable()
