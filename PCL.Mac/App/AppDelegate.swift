@@ -117,6 +117,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         executeTask("保存启动器配置") {
             try LauncherConfig.save()
         }
-        EasyTierManager.shared.easyTier.terminate()
+        EasyTierManager.shared.terminateAll()
     }
 }

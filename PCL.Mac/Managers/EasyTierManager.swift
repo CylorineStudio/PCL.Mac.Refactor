@@ -13,8 +13,6 @@ import SwiftyJSON
 class EasyTierManager {
     public static let shared: EasyTierManager = .init()
     
-    public let easyTier: EasyTier
-    
     private let coreURL: URL = URLConstants.easyTierURL.appending(path: "easytier-core")
     private let cliURL: URL = URLConstants.easyTierURL.appending(path: "easytier-cli")
     private let logURL: URL = URLConstants.logsDirectoryURL.appending(path: "easytier.log")
@@ -22,6 +20,7 @@ class EasyTierManager {
     private let downloadItems: [ComponentType: DownloadItem]
     
     private var isEasyTierInstalled: Bool?
+    private var easyTierInstances: [EasyTier] = []
     
     private init() {
         if Architecture.systemArchitecture() == .arm64 {
@@ -51,15 +50,26 @@ class EasyTierManager {
                 )
             ]
         }
-        
-        self.easyTier = .init(
+    }
+    
+    public func makeEasyTier() -> EasyTier {
+        easyTierInstances.removeAll { $0.process == nil }
+        let instance: EasyTier = .init(
             coreURL: coreURL,
             cliURL: cliURL,
             logURL: logURL,
             .p2pOnly,
             .peer(address: "tcp://public.easytier.top:11010"),
-            .peer(address: "tcp://public2.easytier.cn:54321")
+            .peer(address: "tcp://public2.easytier.cn:54321"),
+            // SwiftScaffolding 不支持通过 Option 数组构造 EasyTier
+            LauncherConfig.shared.multiplayerCustomPeer.map { .peer(address: $0) } ?? .p2pOnly
         )
+        easyTierInstances.append(instance)
+        return instance
+    }
+    
+    public func terminateAll() {
+        easyTierInstances.forEach { $0.terminate() }
     }
     
     /// 判断是否已经安装 EasyTier。

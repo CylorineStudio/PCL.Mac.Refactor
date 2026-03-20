@@ -39,6 +39,7 @@ class LauncherConfig: Codable {
     public var hasMicrosoftAccount: Bool = false
     public var launchCount: Int = 0
     public var hasEnteredLauncher: Bool = false
+    public var multiplayerCustomPeer: String?
     
     public init() {}
     
@@ -66,6 +67,7 @@ class LauncherConfig: Codable {
         self.hasMicrosoftAccount = try container.decodeIfPresent(Bool.self, forKey: .hasMicrosoftAccount) ?? false
         self.launchCount = try container.decodeIfPresent(Int.self, forKey: .launchCount) ?? 0
         self.hasEnteredLauncher = try container.decodeIfPresent(Bool.self, forKey: .hasEnteredLauncher) ?? false
+        self.multiplayerCustomPeer = try container.decodeIfPresent(String.self, forKey: .multiplayerCustomPeer)
     }
     
     public func encode(to encoder: any Encoder) throws {
@@ -79,6 +81,7 @@ class LauncherConfig: Codable {
         try container.encode(hasMicrosoftAccount, forKey: .hasMicrosoftAccount)
         try container.encode(launchCount, forKey: .launchCount)
         try container.encode(hasEnteredLauncher, forKey: .hasEnteredLauncher)
+        try container.encode(multiplayerCustomPeer, forKey: .multiplayerCustomPeer)
     }
     
     public static func save(_ config: LauncherConfig = .shared, to url: URL = URLConstants.configURL) throws {
@@ -96,5 +99,6 @@ class LauncherConfig: Codable {
         case hasMicrosoftAccount
         case launchCount
         case hasEnteredLauncher
+        case multiplayerCustomPeer
     }
 }

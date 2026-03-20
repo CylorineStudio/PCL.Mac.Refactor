@@ -24,6 +24,10 @@ struct MultiplayerPage: View {
         CardContainer {
             switch viewModel.state {
             case .ready:
+                if let status: CLAPIClient.EasyTierStatus = viewModel.easyTierStatus,
+                   case .unavailable(let message, let date) = status {
+                    MyTip(text: "联机功能不可用：\(message)\n状态更新日期：\(Self.dateFormatter.string(from: date))", theme: .red)
+                }
                 if isEasyTierInstalled {
                     readyBody
                 } else {
@@ -36,22 +40,16 @@ struct MultiplayerPage: View {
             }
         }
         .onAppear {
-            Task {
-                let status: CLAPIClient.EasyTierStatus = try await CLAPIClient.shared.getEasyTierStatus()
-                if case .unavailable(let message, let date) = status {
-                    _ = await MessageBoxManager.shared.showText(
-                        title: "联机功能不可用",
-                        content: "很抱歉，联机功能暂时不可用。\n详细信息：\(message)\n状态更新时间：\(Self.dateFormatter.string(from: date))",
-                        level: .error
-                    )
-                    AppRouter.shared.setRoot(.launch)
-                }
-            }
             isEasyTierInstalled = EasyTierManager.shared.isInstalled()
             if viewModel.state == .creatingRoom {
                 loadingViewModel.text = "创建房间中"
             } else if viewModel.state == .joiningRoom {
                 loadingViewModel.text = "加入房间中"
+            }
+        }
+        .task {
+            if viewModel.easyTierStatus == nil {
+                _ = try? await viewModel.fetchEasyTierStatus()
             }
         }
         .onChange(of: viewModel.state) { newValue in
@@ -134,7 +132,7 @@ struct MultiplayerPage: View {
                     }
                 MyListItem(.init(image: "IconAbout", imageSize: 28, name: "帮助文档", description: "点击这里可以查看联机教程！"))
                     .onTapGesture {
-                        NSWorkspace.shared.open(URL(string: "https://cylorine.studio/helps/PCL.Mac#联机")!)
+                        NSWorkspace.shared.open(URL(string: "https://cylorine.studio/helps/PCL.Mac#multiplayer")!)
                     }
             }
         }

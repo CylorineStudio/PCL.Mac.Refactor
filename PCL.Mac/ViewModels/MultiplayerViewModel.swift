@@ -15,6 +15,7 @@ import CryptoKit
 class MultiplayerViewModel: ObservableObject {
     @MainActor @Published public var state: State = .ready
     @MainActor @Published public private(set) var room: Room?
+    @MainActor @Published public var easyTierStatus: CLAPIClient.EasyTierStatus?
     
     private var server: ScaffoldingServer?
     private var client: ScaffoldingClient?
@@ -38,7 +39,7 @@ class MultiplayerViewModel: ObservableObject {
             state = .creatingRoom
             let code: String = RoomCode.generate()
             let server: ScaffoldingServer = .init(
-                easyTier: EasyTierManager.shared.easyTier,
+                easyTier: EasyTierManager.shared.makeEasyTier(),
                 roomCode: code,
                 serverPort: serverPort,
                 hostInfo: playerInfo()
@@ -106,7 +107,7 @@ class MultiplayerViewModel: ObservableObject {
     @MainActor
     public func join(roomCode: String) {
         let client: ScaffoldingClient = .init(
-            easyTier: EasyTierManager.shared.easyTier,
+            easyTier: EasyTierManager.shared.makeEasyTier(),
             playerInfo: playerInfo()
         )
         state = .joiningRoom
@@ -148,6 +149,15 @@ class MultiplayerViewModel: ObservableObject {
         client = nil
         state = .ready
         log("退出房间成功")
+    }
+    
+    @discardableResult
+    public func fetchEasyTierStatus() async throws -> CLAPIClient.EasyTierStatus {
+        let status: CLAPIClient.EasyTierStatus = try await CLAPIClient.shared.getEasyTierStatus()
+        await MainActor.run {
+            self.easyTierStatus = status
+        }
+        return status
     }
     
     public func roomCode() -> String? {
