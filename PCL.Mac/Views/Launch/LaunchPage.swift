@@ -27,6 +27,7 @@ struct LaunchPage: View {
     
     var body: some View {
         CardContainer {
+            MyTip(text: "这是一个用于预览与测试控件的主页！", theme: .blue)
             MyCard("可折叠的卡片") {
                 VStack {
                     MyText("文本")
