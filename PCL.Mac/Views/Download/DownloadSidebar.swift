@@ -36,7 +36,7 @@ struct DownloadSidebar: Sidebar {
             MyNavigationList(
                 .init(.modDownload, "IconMod", "Mod"),
                 .init(.resourcepackDownload, "IconPicture", "资源包"),
-                .init(.shaderpackDownload, nil, "光影包")
+                .init(.shaderpackDownload, "IconSun", "光影包")
             )
             Spacer()
         }
