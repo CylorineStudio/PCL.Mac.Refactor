@@ -19,7 +19,7 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     case instanceConfig(id: String)
     
     // 下载页面的子页面
-    case minecraftDownload, minecraftInstallOptions(version: VersionManifest.Version), modDownload, resourcepackDownload
+    case minecraftDownload, minecraftInstallOptions(version: VersionManifest.Version), modDownload, resourcepackDownload, shaderpackDownload
     case projectInstall(project: ProjectListItemModel)
     
     // 联机页面的子页面
@@ -61,6 +61,8 @@ class AppRouter: ObservableObject {
             ResourcesSearchPage(type: .mod)
         case .resourcepackDownload:
             ResourcesSearchPage(type: .resourcepack)
+        case .shaderpackDownload:
+            ResourcesSearchPage(type: .shader)
         case .projectInstall(let project):
             ResourceInstallPage(project: project)
                 .id(project)
@@ -93,7 +95,7 @@ class AppRouter: ObservableObject {
         case .launch: LaunchSidebar()
         case .instanceList, .noInstanceRepository: InstanceListSidebar()
         case .instanceSettings(let id), .instanceConfig(let id): InstanceSettingsSidebar(id: id)
-        case .minecraftDownload, .modDownload, .resourcepackDownload: DownloadSidebar()
+        case .minecraftDownload, .modDownload, .resourcepackDownload, .shaderpackDownload: DownloadSidebar()
         case .multiplayer, .multiplayerSub, .multiplayerSettings: MultiplayerSidebar()
         case .settings, .javaSettings, .otherSettings: SettingsSidebar()
         case .more, .about, .toolbox: MoreSidebar()

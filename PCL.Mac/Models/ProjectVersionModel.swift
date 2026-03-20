@@ -10,7 +10,8 @@ import Core
 
 struct ProjectVersionModel: Identifiable {
     struct Dependency: Identifiable {
-        public let id: String
+        public let id: String?
+        public let projectId: String
         public let project: ProjectListItemModel
     }
     

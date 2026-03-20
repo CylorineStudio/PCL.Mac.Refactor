@@ -11,7 +11,7 @@ public enum ModrinthProjectType: String, Codable {
     case mod, modpack, resourcepack, shader
 }
 
-public struct ModrinthProject: Decodable, Identifiable {
+public struct ModrinthProject: Decodable, Identifiable, Hashable, Equatable {
     public enum Compatibility: String, Decodable {
         case required, optional, unsupported, unknown
     }

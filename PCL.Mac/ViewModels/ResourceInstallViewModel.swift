@@ -27,13 +27,12 @@ class ResourceInstallViewModel: ObservableObject {
         for version in versions {
             var dependencies: [ProjectVersionModel.Dependency] = []
             for dependency in version.dependencies {
-                guard let id: String = dependency.id,
-                      let projectId: String = dependency.projectId,
+                guard let projectId: String = dependency.projectId,
                       dependency.isRequired else {
                     continue
                 }
                 let project: ModrinthProject = try await ModrinthAPIClient.shared.project(projectId)
-                dependencies.append(.init(id: id, project: .init(project)))
+                dependencies.append(.init(id: dependency.id, projectId: projectId, project: .init(project)))
             }
             
             let value: ProjectVersionModel = .init(
@@ -74,6 +73,33 @@ class ResourceInstallViewModel: ObservableObject {
             self.versionList = versionList
             self.loaded = true
         }
+    }
+    
+    public func createInstallTask(forVersion version: ProjectVersionModel, to instance: MinecraftInstance) async throws -> MyTask<EmptyModel> {
+        guard let primaryFile = version.primaryFile else {
+            throw SimpleError("这个版本中没有主要文件！")
+        }
+        
+        let saveDirectoryName: String = switch project.type {
+        case .mod: "mods"
+        case .modpack: fatalError()
+        case .resourcepack: "resourcepacks"
+        case .shader: "shaderpacks"
+        }
+        let saveDirectoryURL: URL = instance.runningDirectory.appending(path: saveDirectoryName)
+        
+        return .init(
+            name: "资源下载 - \(project.title) \(version.version)",
+            .init(0, "下载文件") { task, model in
+                try await SingleFileDownloader.download(
+                    url: primaryFile.url,
+                    destination: saveDirectoryURL.appending(path: primaryFile.name),
+                    sha1: primaryFile.sha1,
+                    replaceMethod: .skip,
+                    progressHandler: task.setProgress(_:)
+                )
+            }
+        )
     }
     
     public struct VersionMapKey: Hashable, Equatable, Comparable, Identifiable, CustomStringConvertible {

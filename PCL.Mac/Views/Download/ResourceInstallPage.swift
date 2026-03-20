@@ -43,6 +43,9 @@ struct ResourceInstallPage: View {
                         VStack(spacing: 0) {
                             ForEach(versions.1) { version in
                                 VersionListItemView(version: version)
+                                    .onTapGesture {
+                                        onVersionTap(version)
+                                    }
                             }
                         }
                     }
@@ -63,6 +66,28 @@ struct ResourceInstallPage: View {
             } catch {
                 err("加载\(viewModel.project.type) \(viewModel.project.title) 版本列表失败：\(error.localizedDescription)")
                 viewModel.loadingVM.fail(with: "加载版本列表失败：\(error.localizedDescription)")
+            }
+        }
+    }
+    
+    private func onVersionTap(_ version: ProjectVersionModel) {
+        Task {
+            guard let instance: MinecraftInstance = InstanceManager.shared.currentInstance else {
+                hint("请先安装并选择一个实例！", type: .critical)
+                return
+            }
+            if await MessageBoxManager.shared.showText(
+                title: "确认",
+                content: "确定要安装 \(viewModel.project.title) \(version.version) 吗？",
+                level: .info,
+                .init(id: 0, label: "取消", type: .normal),
+                .init(id: 1, label: "确定", type: .highlight)
+            ) == 1 {
+                do {
+                    let task = try await viewModel.createInstallTask(forVersion: version, to: instance)
+                    TaskManager.shared.execute(task: task)
+                    AppRouter.shared.append(.tasks)
+                }
             }
         }
     }

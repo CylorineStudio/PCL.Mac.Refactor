@@ -35,7 +35,8 @@ struct DownloadSidebar: Sidebar {
                 .padding(.top, 20)
             MyNavigationList(
                 .init(.modDownload, "IconMod", "Mod"),
-                .init(.resourcepackDownload, "IconPicture", "资源包")
+                .init(.resourcepackDownload, "IconPicture", "资源包"),
+                .init(.shaderpackDownload, nil, "光影包")
             )
             Spacer()
         }
