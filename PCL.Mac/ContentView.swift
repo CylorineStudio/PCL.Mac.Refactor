@@ -11,7 +11,9 @@ struct ContentView: View {
     @ObservedObject private var hintManager: HintManager = .shared
     @ObservedObject private var router: AppRouter = .shared
     @ObservedObject private var easterEggManager: EasterEggManager = .shared
+    
     @State private var sidebarWidth: CGFloat = AppRouter.shared.sidebar.width
+    @State private var sidebarContentAnimationProgress: Double = 0.0
     
     var body: some View {
         VStack(spacing: 0) {
@@ -23,9 +25,17 @@ struct ContentView: View {
                     .frame(width: sidebarWidth)
                     .shadow(radius: 2)
                     .onChange(of: router.sidebar.width) { newValue in
-                        
                         withAnimation(.spring(response: 0.18, dampingFraction: 0.85)) {
                             sidebarWidth = newValue
+                        }
+                        switch router.getLast() {
+                        case .launch, .tasks:
+                            sidebarContentAnimationProgress = 0.0
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                                sidebarContentAnimationProgress = 1.0
+                            }
+                        default:
+                            break
                         }
                     }
                     .zIndex(10)
@@ -38,6 +48,8 @@ struct ContentView: View {
                 HStack {
                     AnyView(router.sidebar)
                         .frame(width: router.sidebar.width)
+                        .opacity(sidebarContentAnimationProgress)
+                        .scaleEffect(sidebarContentAnimationProgress * 0.04 + 0.96)
                     Spacer()
                 }
             }
@@ -58,6 +70,12 @@ struct ContentView: View {
         }
         .rotation3DEffect(easterEggManager.rotationAngle, axis: easterEggManager.rotationAxis)
         .contrast(easterEggManager.modifyColor ? -1 : 1)
+        .onAppear {
+            // 当前一定是启动页面，直接开始动画
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                sidebarContentAnimationProgress = 1.0
+            }
+        }
     }
 }
 
