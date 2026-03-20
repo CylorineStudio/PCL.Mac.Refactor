@@ -21,16 +21,25 @@ struct ContentView: View {
                 Rectangle()
                     .fill(.white)
                     .frame(width: sidebarWidth)
-                    .overlay(AnyView(router.sidebar))
+                    .shadow(radius: 2)
                     .onChange(of: router.sidebar.width) { newValue in
-                        withAnimation(.spring(response: 0.1, dampingFraction: 0.8)) {
+                        
+                        withAnimation(.spring(response: 0.18, dampingFraction: 0.85)) {
                             sidebarWidth = newValue
                         }
                     }
                     .zIndex(10)
+                
                 router.content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(0xC0DEF5))
+            }
+            .overlay {
+                HStack {
+                    AnyView(router.sidebar)
+                        .frame(width: router.sidebar.width)
+                    Spacer()
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
