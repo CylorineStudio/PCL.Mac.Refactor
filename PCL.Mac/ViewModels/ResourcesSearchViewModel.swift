@@ -9,7 +9,7 @@ import Foundation
 import Core
 
 class ResourcesSearchViewModel: ObservableObject {
-    @Published public var searchResults: [ProjectListItemModel] = []
+    @Published public var searchResults: [ProjectListItemModel]?
     @Published public var query: String = ""
     public let type: ModrinthProjectType
     public let loadingVM: MyLoadingViewModel = .init(text: "加载中")
@@ -28,7 +28,7 @@ class ResourcesSearchViewModel: ObservableObject {
         await MainActor.run {
             self.query = query
             loadingVM.reset()
-            searchResults.removeAll()
+            searchResults = nil
         }
         let response: ModrinthAPIClient.SearchResponse = try await ModrinthAPIClient.shared.search(type: type, query, forVersion: nil, pageIndex: pageIndex)
         await MainActor.run {

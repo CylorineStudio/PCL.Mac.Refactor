@@ -38,7 +38,7 @@ class ResourceInstallViewModel: ObservableObject {
                     continue
                 }
                 let project: ModrinthProject = try await ModrinthAPIClient.shared.project(projectId)
-                dependencies.append(.init(id: dependency.id, projectId: projectId, project: .init(project)))
+                dependencies.append(.init(versionId: dependency.id, projectId: projectId, project: .init(project)))
             }
             
             var keys: [VersionMapKey] = []
@@ -72,10 +72,7 @@ class ResourceInstallViewModel: ObservableObject {
                 if let selectedInstanceKey, selectedInstanceKey == key {
                     selectedVersionGroup?.1.append(value)
                 } else {
-                    if !versionMap.keys.contains(key) {
-                        versionMap[key] = []
-                    }
-                    versionMap[key]?.append(value)
+                    versionMap[key, default: []].append(value)
                 }
             }
         }
@@ -154,7 +151,7 @@ class ResourceInstallViewModel: ObservableObject {
         }
         
         public static func == (lhs: Self, rhs: Self) -> Bool {
-            return lhs.description == rhs.description
+            return lhs.loader == rhs.loader && lhs.version == rhs.version
         }
         
         public var description: String {

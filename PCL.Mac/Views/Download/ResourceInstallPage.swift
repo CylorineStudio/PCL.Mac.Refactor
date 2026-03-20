@@ -10,7 +10,6 @@ import Core
 
 struct ResourceInstallPage: View {
     @StateObject private var viewModel: ResourceInstallViewModel
-    @State private var disableCardAppearAnimation: Bool = false
     @State private var currentPage: Int = 0
     
     init(project: ProjectListItemModel) {
@@ -29,11 +28,6 @@ struct ResourceInstallPage: View {
                 PaginatedContainer(versionList, id: \.0, currentPage: $currentPage, viewsPerPage: 10) { versionGroup in
                     versionCard(versionGroup: versionGroup, folded: versionList.count == 1 ? false : true)
                 }
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        disableCardAppearAnimation = true
-                    }
-                }
             } else {
                 MyLoading(viewModel: viewModel.loadingVM)
                     .cardIndex(1)
@@ -42,6 +36,7 @@ struct ResourceInstallPage: View {
         .task(id: viewModel.project) {
             do {
                 try await viewModel.load(selectedInstance: InstanceManager.shared.currentInstance)
+            } catch is CancellationError {
             } catch {
                 err("加载\(viewModel.project.type) \(viewModel.project.title) 版本列表失败：\(error.localizedDescription)")
                 viewModel.loadingVM.fail(with: "加载版本列表失败：\(error.localizedDescription)")

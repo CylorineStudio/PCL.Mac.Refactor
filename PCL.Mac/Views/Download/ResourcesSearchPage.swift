@@ -36,11 +36,11 @@ struct ResourcesSearchPage: View {
                 }
             }
             
-            if !viewModel.searchResults.isEmpty {
+            if let searchResults = viewModel.searchResults {
                 PaginatedContainer(currentPage: $currentPage, pageCount: viewModel.totalPages) { _ in
                     MyCard("", titled: false) {
                         LazyVStack(spacing: 0) {
-                            ForEach(viewModel.searchResults) { project in
+                            ForEach(searchResults) { project in
                                 ProjectListItemView(project: project)
                                     .onTapGesture {
                                         AppRouter.shared.append(.projectInstall(project: project))

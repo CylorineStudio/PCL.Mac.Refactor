@@ -177,7 +177,10 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
         }
         
         public static func < (lhs: Self, rhs: Self) -> Bool {
-            return lhs.major > rhs.major ? false : lhs.minor < rhs.minor ? true : false
+            if lhs.major != rhs.major {
+                return lhs.major < rhs.major
+            }
+            return lhs.minor < rhs.minor
         }
         
         public var description: String {
@@ -233,7 +236,7 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
         "path-tracing": "路径追踪",
         "pbr": "PBR",
         "reflections": "反射",
-        "iris":" Iris",
+        "iris": "Iris",
         "optifine": "OptiFine",
         "vanilla": "原版可用"
     ]
