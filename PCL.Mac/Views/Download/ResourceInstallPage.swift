@@ -24,10 +24,10 @@ struct ResourceInstallPage: View {
             }
             if viewModel.loaded, let versionList = viewModel.versionList {
                 if currentPage == 0, let selectedVersionGroup = viewModel.selectedVersionGroup {
-                    versionCard(versionGroup: selectedVersionGroup, isSelected: true)
+                    versionCard(versionGroup: selectedVersionGroup, isSelected: true, folded: false)
                 }
                 PaginatedContainer(versionList, id: \.0, currentPage: $currentPage, viewsPerPage: 10) { versionGroup in
-                    versionCard(versionGroup: versionGroup)
+                    versionCard(versionGroup: versionGroup, folded: versionList.count == 1 ? false : true)
                 }
                 .onAppear {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -99,8 +99,8 @@ struct ResourceInstallPage: View {
     }
     
     @ViewBuilder
-    private func versionCard(versionGroup: ResourceInstallViewModel.VersionGroup, isSelected: Bool = false) -> some View {
-        MyCard((isSelected ? "所选实例：" : "") + versionGroup.0.description, folded: isSelected ? false : nil) {
+    private func versionCard(versionGroup: ResourceInstallViewModel.VersionGroup, isSelected: Bool = false, folded: Bool = true) -> some View {
+        MyCard((isSelected ? "所选实例：" : "") + versionGroup.0.description, folded: folded) {
             let dependencies: [ProjectVersionModel.Dependency] = versionGroup.1[0].requiredDependencies
             if !dependencies.isEmpty {
                 VStack(alignment: .leading) {
