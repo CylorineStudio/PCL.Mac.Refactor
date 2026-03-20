@@ -9,10 +9,13 @@ import Foundation
 import Core
 
 class ResourceInstallViewModel: ObservableObject {
-    public typealias VersionList = [(VersionMapKey, [ProjectVersionModel])]
+    public typealias VersionGroup = (VersionMapKey, [ProjectVersionModel])
+    public typealias VersionList = [VersionGroup]
     
     @Published public var versionList: VersionList?
+    @Published public var selectedVersionGroup: VersionGroup?
     @Published public var loaded: Bool = false
+    
     public let project: ProjectListItemModel
     public let loadingVM: MyLoadingViewModel = .init(text: "加载中")
     
@@ -20,7 +23,10 @@ class ResourceInstallViewModel: ObservableObject {
         self.project = project
     }
     
-    public func load() async throws {
+    public func load(selectedInstance: MinecraftInstance? = nil) async throws {
+        let selectedInstanceKey: VersionMapKey? = selectedInstance.map { .init(loader: $0.modLoader, version: $0.version) }
+        var selectedVersionGroup: VersionGroup? = selectedInstanceKey.map { ($0, []) }
+        
         let versions: [ModrinthVersion] = try await ModrinthAPIClient.shared.versions(ofProject: project.id)
         
         var versionMap: [VersionMapKey: [ProjectVersionModel]] = [:]
@@ -50,9 +56,6 @@ class ResourceInstallViewModel: ObservableObject {
                 }
             }
             for key in keys {
-                if !versionMap.keys.contains(key) {
-                    versionMap[key] = []
-                }
                 let value: ProjectVersionModel = .init(
                     id: version.id,
                     name: version.name,
@@ -65,13 +68,23 @@ class ResourceInstallViewModel: ObservableObject {
                     gameVersion: key.version.id,
                     loader: key.loader
                 )
-                versionMap[key]?.append(value)
+                
+                if let selectedInstanceKey, selectedInstanceKey == key {
+                    selectedVersionGroup?.1.append(value)
+                } else {
+                    if !versionMap.keys.contains(key) {
+                        versionMap[key] = []
+                    }
+                    versionMap[key]?.append(value)
+                }
             }
         }
         
         let versionList: VersionList = versionMap.map { ($0, $1) }.sorted(by: { $0.0 > $1.0 })
+        let finalSelectedGroup: VersionGroup? = selectedVersionGroup?.1.isEmpty == true ? nil : selectedVersionGroup
         await MainActor.run {
             self.versionList = versionList
+            self.selectedVersionGroup = finalSelectedGroup
             self.loaded = true
         }
     }

@@ -23,32 +23,11 @@ struct ResourceInstallPage: View {
                 ProjectListItemView(project: viewModel.project)
             }
             if viewModel.loaded, let versionList = viewModel.versionList {
-                PaginatedContainer(versionList, id: \.0, currentPage: $currentPage, viewsPerPage: 10) { versions in
-                    MyCard(versions.0.description) {
-                        let dependencies: [ProjectVersionModel.Dependency] = versions.1[0].requiredDependencies
-                        if !dependencies.isEmpty {
-                            VStack(alignment: .leading) {
-                                MyText("前置资源")
-                                VStack(spacing: 0) {
-                                    ForEach(dependencies) { dependency in
-                                        ProjectListItemView(project: dependency.project)
-                                            .onTapGesture {
-                                                AppRouter.shared.append(.projectInstall(project: dependency.project))
-                                            }
-                                    }
-                                }
-                                MyText("版本列表")
-                            }
-                        }
-                        VStack(spacing: 0) {
-                            ForEach(versions.1) { version in
-                                VersionListItemView(version: version)
-                                    .onTapGesture {
-                                        onVersionTap(version)
-                                    }
-                            }
-                        }
-                    }
+                if currentPage == 0, let selectedVersionGroup = viewModel.selectedVersionGroup {
+                    versionCard(versionGroup: selectedVersionGroup, isSelected: true)
+                }
+                PaginatedContainer(versionList, id: \.0, currentPage: $currentPage, viewsPerPage: 10) { versionGroup in
+                    versionCard(versionGroup: versionGroup)
                 }
                 .onAppear {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -62,7 +41,7 @@ struct ResourceInstallPage: View {
         }
         .task(id: viewModel.project) {
             do {
-                try await viewModel.load()
+                try await viewModel.load(selectedInstance: InstanceManager.shared.currentInstance)
             } catch {
                 err("加载\(viewModel.project.type) \(viewModel.project.title) 版本列表失败：\(error.localizedDescription)")
                 viewModel.loadingVM.fail(with: "加载版本列表失败：\(error.localizedDescription)")
@@ -114,6 +93,35 @@ struct ResourceInstallPage: View {
                     let task = try await viewModel.createInstallTask(forVersion: version, to: instance)
                     TaskManager.shared.execute(task: task)
                     AppRouter.shared.append(.tasks)
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func versionCard(versionGroup: ResourceInstallViewModel.VersionGroup, isSelected: Bool = false) -> some View {
+        MyCard((isSelected ? "所选实例：" : "") + versionGroup.0.description, folded: isSelected ? false : nil) {
+            let dependencies: [ProjectVersionModel.Dependency] = versionGroup.1[0].requiredDependencies
+            if !dependencies.isEmpty {
+                VStack(alignment: .leading) {
+                    MyText("前置资源")
+                    VStack(spacing: 0) {
+                        ForEach(dependencies) { dependency in
+                            ProjectListItemView(project: dependency.project)
+                                .onTapGesture {
+                                    AppRouter.shared.append(.projectInstall(project: dependency.project))
+                                }
+                        }
+                    }
+                    MyText("版本列表")
+                }
+            }
+            VStack(spacing: 0) {
+                ForEach(versionGroup.1) { version in
+                    VersionListItemView(version: version)
+                        .onTapGesture {
+                            onVersionTap(version)
+                        }
                 }
             }
         }

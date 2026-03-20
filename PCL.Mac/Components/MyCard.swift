@@ -123,7 +123,12 @@ struct MyCard<Content: View, Action: View>: View {
             .background {
                 GeometryReader { proxy in
                     Color.clear
-                        .onAppear { contentHeight = proxy.size.height }
+                        .onAppear {
+                            contentHeight = proxy.size.height
+                            if initialFolded == false {
+                                internalContentHeight = contentHeight
+                            }
+                        }
                         .onChange(of: proxy.size) { newSize in
                             contentHeight = newSize.height
                             if !folded {
