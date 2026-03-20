@@ -35,17 +35,6 @@ class ResourceInstallViewModel: ObservableObject {
                 dependencies.append(.init(id: dependency.id, projectId: projectId, project: .init(project)))
             }
             
-            let value: ProjectVersionModel = .init(
-                id: version.id,
-                name: version.name,
-                version: version.versionNumber,
-                downloads: ProjectListItemModel.formatDownloads(version.downloads),
-                datePublished: ProjectListItemModel.formatLastUpdate(version.datePublished),
-                requiredDependencies: dependencies,
-                type: version.type,
-                primaryFile: version.files.filter(\.primary).first
-            )
-            
             var keys: [VersionMapKey] = []
             for gameVersion in version.gameVersions {
                 if let type = CoreState.versionManifest.version(for: gameVersion)?.type,
@@ -64,6 +53,18 @@ class ResourceInstallViewModel: ObservableObject {
                 if !versionMap.keys.contains(key) {
                     versionMap[key] = []
                 }
+                let value: ProjectVersionModel = .init(
+                    id: version.id,
+                    name: version.name,
+                    version: version.versionNumber,
+                    downloads: ProjectListItemModel.formatDownloads(version.downloads),
+                    datePublished: ProjectListItemModel.formatLastUpdate(version.datePublished),
+                    requiredDependencies: dependencies,
+                    type: version.type,
+                    primaryFile: version.files.filter(\.primary).first,
+                    gameVersion: key.version.id,
+                    loader: key.loader
+                )
                 versionMap[key]?.append(value)
             }
         }
@@ -72,6 +73,25 @@ class ResourceInstallViewModel: ObservableObject {
         await MainActor.run {
             self.versionList = versionList
             self.loaded = true
+        }
+    }
+    
+    /// 检查实例是否可以安装某个版本。
+    /// - Parameters:
+    ///   - instance: 当前实例。
+    ///   - version: 选择的版本。
+    /// - Throws: 如果不能安装，抛出 `InstanceCheckError`。
+    public func checkInstance(_ instance: MinecraftInstance, withVersion version: ProjectVersionModel) throws {
+        if project.type == .mod, let requiredLoader: ModLoader = version.loader {
+            guard let loader: ModLoader = instance.modLoader else {
+                throw InstanceCheckError.modLoaderMissing(name: requiredLoader)
+            }
+            if loader != requiredLoader {
+                throw InstanceCheckError.modLoaderMismatch(required: requiredLoader, found: loader)
+            }
+        }
+        if version.gameVersion != instance.version.id {
+            throw InstanceCheckError.versionUnsupported(supported: version.gameVersion, found: instance.version.id)
         }
     }
     
@@ -129,6 +149,23 @@ class ResourceInstallViewModel: ObservableObject {
                 return "\(loader) \(version)"
             }
             return version.description
+        }
+    }
+    
+    public enum InstanceCheckError: LocalizedError {
+        case modLoaderMissing(name: ModLoader)
+        case modLoaderMismatch(required: ModLoader, found: ModLoader)
+        case versionUnsupported(supported: String, found: String)
+        
+        public var errorDescription: String? {
+            switch self {
+            case .modLoaderMissing(let needed):
+                "这个版本需要 \(needed) 加载器，但当前选择的实例没有安装！"
+            case .modLoaderMismatch(let needed, let found):
+                "这个版本需要 \(needed) 加载器，但当前选择的实例安装的是 \(found)！"
+            case .versionUnsupported(let supported, let found):
+                "这个版本只支持 Minecraft \(supported)，但当前选择的实例版本是 \(found)！"
+            }
         }
     }
 }

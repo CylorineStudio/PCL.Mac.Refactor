@@ -71,11 +71,38 @@ struct ResourceInstallPage: View {
     }
     
     private func onVersionTap(_ version: ProjectVersionModel) {
+        log("\(version.name) \(version.version) 被点击")
         Task {
             guard let instance: MinecraftInstance = InstanceManager.shared.currentInstance else {
                 hint("请先安装并选择一个实例！", type: .critical)
                 return
             }
+            
+            do {
+                try viewModel.checkInstance(instance, withVersion: version)
+            } catch let error as ResourceInstallViewModel.InstanceCheckError {
+                log("当前实例不满足该版本要求：\(error.localizedDescription)")
+                switch error {
+                case .versionUnsupported:
+                    if await MessageBoxManager.shared.showText(
+                        title: "当前实例不符合要求",
+                        content: "\(error.localizedDescription)\n你可以选择继续安装，但游戏可能会发生崩溃或无法正常游玩。\n是否继续安装？",
+                        level: .error,
+                        .init(id: 0, label: "取消", type: .normal),
+                        .init(id: 1, label: "继续", type: .red)
+                    ) != 1 {
+                        return
+                    }
+                default:
+                    _ = await MessageBoxManager.shared.showText(
+                        title: "当前实例不符合要求",
+                        content: error.localizedDescription,
+                        level: .error
+                    )
+                    return
+                }
+            }
+            
             if await MessageBoxManager.shared.showText(
                 title: "确认",
                 content: "确定要安装 \(viewModel.project.title) \(version.version) 吗？",

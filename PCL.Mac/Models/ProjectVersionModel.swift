@@ -23,4 +23,6 @@ struct ProjectVersionModel: Identifiable {
     public let requiredDependencies: [Dependency]
     public let type: ModrinthVersion.VersionType
     public let primaryFile: ModrinthVersion.File?
+    public let gameVersion: String
+    public let loader: ModLoader?
 }
