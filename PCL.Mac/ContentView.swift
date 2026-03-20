@@ -25,7 +25,7 @@ struct ContentView: View {
                     .frame(width: sidebarWidth)
                     .shadow(radius: 2)
                     .onChange(of: router.sidebar.width) { newValue in
-                        withAnimation(.spring(response: 0.18, dampingFraction: 0.85)) {
+                        withAnimation(.spring(response: 0.16, dampingFraction: 1.0)) {
                             sidebarWidth = newValue
                         }
                         switch router.getLast() {
