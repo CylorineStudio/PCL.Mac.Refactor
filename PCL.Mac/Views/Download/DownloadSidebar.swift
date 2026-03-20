@@ -14,18 +14,30 @@ struct DownloadSidebar: Sidebar {
     let width: CGFloat = 150
     
     var body: some View {
-        VStack {
+        VStack(spacing: 4) {
+            MyText("Minecraft", size: 12, color: .colorGray2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 13)
+                .padding(.top, 10)
             MyNavigationList(
-                .init(.minecraftDownload, "LaunchPageIcon", "游戏下载"),
-                .init(.downloadPage2, "DownloadPageIcon", "Page2"),
-                .init(.downloadPage3, "MultiplayerPageIcon", "Page3")
-            ) { router in
-                switch router {
+                .init(.minecraftDownload, "IconBlock", "游戏下载")
+            ) { route in
+                switch route {
                 case .minecraftDownload:
                     minecraftDownloadPageViewModel.reload()
                 default: break
                 }
             }
+            
+            MyText("社区资源", size: 12, color: .colorGray2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 13)
+                .padding(.top, 20)
+            MyNavigationList(
+                .init(.modDownload, "IconMod", "Mod"),
+                .init(.resourcepackDownload, "IconPicture", "资源包"),
+                .init(.shaderpackDownload, "IconSun", "光影包")
+            )
             Spacer()
         }
     }

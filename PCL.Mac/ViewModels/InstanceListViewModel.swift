@@ -13,6 +13,7 @@ class InstanceListViewModel: ObservableObject {
     @Published var loadTask: Task<Void, Error>?
     
     /// 重新加载 `MinecraftRepository` 的实例列表。
+    @MainActor
     public func reload(_ repository: MinecraftRepository) {
         reset()
         repository.instances = nil
@@ -25,6 +26,7 @@ class InstanceListViewModel: ObservableObject {
     }
     
     /// 异步重新加载 `MinecraftRepository` 的实例列表。
+    @MainActor
     public func reloadAsync(_ repository: MinecraftRepository) {
         if loadTask != nil { return }
         reset()
@@ -44,6 +46,7 @@ class InstanceListViewModel: ObservableObject {
         }
     }
     
+    @MainActor
     public func reset() {
         loadingViewModel.reset()
     }

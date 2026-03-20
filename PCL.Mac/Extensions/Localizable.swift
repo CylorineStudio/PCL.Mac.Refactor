@@ -1,5 +1,5 @@
 //
-//  Frontend.swift
+//  Localizable.swift
 //  PCL.Mac
 //
 //  Created by AnemoFlower on 2025/12/11.
@@ -10,7 +10,11 @@ import Core
 
 // 为 PCL.Mac.Core 中的一些枚举类扩展本地化名或图标，以在 SwiftUI 中显示。
 
-extension MinecraftVersion.VersionType {
+protocol Localizable {
+    var localizedName: String { get }
+}
+
+extension MinecraftVersion.VersionType: Localizable {
     var icon: String {
         switch self {
         case .release: "GrassBlock"
@@ -20,7 +24,7 @@ extension MinecraftVersion.VersionType {
         }
     }
     
-    var name: String {
+    var localizedName: String {
         switch self {
         case .release: "正式版"
         case .snapshot: "快照版"
@@ -41,11 +45,32 @@ extension SubTaskState {
     }
 }
 
-extension AccountType {
-    public var localized: String {
+extension AccountType: Localizable {
+    var localizedName: String {
         switch self {
         case .offline: "离线账号"
         case .microsoft: "正版账号"
+        }
+    }
+}
+
+extension ModrinthProjectType: Localizable {
+    var localizedName: String {
+        switch self {
+        case .mod: "模组"
+        case .modpack: "整合包"
+        case .resourcepack: "资源包"
+        case .shader: "光影包"
+        }
+    }
+}
+
+extension ModrinthVersion.VersionType: Localizable {
+    var localizedName: String {
+        switch self {
+        case .release: "正式版"
+        case .beta: "测试版"
+        case .alpha: "早期测试版"
         }
     }
 }

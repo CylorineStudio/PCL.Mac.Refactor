@@ -19,7 +19,8 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     case instanceConfig(id: String)
     
     // 下载页面的子页面
-    case minecraftDownload, minecraftInstallOptions(version: VersionManifest.Version), downloadPage2, downloadPage3
+    case minecraftDownload, minecraftInstallOptions(version: VersionManifest.Version), modDownload, resourcepackDownload, shaderpackDownload
+    case projectInstall(project: ProjectListItemModel)
     
     // 联机页面的子页面
     case multiplayerSub, multiplayerSettings
@@ -56,10 +57,15 @@ class AppRouter: ObservableObject {
             MinecraftDownloadPage()
         case .minecraftInstallOptions(let version):
             MinecraftInstallOptionsPage(version: version)
-        case .downloadPage2:
-            DownloadPage2()
-        case .downloadPage3:
-            DownloadPage3()
+        case .modDownload:
+            ResourcesSearchPage(type: .mod)
+        case .resourcepackDownload:
+            ResourcesSearchPage(type: .resourcepack)
+        case .shaderpackDownload:
+            ResourcesSearchPage(type: .shader)
+        case .projectInstall(let project):
+            ResourceInstallPage(project: project)
+                .id(project)
         case .tasks:
             TasksPage()
         case .instanceList(let repository):
@@ -89,7 +95,7 @@ class AppRouter: ObservableObject {
         case .launch: LaunchSidebar()
         case .instanceList, .noInstanceRepository: InstanceListSidebar()
         case .instanceSettings(let id), .instanceConfig(let id): InstanceSettingsSidebar(id: id)
-        case .minecraftDownload, .downloadPage2, .downloadPage3: DownloadSidebar()
+        case .minecraftDownload, .modDownload, .resourcepackDownload, .shaderpackDownload: DownloadSidebar()
         case .multiplayer, .multiplayerSub, .multiplayerSettings: MultiplayerSidebar()
         case .settings, .javaSettings, .otherSettings: SettingsSidebar()
         case .more, .about, .toolbox: MoreSidebar()
@@ -101,11 +107,12 @@ class AppRouter: ObservableObject {
     /// 当前页面是不是子页面（需要显示返回键和标题，隐藏导航按钮）
     var isSubPage: Bool {
         switch getLast() {
-        case .tasks: return true
-        case .instanceList, .noInstanceRepository: return true
-        case .instanceSettings, .instanceConfig: return true
-        case .minecraftInstallOptions: return true
-        default: return false
+        case .tasks: true
+        case .instanceList, .noInstanceRepository: true
+        case .instanceSettings, .instanceConfig: true
+        case .minecraftInstallOptions: true
+        case .projectInstall: true
+        default: false
         }
     }
     
@@ -116,6 +123,7 @@ class AppRouter: ObservableObject {
         case .instanceList, .noInstanceRepository: "实例列表"
         case .instanceSettings(let id), .instanceConfig(let id): "实例设置 - \(id)"
         case .minecraftInstallOptions(let version): "游戏安装 - \(version.id)"
+        case .projectInstall(let project): "资源下载 - \(project.title)"
         default: "错误：当前页面没有标题，请报告此问题！"
         }
     }

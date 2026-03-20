@@ -32,6 +32,20 @@ public struct VersionManifest: Decodable {
         public let url: URL
         public let time: Date
         public let releaseTime: Date
+        
+        private enum CodingKeys: CodingKey {
+            case id, type, url, time, releaseTime
+        }
+        
+        public init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: VersionManifest.Version.CodingKeys.self)
+            self.id = try container.decode(String.self, forKey: VersionManifest.Version.CodingKeys.id)
+                .replacingOccurrences(of: " Pre-Release ", with: "-pre")
+            self.type = try container.decode(MinecraftVersion.VersionType.self, forKey: VersionManifest.Version.CodingKeys.type)
+            self.url = try container.decode(URL.self, forKey: VersionManifest.Version.CodingKeys.url)
+            self.time = try container.decode(Date.self, forKey: VersionManifest.Version.CodingKeys.time)
+            self.releaseTime = try container.decode(Date.self, forKey: VersionManifest.Version.CodingKeys.releaseTime)
+        }
     }
     
     /// 根据版本号获取在 `versions` 中的顺序（版本号越大，返回值越小）。

@@ -33,7 +33,7 @@ struct MyTextField: View {
                 .stroke(foregroundColor, lineWidth: 1)
                 .padding(.top, 1)
                 .allowsHitTesting(false)
-            if text.isEmpty {
+            if !focused && text.isEmpty {
                 Text(placeholder)
                     .foregroundStyle(Color.colorGray3)
                     .padding(4)

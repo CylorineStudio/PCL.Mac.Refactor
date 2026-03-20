@@ -139,7 +139,7 @@ struct LaunchSidebar: Sidebar {
                         PlayerAvatar(account, length: 36)
                         VStack(alignment: .leading) {
                             MyText(account.profile.name)
-                            MyText(account.type.localized, color: .colorGray3)
+                            MyText(account.type.localizedName, color: .colorGray3)
                         }
                         Spacer()
                         if hovered {
