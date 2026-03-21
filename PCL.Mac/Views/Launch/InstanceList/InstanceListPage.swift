@@ -86,7 +86,7 @@ private struct InstanceView: View {
         self.name = instance.name
         self.version = instance.version
         if let modLoader = instance.modLoader {
-            self.iconName = modLoader.description
+            self.iconName = modLoader.icon
         } else {
             self.iconName = "GrassBlock"
         }

@@ -36,8 +36,8 @@ public class ForgeInstallService {
         }
     }
     
-    private let minecraftVersion: MinecraftVersion
-    private let version: String
+    internal let minecraftVersion: MinecraftVersion
+    internal let version: String
     private let repository: MinecraftRepository
     private let manifest: ClientManifest
     private let runningDirectory: URL
@@ -92,8 +92,7 @@ public class ForgeInstallService {
     /// - Returns: 是否是新版本安装器，且需要继续执行后续步骤。
     private func downloadInstaller(progressHandler: @MainActor @escaping (Double) -> Void) async throws -> Bool {
         let destination: URL = tempDirectory.appending(path: "installer.jar")
-        let url: URL = .init(string: "https://bmclapi2.bangbang93.com/forge/download?mcversion=\(minecraftVersion)&version=\(version)&category=installer&format=jar")!
-        try await SingleFileDownloader.download(url: url, destination: destination, sha1: nil, replaceMethod: .skip, progressHandler: progressHandler)
+        try await SingleFileDownloader.download(url: installerDownloadURL(), destination: destination, sha1: nil, replaceMethod: .skip, progressHandler: progressHandler)
         _ = try FileManager.default.unzipItem(at: destination, to: installerURL)
         
         // 处理客户端清单
@@ -126,6 +125,10 @@ public class ForgeInstallService {
             try FileManager.default.moveItem(at: installerURL.appending(path: "version.json"), to: manifestURL)
             return true
         }
+    }
+    
+    internal func installerDownloadURL() -> URL {
+        return .init(string: "https://files.minecraftforge.net/maven/net/minecraftforge/forge/\(minecraftVersion)-\(version)/forge-\(minecraftVersion)-\(version)-installer.jar")!
     }
     
     private func makeValueDict() -> [String: String] {

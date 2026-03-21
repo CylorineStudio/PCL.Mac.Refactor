@@ -19,7 +19,7 @@ struct MinecraftInstallOptionsPage: View {
     var body: some View {
         CardContainer {
             VStack {
-                MyTip(text: "Forge 版本列表与安装器由 BMCLAPI 提供。", theme: .blue)
+                MyTip(text: "Forge / NeoForge 版本列表由 BMCLAPI 提供。", theme: .blue)
                     .padding(.bottom, 10)
                 MyCard("", titled: false, limitHeight: false) {
                     HStack {
@@ -44,6 +44,8 @@ struct MinecraftInstallOptionsPage: View {
                         .cardIndex(1)
                     ModLoaderCard(.forge, viewModel.version.id, $viewModel.loader)
                         .cardIndex(2)
+                    ModLoaderCard(.neoforge, viewModel.version.id, $viewModel.loader)
+                        .cardIndex(3)
                 }
                 Spacer()
             }
@@ -79,11 +81,7 @@ struct MinecraftInstallOptionsPage: View {
     
     private var icon: String {
         if let loader = viewModel.loader {
-            return switch loader.type {
-            case .fabric: "Fabric"
-            case .forge: "Forge"
-            case .neoforge: "Neoforge"
-            }
+            return loader.type.icon
         } else {
             return viewModel.version.type == .snapshot ? "Dirt" : "GrassBlock"
         }
@@ -108,7 +106,7 @@ private struct ModLoaderCard: View {
             ZStack(alignment: .topLeading) {
                 MyCard(type.description, foldable: loadState == .finished, folded: true) {
                     if let versions {
-                        MyList(items: versions.map { ListItem(image: iconName, name: $0.id, description: $0.beta ? "测试版" : "稳定版") }) { index in
+                        MyList(items: versions.map { ListItem(image: type.icon, name: $0.id, description: $0.beta ? "测试版" : "稳定版") }) { index in
                             if let index {
                                 currentLoader = MinecraftInstallTask.Loader(type: type, version: versions[index].id)
                             } else {
@@ -120,7 +118,7 @@ private struct ModLoaderCard: View {
                 .disableCardAppearAnimation()
                 HStack(spacing: 7) {
                     if let currentLoader, currentLoader.type == type {
-                        Image(iconName)
+                        Image(type.icon)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 18)
@@ -139,14 +137,6 @@ private struct ModLoaderCard: View {
         }
     }
     
-    private var iconName: String {
-        switch type {
-        case .fabric: "Fabric"
-        case .forge: "Forge"
-        case .neoforge: "Neoforge"
-        }
-    }
-    
     private func loadVersions() async {
         do {
             let versions: [Version] = switch type {
@@ -156,7 +146,12 @@ private struct ModLoaderCard: View {
             case .forge:
                 try await Requests.get("https://bmclapi2.bangbang93.com/forge/minecraft/\(minecraftVersion)").json().arrayValue
                     .map { .init(id: $0["version"].stringValue) }
-            case .neoforge: []
+            case .neoforge:
+                try await Requests.get("https://bmclapi2.bangbang93.com/neoforge/list/\(minecraftVersion)").json().arrayValue
+                    .map { json in
+                        let version: String = json["version"].stringValue
+                        return .init(id: version.hasPrefix("1.20.1-") ? String(version.dropFirst("1.20.1-".count)) : version)
+                    }
             }
             await MainActor.run {
                 self.versions = versions.sorted { $0.id.compare($1.id, options: .numeric) == .orderedDescending }

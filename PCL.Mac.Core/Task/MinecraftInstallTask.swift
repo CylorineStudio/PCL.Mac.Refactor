@@ -67,7 +67,7 @@ public enum MinecraftInstallTask {
                 )
             },
             
-            // Forge / NeoForge
+            // Mod Loader
             
             .init(5, "__modify_manifest", display: false) { task, model in
                 let manifestURL: URL = model.runningDirectory.appending(path: "\(model.name).json")
@@ -131,7 +131,7 @@ public enum MinecraftInstallTask {
                         )
                         model.manifest = manifest.merge(to: model.manifest)
                     },
-                    at: 3
+                    at: 4
                 )
                 
             case .forge:
@@ -141,16 +141,31 @@ public enum MinecraftInstallTask {
                         model.forgeInstallService = service
                         try await service.downloadFiles(progressHandler: task.setProgress(_:))
                     },
-                    at: 3
+                    at: 4
                 )
                 subTasks.insert(
                     .init(4, "执行 Forge 安装器") { task, model in
                         try await model.forgeInstallService!.executeProcessors(progressHandler: task.setProgress(_:))
                         model.manifest = try .load(at: model.runningDirectory.appending(path: "\(model.name).json")).0
                     },
+                    at: 5
+                )
+            case .neoforge:
+                subTasks.insert(
+                    .init(3, "下载 NeoForge 安装器文件") { task, model in
+                        let service: NeoforgeInstallService = .init(minecraftVersion: model.version, version: modLoader.version, repository: model.repository, manifest: model.manifest, runningDirectory: model.runningDirectory)
+                        model.forgeInstallService = service
+                        try await service.downloadFiles(progressHandler: task.setProgress(_:))
+                    },
                     at: 4
                 )
-            default: break
+                subTasks.insert(
+                    .init(4, "执行 NeoForge 安装器") { task, model in
+                        try await model.forgeInstallService!.executeProcessors(progressHandler: task.setProgress(_:))
+                        model.manifest = try .load(at: model.runningDirectory.appending(path: "\(model.name).json")).0
+                    },
+                    at: 5
+                )
             }
         }
         
