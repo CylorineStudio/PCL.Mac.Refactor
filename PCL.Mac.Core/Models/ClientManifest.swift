@@ -438,7 +438,7 @@ public extension ClientManifest {
         let modLoader: ModLoader?
         guard let str: String = .init(data: data, encoding: .utf8) else { throw LoadError.formatError }
         if str.contains("neoforge") {
-            modLoader = nil // unsupported
+            modLoader = .neoforge
         } else if str.contains("forge") {
             modLoader = .forge
         } else if str.contains("fabric") {

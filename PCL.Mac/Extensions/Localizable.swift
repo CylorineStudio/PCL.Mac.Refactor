@@ -74,3 +74,13 @@ extension ModrinthVersion.VersionType: Localizable {
         }
     }
 }
+
+extension ModLoader {
+    var icon: String {
+        switch self {
+        case .fabric: "Fabric"
+        case .forge: "Forge"
+        case .neoforge: "Neoforge"
+        }
+    }
+}

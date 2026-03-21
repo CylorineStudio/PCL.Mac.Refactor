@@ -81,11 +81,7 @@ struct MinecraftInstallOptionsPage: View {
     
     private var icon: String {
         if let loader = viewModel.loader {
-            return switch loader.type {
-            case .fabric: "Fabric"
-            case .forge: "Forge"
-            case .neoforge: "Neoforge"
-            }
+            return loader.type.icon
         } else {
             return viewModel.version.type == .snapshot ? "Dirt" : "GrassBlock"
         }
@@ -110,7 +106,7 @@ private struct ModLoaderCard: View {
             ZStack(alignment: .topLeading) {
                 MyCard(type.description, foldable: loadState == .finished, folded: true) {
                     if let versions {
-                        MyList(items: versions.map { ListItem(image: iconName, name: $0.id, description: $0.beta ? "测试版" : "稳定版") }) { index in
+                        MyList(items: versions.map { ListItem(image: type.icon, name: $0.id, description: $0.beta ? "测试版" : "稳定版") }) { index in
                             if let index {
                                 currentLoader = MinecraftInstallTask.Loader(type: type, version: versions[index].id)
                             } else {
@@ -122,7 +118,7 @@ private struct ModLoaderCard: View {
                 .disableCardAppearAnimation()
                 HStack(spacing: 7) {
                     if let currentLoader, currentLoader.type == type {
-                        Image(iconName)
+                        Image(type.icon)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 18)
@@ -138,14 +134,6 @@ private struct ModLoaderCard: View {
         }
         .task(id: type) {
             await loadVersions()
-        }
-    }
-    
-    private var iconName: String {
-        switch type {
-        case .fabric: "Fabric"
-        case .forge: "Forge"
-        case .neoforge: "Neoforge"
         }
     }
     

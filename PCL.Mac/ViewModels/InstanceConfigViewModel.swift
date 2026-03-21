@@ -25,7 +25,7 @@ class InstanceConfigViewModel: ObservableObject {
     
     public var iconName: String {
         if let modLoader: ModLoader = instance?.modLoader {
-            return modLoader.description
+            return modLoader.icon
         }
         return "GrassBlock"
     }
