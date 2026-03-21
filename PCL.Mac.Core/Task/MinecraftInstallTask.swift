@@ -150,7 +150,22 @@ public enum MinecraftInstallTask {
                     },
                     at: 4
                 )
-            default: break
+            case .neoforge:
+                subTasks.insert(
+                    .init(3, "下载 NeoForge 安装器文件") { task, model in
+                        let service: NeoforgeInstallService = .init(minecraftVersion: model.version, version: modLoader.version, repository: model.repository, manifest: model.manifest, runningDirectory: model.runningDirectory)
+                        model.forgeInstallService = service
+                        try await service.downloadFiles(progressHandler: task.setProgress(_:))
+                    },
+                    at: 3
+                )
+                subTasks.insert(
+                    .init(4, "执行 NeoForge 安装器") { task, model in
+                        try await model.forgeInstallService!.executeProcessors(progressHandler: task.setProgress(_:))
+                        model.manifest = try .load(at: model.runningDirectory.appending(path: "\(model.name).json")).0
+                    },
+                    at: 4
+                )
             }
         }
         

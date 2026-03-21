@@ -19,7 +19,7 @@ struct MinecraftInstallOptionsPage: View {
     var body: some View {
         CardContainer {
             VStack {
-                MyTip(text: "Forge 版本列表与安装器由 BMCLAPI 提供。", theme: .blue)
+                MyTip(text: "Forge / NeoForge 版本列表由 BMCLAPI 提供。", theme: .blue)
                     .padding(.bottom, 10)
                 MyCard("", titled: false, limitHeight: false) {
                     HStack {
@@ -44,6 +44,8 @@ struct MinecraftInstallOptionsPage: View {
                         .cardIndex(1)
                     ModLoaderCard(.forge, viewModel.version.id, $viewModel.loader)
                         .cardIndex(2)
+                    ModLoaderCard(.neoforge, viewModel.version.id, $viewModel.loader)
+                        .cardIndex(3)
                 }
                 Spacer()
             }
@@ -156,7 +158,12 @@ private struct ModLoaderCard: View {
             case .forge:
                 try await Requests.get("https://bmclapi2.bangbang93.com/forge/minecraft/\(minecraftVersion)").json().arrayValue
                     .map { .init(id: $0["version"].stringValue) }
-            case .neoforge: []
+            case .neoforge:
+                try await Requests.get("https://bmclapi2.bangbang93.com/neoforge/list/\(minecraftVersion)").json().arrayValue
+                    .map { json in
+                        let version: String = json["version"].stringValue
+                        return .init(id: version.hasPrefix("1.20.1-") ? String(version.dropFirst("1.20.1-".count)) : version)
+                    }
             }
             await MainActor.run {
                 self.versions = versions.sorted { $0.id.compare($1.id, options: .numeric) == .orderedDescending }
