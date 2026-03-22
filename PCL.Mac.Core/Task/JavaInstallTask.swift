@@ -40,6 +40,7 @@ public enum JavaInstallTask {
             },
             .init(2, "__completion", display: false) { _, model in
                 let bundleRoot: URL = try FileManager.default.contentsOfDirectory(at: tempDirectory, includingPropertiesForKeys: nil)[0]
+                try FileManager.default.createDirectory(at: bundleDestination.deletingLastPathComponent(), withIntermediateDirectories: true)
                 try FileManager.default.moveItem(at: bundleRoot, to: bundleDestination)
                 try await JavaManager.shared.research()
             }
