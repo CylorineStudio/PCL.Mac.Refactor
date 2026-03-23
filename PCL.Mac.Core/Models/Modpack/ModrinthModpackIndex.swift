@@ -15,8 +15,17 @@ public struct ModrinthModpackIndex: Codable {
         public let downloads: [URL]
     }
     
-    public enum DependencyType: String, Codable {
-        case minecraft, forge, neoforge, fabric = "fabric-loader", quilt = "quilt-loader"
+    public struct Dependencies: Codable {
+        public let minecraft: String
+        public let forge: String?
+        public let neoforge: String?
+        public let fabricLoader: String?
+        public let quiltLoader: String?
+        
+        private enum CodingKeys: String, CodingKey {
+            case minecraft, forge, neoforge
+            case fabricLoader = "fabric-loader", quiltLoader = "quilt-loader"
+        }
     }
     
     public let formatVersion: Int
@@ -24,5 +33,6 @@ public struct ModrinthModpackIndex: Codable {
     public let summary: String?
     public let game: String
     public let versionId: String
-    public let dependencies: [DependencyType: String]
+    public let files: [File]
+    public let dependencies: Dependencies
 }
