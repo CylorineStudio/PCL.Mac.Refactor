@@ -13,6 +13,7 @@ struct InstanceListSidebar: Sidebar {
     @EnvironmentObject private var viewModel: InstanceListViewModel
     
     let width: CGFloat = 300
+    private let modpackViewModel: ModpackViewModel = .init()
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -35,9 +36,7 @@ struct InstanceListSidebar: Sidebar {
                 ImportButton("IconAdd", "添加已有目录") {
                     try instanceViewModel.requestAddRepository()
                 }
-                ImportButton("IconImportModpack", "导入整合包（暂未完成）") {
-                    NSWorkspace.shared.open(URL(string: "https://www.bilibili.com/video/BV1GJ411x7h7")!)
-                }
+                ImportButton("IconImportModpack", "导入整合包", perform: onImportModpackClicked)
             }
             Spacer()
         }
@@ -47,6 +46,83 @@ struct InstanceListSidebar: Sidebar {
                 AppRouter.shared.removeLast()
                 AppRouter.shared.append(.instanceList(repository))
             }
+        }
+    }
+    
+    private func onImportModpackClicked() {
+        guard let repository: MinecraftRepository = instanceViewModel.currentRepository else {
+            hint("请先选择一个游戏目录！", type: .critical)
+            return
+        }
+        
+        let panel: NSOpenPanel = .init()
+        panel.allowsMultipleSelection = false
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowedContentTypes = [
+            .zip,
+            .init(filenameExtension: "mrpack")!
+        ]
+        
+        if panel.runModal() == .OK {
+            guard let url = panel.url else { return }
+            Task {
+                await importModpack(url, repository: repository)
+            }
+        }
+    }
+    
+    private func importModpack(_ url: URL, repository: MinecraftRepository) async {
+        do {
+            guard let result: ModpackViewModel.ModpackLoadResult = try modpackViewModel.loadModpack(at: url) else {
+                _ = await MessageBoxManager.shared.showText(
+                    title: "不支持的整合包格式",
+                    content: "很抱歉，PCL.Mac 目前只支持导入 Modrinth 格式的整合包，不支持这个整合包使用的格式……",
+                    level: .error
+                )
+                return
+            }
+            guard await MessageBoxManager.shared.showText(
+                title: "整合包信息",
+                content: "格式：\(result.format)\n名称：\(result.name)\n版本：\(result.version)\n描述：\(result.summary)\n依赖：\(result.dependencyInfo)\n\n是否继续安装？",
+                level: .info,
+                .init(id: 0, label: "否", type: .normal),
+                .init(id: 1, label: "是", type: .highlight)
+            ) == 1 else { return }
+            
+            guard let name: String = await MessageBoxManager.shared.showInput(
+                title: "导入整合包 - 输入实例名",
+                initialContent: result.name
+            ) else { return }
+            
+            if repository.contains(name) {
+                hint("该名称已被占用！", type: .critical)
+                return
+            }
+            
+            switch result.index {
+            case .modrinth(let index):
+                let task = try ModrinthModpackInstallTask.create(
+                    url: url,
+                    index: index,
+                    repository: repository,
+                    name: name
+                ) { instance in
+                    instanceViewModel.switchInstance(to: instance, repository)
+                    if AppRouter.shared.getLast() == .tasks {
+                        AppRouter.shared.removeLast()
+                        if case .minecraftInstallOptions = AppRouter.shared.getLast() {
+                            AppRouter.shared.removeLast()
+                        }
+                    }
+                }
+                
+                TaskManager.shared.execute(task: task)
+                AppRouter.shared.append(.tasks)
+            }
+        } catch {
+            err("导入整合包失败：\(error)")
+            hint("导入整合包失败：\(error.localizedDescription)", type: .critical)
         }
     }
 }

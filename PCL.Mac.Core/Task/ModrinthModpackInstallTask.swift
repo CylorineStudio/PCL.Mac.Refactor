@@ -13,7 +13,8 @@ public enum ModrinthModpackInstallTask {
         url: URL,
         index: ModrinthModpackIndex,
         repository: MinecraftRepository,
-        name: String
+        name: String,
+        completion: ((MinecraftInstance) -> Void)? = nil
     ) throws -> MyTask<Model> {
         let minecraftVersion: MinecraftVersion = .init(index.dependencies.minecraft)
         let loader: MinecraftInstallTask.Loader?
@@ -33,17 +34,20 @@ public enum ModrinthModpackInstallTask {
             name: name,
             version: minecraftVersion,
             repository: repository,
-            modLoader: loader
+            modLoader: loader,
+            completion: completion
         )
         var subTasks: [MyTask<Model>.SubTask] = minecraftInstallTask.subTasks
         
         subTasks.insert(
             contentsOf: [
                 .init(6, "下载整合包所需文件") { task, model in
-                    let downloadItems: [DownloadItem] = index.files.compactMap { file in
-                        guard let url: URL = file.downloads.first else { return nil }
-                        return .init(url: url, destination: model.runningDirectory.appending(path: file.path), sha1: file.hashes["sha1"])
-                    }
+                    let downloadItems: [DownloadItem] = index.files
+                        .filter { $0.env?[.client] != .unsupported }
+                        .compactMap { file in
+                            guard let url: URL = file.downloads.first else { return nil }
+                            return .init(url: url, destination: model.runningDirectory.appending(path: file.path), sha1: file.hashes["sha1"])
+                        }
                     try await MultiFileDownloader(items: downloadItems, concurrentLimit: 64, replaceMethod: .skip, progressHandler: task.setProgress(_:)).start()
                 },
                 .init(7, "应用整合包修改") { task, model in
@@ -61,6 +65,7 @@ public enum ModrinthModpackInstallTask {
                             }
                         }
                     }
+                    try FileManager.default.removeItem(at: tempDirectory)
                 }
             ],
             at: subTasks.count - 2

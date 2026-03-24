@@ -58,6 +58,13 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
         return try .load(from: versionsURL.appending(path: id))
     }
     
+    /// 判断仓库中是否存在带有指定 id 的实例。
+    /// - Parameter id: 指定 id。
+    /// - Returns: 一个 `Bool`，表示是否存在。
+    public func contains(_ id: String) -> Bool {
+        return FileManager.default.fileExists(atPath: versionsURL.appending(path: id).path)
+    }
+    
     
     private func getInstanceList() throws -> ([MinecraftInstance], [ErrorInstance]) {
         try createDirectories()
