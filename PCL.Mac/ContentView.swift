@@ -170,10 +170,15 @@ private struct MessageBoxOverlay: View {
 }
 
 private struct ExtraButtonsOverlay: View {
+    @ObservedObject private var router: AppRouter = .shared
     @ObservedObject private var launchManager: MinecraftLaunchManager = .shared
+    @ObservedObject private var taskManager: TaskManager = .shared
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
+            ExtraButton("DownloadPageIcon", showTasksButton) {
+                router.append(.tasks)
+            }
             ExtraButton("IconPower", launchManager.isRunning) {
                 launchManager.stop()
                 if launchManager.isLaunching {
@@ -185,6 +190,12 @@ private struct ExtraButtonsOverlay: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .animation(.spring(response: 0.4), value: launchManager.isRunning)
+        .animation(.spring(response: 0.4), value: showTasksButton)
+    }
+    
+    private var showTasksButton: Bool {
+        !taskManager.tasks.filter(\.display).isEmpty && router.getLast() != .tasks
     }
     
     private struct ExtraButton: View {
@@ -221,6 +232,7 @@ private struct ExtraButtonsOverlay: View {
                 )
                 .onHover { hovered = $0 }
                 .scaleEffect(show ? (pressed ? 0.85 : 1) : 0, anchor: .center)
+                .padding(show ? 4 : 0)
                 .animation(.linear(duration: 0.15), value: hovered)
                 .animation(.easeOut(duration: 0.15), value: pressed)
                 .animation(.spring(response: 0.4), value: show)
