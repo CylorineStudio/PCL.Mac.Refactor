@@ -44,58 +44,124 @@ struct ResourceInstallPage: View {
         }
     }
     
-    private func onVersionTap(_ version: ProjectVersionModel) {
-        log("\(version.name) \(version.version) 被点击")
-        Task {
-            guard let instance: MinecraftInstance = InstanceManager.shared.currentInstance else {
-                hint("请先安装并选择一个实例！", type: .critical)
-                return
-            }
-            
-            do {
-                try viewModel.checkInstance(instance, withVersion: version)
-            } catch let error as ResourceInstallViewModel.InstanceCheckError {
-                log("当前实例不满足该版本要求：\(error.localizedDescription)")
-                switch error {
-                case .versionUnsupported:
-                    if await MessageBoxManager.shared.showText(
-                        title: "当前实例不符合要求",
-                        content: "\(error.localizedDescription)\n你可以选择继续安装，但游戏可能会发生崩溃或无法正常游玩。\n是否继续安装？",
-                        level: .error,
-                        .init(id: 0, label: "取消", type: .normal),
-                        .init(id: 1, label: "继续", type: .red)
-                    ) != 1 {
-                        return
-                    }
-                default:
-                    _ = await MessageBoxManager.shared.showText(
-                        title: "当前实例不符合要求",
-                        content: error.localizedDescription,
-                        level: .error
-                    )
+    private func onVersionTap(_ version: ProjectVersionModel) async throws {
+        guard let instance: MinecraftInstance = InstanceManager.shared.currentInstance else {
+            hint("请先安装并选择一个实例！", type: .critical)
+            return
+        }
+        
+        do {
+            try viewModel.checkInstance(instance, withVersion: version)
+        } catch let error as ResourceInstallViewModel.InstanceCheckError {
+            log("当前实例不满足该版本要求：\(error.localizedDescription)")
+            switch error {
+            case .versionUnsupported:
+                if await MessageBoxManager.shared.showText(
+                    title: "当前实例不符合要求",
+                    content: "\(error.localizedDescription)\n你可以选择继续安装，但游戏可能会发生崩溃或无法正常游玩。\n是否继续安装？",
+                    level: .error,
+                    .init(id: 0, label: "取消", type: .normal),
+                    .init(id: 1, label: "继续", type: .red)
+                ) != 1 {
                     return
                 }
+            default:
+                _ = await MessageBoxManager.shared.showText(
+                    title: "当前实例不符合要求",
+                    content: error.localizedDescription,
+                    level: .error
+                )
+                return
             }
-            
-            if await MessageBoxManager.shared.showText(
-                title: "确认",
-                content: "确定要安装 \(viewModel.project.title) \(version.version) 吗？",
-                level: .info,
-                .init(id: 0, label: "取消", type: .normal),
-                .init(id: 1, label: "确定", type: .highlight)
-            ) == 1 {
-                do {
-                    let task = try await viewModel.createInstallTask(forVersion: version, to: instance)
-                    TaskManager.shared.execute(task: task)
-                    AppRouter.shared.append(.tasks)
-                }
+        }
+        
+        if await MessageBoxManager.shared.showText(
+            title: "确认",
+            content: "确定要安装 \(viewModel.project.title) \(version.version) 吗？",
+            level: .info,
+            .init(id: 0, label: "取消", type: .normal),
+            .init(id: 1, label: "确定", type: .highlight)
+        ) == 1 {
+            do {
+                let task = try await viewModel.createInstallTask(forVersion: version, to: instance)
+                TaskManager.shared.execute(task: task)
+                AppRouter.shared.append(.tasks)
             }
         }
     }
     
+    private func onModpackTap(_ version: ProjectVersionModel) async throws {
+        guard let repository: MinecraftRepository = InstanceManager.shared.currentRepository else {
+            hint("请先选择一个游戏目录！", type: .critical)
+            return
+        }
+        
+        guard await MessageBoxManager.shared.showText(
+            title: "确认",
+            content: "确定要安装整合包 \(viewModel.project.title) \(version.version) 吗？",
+            level: .info,
+            .init(id: 0, label: "取消", type: .normal),
+            .init(id: 1, label: "确定", type: .highlight)
+        ) == 1 else { return }
+        
+        let (downloadTask, destination): (MyTask<EmptyModel>, URL)
+        do {
+            (downloadTask, destination) = try viewModel.createModpackDownloadTask(version)
+        } catch {
+            err("创建下载任务失败：\(error.localizedDescription)")
+            hint("创建下载任务失败：\(error.localizedDescription)", type: .critical)
+            return
+        }
+        
+        let downloadExecutorTask: Task<Void, Error> = TaskManager.shared.execute(task: downloadTask)
+        do {
+            try await downloadExecutorTask.value
+        } catch {
+            err("下载整合包失败：\(error.localizedDescription)")
+            hint("下载整合包失败：\(error.localizedDescription)", type: .critical)
+            return
+        }
+        
+        let index: ModrinthModpackIndex
+        do {
+            index = try viewModel.loadIndex(destination)
+        } catch {
+            err("加载整合包索引失败：\(error.localizedDescription)")
+            hint("加载整合包索引失败：\(error.localizedDescription)", type: .critical)
+            return
+        }
+        
+        guard let name: String = await MessageBoxManager.shared.showInput(
+            title: "安装整合包 - 输入实例名",
+            initialContent: index.name
+        ) else { return }
+        
+        if repository.contains(name) {
+            hint("该名称已被占用！", type: .critical)
+            return
+        }
+        
+        let installTask: MyTask<ModrinthModpackInstallTask.Model>
+        do {
+            installTask = try ModrinthModpackInstallTask.create(
+                url: destination,
+                index: index,
+                repository: repository,
+                name: name
+            ) { instance in
+                InstanceManager.shared.switchInstance(to: instance, repository)
+            }
+        } catch {
+            err("创建安装任务失败：\(error.localizedDescription)")
+            hint("创建安装任务失败：\(error.localizedDescription)", type: .critical)
+            return
+        }
+        TaskManager.shared.execute(task: installTask)
+    }
+    
     @ViewBuilder
     private func versionCard(versionGroup: ResourceInstallViewModel.VersionGroup, isSelected: Bool = false, folded: Bool = true) -> some View {
-        MyCard((isSelected ? "所选实例：" : "") + versionGroup.0.description, folded: folded) {
+        MyCard((isSelected ? "最佳版本：" : "") + versionGroup.0.description, folded: folded) {
             let dependencies: [ProjectVersionModel.Dependency] = versionGroup.1[0].requiredDependencies
             if !dependencies.isEmpty {
                 VStack(alignment: .leading) {
@@ -115,7 +181,19 @@ struct ResourceInstallPage: View {
                 ForEach(versionGroup.1) { version in
                     VersionListItemView(version: version)
                         .onTapGesture {
-                            onVersionTap(version)
+                            log("\(version.name) \(version.version) 被点击")
+                            Task {
+                                do {
+                                    if viewModel.project.type == .modpack {
+                                        try await onModpackTap(version)
+                                    } else {
+                                        try await onVersionTap(version)
+                                    }
+                                } catch {
+                                    err("执行点击回调意外失败：\(error.localizedDescription)")
+                                    hint("执行点击回调意外失败：\(error.localizedDescription)", type: .critical)
+                                }
+                            }
                         }
                 }
             }

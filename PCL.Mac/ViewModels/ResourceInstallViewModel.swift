@@ -7,6 +7,7 @@
 
 import Foundation
 import Core
+import ZIPFoundation
 
 class ResourceInstallViewModel: ObservableObject {
     public typealias VersionGroup = (VersionMapKey, [ProjectVersionModel])
@@ -175,6 +176,59 @@ class ResourceInstallViewModel: ObservableObject {
                 "这个版本需要 \(needed) 加载器，但当前选择的实例安装的是 \(found)！"
             case .versionUnsupported(let supported, let found):
                 "这个版本只支持 Minecraft \(supported)，但当前选择的实例版本是 \(found)！"
+            }
+        }
+    }
+}
+
+
+// MARK: - 整合包相关
+extension ResourceInstallViewModel {
+    public func createModpackDownloadTask(_ version: ProjectVersionModel) throws -> (MyTask<EmptyModel>, URL) {
+        guard let primaryFile = version.primaryFile else {
+            throw SimpleError("这个版本中没有主要文件！")
+        }
+        
+        let destination: URL = URLConstants.tempURL.appending(path: "modpack-download-\(UUID().uuidString.lowercased())")
+        let task: MyTask<EmptyModel> = .init(
+            name: "下载整合包 - \(project.title) \(version.version)",
+            .init(0, "下载文件") { task, _ in
+                try await SingleFileDownloader.download(
+                    url: primaryFile.url,
+                    destination: destination,
+                    sha1: primaryFile.sha1,
+                    replaceMethod: .skip,
+                    progressHandler: task.setProgress(_:)
+                )
+            }
+        )
+        return (task, destination)
+    }
+    
+    public func loadIndex(_ url: URL) throws -> ModrinthModpackIndex {
+        do {
+            let archive: Archive = try .init(url: url, accessMode: .read)
+            guard let entry: Entry = archive["modrinth.index.json"] else {
+                throw SimpleError("未找到整合包索引文件。")
+            }
+            var data: Data = .init()
+            _ = try archive.extract(entry, consumer: { data += $0 })
+            let index: ModrinthModpackIndex = try JSONDecoder.shared.decode(ModrinthModpackIndex.self, from: data)
+            return index
+        } catch let error as Archive.ArchiveError where error == .unreadableArchive {
+            throw ModpackInstallError.invalidModpackFormat(underlying: SimpleError("压缩文件格式错误。"))
+        } catch {
+            throw ModpackInstallError.invalidModpackFormat(underlying: error)
+        }
+    }
+    
+    public enum ModpackInstallError: LocalizedError {
+        case invalidModpackFormat(underlying: Error)
+        
+        public var errorDescription: String? {
+            switch self {
+            case .invalidModpackFormat(let underlying):
+                "整合包格式错误：\(underlying.localizedDescription)"
             }
         }
     }
