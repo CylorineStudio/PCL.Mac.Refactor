@@ -91,8 +91,8 @@ class EasyTierManager {
             title: "错误",
             content: "你需要安装 EasyTier 才能使用这个功能！",
             level: .error,
-            .init(id: 1, label: "安装", type: .highlight),
-            .init(id: 0, label: "取消", type: .normal)
+            .yes(label: "安装", type: .highlight),
+            .no()
         ) == 1 {
             let task: MyTask = makeInstallTask()
             await MainActor.run {

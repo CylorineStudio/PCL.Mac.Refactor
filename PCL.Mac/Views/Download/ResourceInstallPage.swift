@@ -60,8 +60,8 @@ struct ResourceInstallPage: View {
                     title: "当前实例不符合要求",
                     content: "\(error.localizedDescription)\n你可以选择继续安装，但游戏可能会发生崩溃或无法正常游玩。\n是否继续安装？",
                     level: .error,
-                    .init(id: 0, label: "取消", type: .normal),
-                    .init(id: 1, label: "继续", type: .red)
+                    .no(),
+                    .yes(label: "继续", type: .red)
                 ) != 1 {
                     return
                 }
@@ -79,8 +79,8 @@ struct ResourceInstallPage: View {
             title: "确认",
             content: "确定要安装 \(viewModel.project.title) \(version.version) 吗？",
             level: .info,
-            .init(id: 0, label: "取消", type: .normal),
-            .init(id: 1, label: "确定", type: .highlight)
+            .no(),
+            .yes(type: .highlight)
         ) == 1 {
             do {
                 let task = try await viewModel.createInstallTask(forVersion: version, to: instance)
@@ -100,8 +100,8 @@ struct ResourceInstallPage: View {
             title: "确认",
             content: "确定要安装整合包 \(viewModel.project.title) \(version.version) 吗？",
             level: .info,
-            .init(id: 0, label: "取消", type: .normal),
-            .init(id: 1, label: "确定", type: .highlight)
+            .no(),
+            .yes(type: .highlight)
         ) == 1 else { return }
         
         hint("开始下载整合包……")

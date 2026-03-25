@@ -13,7 +13,7 @@ class MessageBoxManager: ObservableObject {
     public static let cancelButtonID: Int = 1000
     public static let okButtonID: Int = 1001
     @Published public private(set) var currentMessageBox: MessageBoxModel?
-    private let defaultButton: MessageBoxModel.Button = .init(id: 0, label: "确定", type: .normal)
+    private let defaultButton: MessageBoxModel.Button = .yes()
     private let semaphore: AsyncSemaphore = .init(value: 1)
     private var callback: ((MessageBoxResult) -> Void)?
     /// 在弹出下一个弹窗时，是否需要等待。

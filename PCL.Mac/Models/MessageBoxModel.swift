@@ -43,5 +43,21 @@ struct MessageBoxModel: Equatable, Identifiable {
             self.type = type
             self.onClick = onClick
         }
+        
+        /// 创建一个 `id` 为 `1` 的“是”按钮。
+        /// - Parameters:
+        ///   - label: 按钮文本，默认为 `"确认"`。
+        ///   - type: 按钮类型，默认为 `.normal`。
+        public static func yes(label: String = "确认", type: MyButton.`Type` = .normal) -> Button {
+            return .init(id: 1, label: label, type: type)
+        }
+        
+        /// 创建一个 `id` 为 `0` 的“否”按钮。
+        /// - Parameters:
+        ///   - label: 按钮文本，默认为 `"取消"`。
+        ///   - type: 按钮类型，默认为 `.normal`。
+        public static func no(label: String = "取消", type: MyButton.`Type` = .normal) -> Button {
+            return .init(id: 0, label: label, type: type)
+        }
     }
 }

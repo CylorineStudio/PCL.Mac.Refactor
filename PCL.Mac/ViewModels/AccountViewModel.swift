@@ -206,7 +206,7 @@ class AccountViewModel: ObservableObject {
                 NSPasteboard.general.setString(code.code, forType: .string)
                 NSWorkspace.shared.open(code.verificationURL)
             },
-            .init(id: 1, label: "取消", type: .red)
+            .no()
         ) == 1 {
             log("用户取消了授权")
             authTask.cancel()
@@ -218,8 +218,8 @@ class AccountViewModel: ObservableObject {
             title: title,
             content: content,
             level: .error,
-            .init(id: 0, label: "取消", type: .normal),
-            .init(id: 1, label: "确定", type: .highlight)
+            .no(),
+            .yes(type: .highlight)
         ) == 1 {
             NSWorkspace.shared.open(link.url!)
         }

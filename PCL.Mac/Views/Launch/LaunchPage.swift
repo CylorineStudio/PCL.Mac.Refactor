@@ -71,7 +71,7 @@ struct LaunchPage: View {
                                 .init(id: 0, label: "hint（点击这个按钮不会关闭弹窗！）", type: .normal) {
                                     hint("awa!", type: .finish)
                                 },
-                                .init(id: 1, label: "确认", type: .highlight),
+                                .yes(type: .highlight),
                             )
                             
                             let index: Int? = await MessageBoxManager.shared.showListAsync(title: "列表选择", items: listItems)

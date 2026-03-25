@@ -86,8 +86,8 @@ struct InstanceListSidebar: Sidebar {
                 title: "整合包信息",
                 content: "格式：\(result.format)\n名称：\(result.name)\n版本：\(result.version)\n描述：\(result.summary)\n依赖：\(result.dependencyInfo)\n\n是否继续安装？",
                 level: .info,
-                .init(id: 0, label: "否", type: .normal),
-                .init(id: 1, label: "是", type: .highlight)
+                .no(),
+                .yes(label: "继续")
             ) == 1 else { return }
             
             guard var name: String = await MessageBoxManager.shared.showInputAsync(
