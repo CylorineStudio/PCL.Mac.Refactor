@@ -67,7 +67,7 @@ class MultiplayerViewModel: ObservableObject {
                             guard await Scaffolding.checkMinecraftServer(on: serverPort, timeout: 5) else {
                                 log("局域网世界验活失败")
                                 await self.stopHost()
-                                _ = await MessageBoxManager.shared.showTextAsync(title: "房间已关闭", content: "局域网世界已关闭，房间已自动关闭。")
+                                MessageBoxManager.shared.showText(title: "房间已关闭", content: "局域网世界已关闭，房间已自动关闭。")
                                 break
                             }
                         }
@@ -75,7 +75,7 @@ class MultiplayerViewModel: ObservableObject {
                     log("启动联机中心成功，房间码：\(server.roomCode)")
                 } catch {
                     err("启动联机中心失败：\(error.localizedDescription)")
-                    await self.showErrorAsync(title: "启动联机中心失败", body: error.localizedDescription)
+                    self.showError(title: "启动联机中心失败", body: error.localizedDescription)
                     await MainActor.run {
                         self.stopHost()
                     }
@@ -135,7 +135,7 @@ class MultiplayerViewModel: ObservableObject {
                 }
             } catch {
                 err("加入房间失败：\(error.localizedDescription)")
-                await self.showErrorAsync(title: "加入房间失败", body: error.localizedDescription)
+                self.showError(title: "加入房间失败", body: error.localizedDescription)
                 await self.leave()
             }
         }
@@ -164,15 +164,8 @@ class MultiplayerViewModel: ObservableObject {
         return server?.roomCode
     }
     
-    @MainActor
     private func showError(title: String, body: String) {
-        Task {
-            await showErrorAsync(title: title, body: body)
-        }
-    }
-    
-    private func showErrorAsync(title: String, body: String) async {
-        _ = await MessageBoxManager.shared.showTextAsync(
+        MessageBoxManager.shared.showText(
             title: title,
             content: body + "\n若要反馈此问题，请向对方发送完整日志，而不是发送关于此页面的图片。",
             level: .error
@@ -206,13 +199,13 @@ class MultiplayerViewModel: ObservableObject {
     private func handleHeartbeatFailure(_ error: Swift.Error) async {
         switch error {
         case RoomError.roomClosed:
-            _ = await MessageBoxManager.shared.showTextAsync(
+            MessageBoxManager.shared.showText(
                 title: "房间已被关闭",
                 content: "房间连接中断，可能是由于房间被关闭或网络不稳定。"
             )
         default:
             log("发送心跳包失败：\(error.localizedDescription)")
-            await showError(title: "发生未知错误", body: "同步数据失败：\(error.localizedDescription)")
+            showError(title: "发生未知错误", body: "同步数据失败：\(error.localizedDescription)")
         }
         await leave()
     }
@@ -244,11 +237,11 @@ class MultiplayerViewModel: ObservableObject {
             }
             Task {
                 await self.stopHost()
-                _ = await MessageBoxManager.shared.showTextAsync(
-                    title: "房间被强制关闭",
-                    content: "房间被管理员强制关闭。\n原因：\(parts[1])"
-                )
             }
+            MessageBoxManager.shared.showText(
+                title: "房间被强制关闭",
+                content: "房间被管理员强制关闭。\n原因：\(parts[1])"
+            )
             return .init(status: 0, data: Data())
         }
     }

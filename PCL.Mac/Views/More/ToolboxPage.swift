@@ -17,28 +17,24 @@ struct ToolboxPage: View {
                 HStack {
                     MyButton("今日人品") {
                         let lucky: Int = viewModel.todayLucky
-                        Task {
-                            _ = await MessageBoxManager.shared.showTextAsync(
-                                title: "今日人品 - \(viewModel.todayDate)",
-                                content: "你今天的人品值是：\(viewModel.formatLucky(lucky))",
-                                level: lucky <= 30 ? .error : .info
-                            )
-                        }
+                        MessageBoxManager.shared.showText(
+                            title: "今日人品 - \(viewModel.todayDate)",
+                            content: "你今天的人品值是：\(viewModel.formatLucky(lucky))",
+                            level: lucky <= 30 ? .error : .info
+                        )
                     }
                     .frame(width: 100)
                     
                     MyButton("千万别点", type: .red) {
-                        Task {
-                            _ = await MessageBoxManager.shared.showTextAsync(
-                                title: "警告",
-                                content: "PCL.Mac 作者不会受理由于点击千万别点造成的任何 Bug。\n这是最后的警告，是否继续操作？",
-                                level: .error,
-                                .init(id: 0, label: "确定", type: .red),
-                                .init(id: 1, label: "确定", type: .normal),
-                                .init(id: 2, label: "确定", type: .normal)
-                            )
-                            viewModel.executeEasterEgg()
-                        }
+                        MessageBoxManager.shared.showText(
+                            title: "警告",
+                            content: "PCL.Mac 作者不会受理由于点击千万别点造成的任何 Bug。\n这是最后的警告，是否继续操作？",
+                            level: .error,
+                            .init(id: 0, label: "确定", type: .red),
+                            .init(id: 1, label: "确定", type: .normal),
+                            .init(id: 2, label: "确定", type: .normal)
+                        )
+                        viewModel.executeEasterEgg()
                     }
                     .frame(width: 100)
                     Spacer()

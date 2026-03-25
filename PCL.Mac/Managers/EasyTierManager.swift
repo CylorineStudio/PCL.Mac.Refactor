@@ -84,18 +84,18 @@ class EasyTierManager {
     
     /// 如果没有安装 EasyTier，提示用户安装。
     /// - Returns: 是否未安装 EasyTier。
-    public func hintInstall() async -> Bool {
+    public func hintInstall() -> Bool {
         if isInstalled() { return false }
         log("用户未安装 EasyTier")
-        if await MessageBoxManager.shared.showTextAsync(
+        MessageBoxManager.shared.showText(
             title: "错误",
             content: "你需要安装 EasyTier 才能使用这个功能！",
             level: .error,
             .yes(label: "安装", type: .highlight),
             .no()
-        ) == 1 {
-            let task: MyTask = makeInstallTask()
-            await MainActor.run {
+        ) { result in
+            if result == 1 {
+                let task: MyTask = self.makeInstallTask()
                 TaskManager.shared.execute(task: task)
                 AppRouter.shared.append(.tasks)
             }

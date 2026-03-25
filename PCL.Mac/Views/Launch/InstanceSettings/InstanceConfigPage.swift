@@ -70,25 +70,24 @@ struct InstanceConfigPage: View {
                 HStack(spacing: 30) {
                     MyButton("切换 Java") {
                         let runtimes: [JavaRuntime] = viewModel.javaList()
-                        Task {
-                            if let index: Int = await MessageBoxManager.shared.showListAsync(
-                                title: "切换 Java",
-                                items: runtimes.map { .init(name: $0.description, description: $0.executableURL.path) }
-                            ) {
-                                let runtime: JavaRuntime = runtimes[index]
-                                do {
-                                    try viewModel.switchJava(to: runtime)
-                                } catch let error as InstanceConfigViewModel.Error {
-                                    switch error {
-                                    case .invalidJavaVersion(let min):
-                                        _ = await MessageBoxManager.shared.showTextAsync(
-                                            title: "Java 版本不满足要求",
-                                            content: "这个实例需要 Java \(min) 才能启动，但你选择的是 Java \(runtime.version)！",
-                                            level: .error
-                                        )
-                                    }
+                        MessageBoxManager.shared.showList(
+                            title: "切换 Java",
+                            items: runtimes.map { .init(name: $0.description, description: $0.executableURL.path) }
+                        ) { index in
+                            guard let index else { return }
+                            let runtime: JavaRuntime = runtimes[index]
+                            do {
+                                try viewModel.switchJava(to: runtime)
+                            } catch let error as InstanceConfigViewModel.Error {
+                                switch error {
+                                case .invalidJavaVersion(let min):
+                                    MessageBoxManager.shared.showText(
+                                        title: "Java 版本不满足要求",
+                                        content: "这个实例需要 Java \(min) 才能启动，但你选择的是 Java \(runtime.version)！",
+                                        level: .error
+                                    )
                                 }
-                            }
+                            } catch {}
                         }
                     }
                     .frame(minWidth: 150)

@@ -15,7 +15,7 @@ class MessageBoxManager: ObservableObject {
     @Published public private(set) var currentMessageBox: MessageBoxModel?
     private let defaultButton: MessageBoxModel.Button = .yes()
     private let semaphore: AsyncSemaphore = .init(value: 1)
-    private var callback: ((MessageBoxResult) -> Void)?
+    private var callback:(@MainActor (MessageBoxResult) -> Void)?
     /// 在弹出下一个弹窗时，是否需要等待。
     private var shouldWait: Bool = false
     /// 清除等待状态的 `DispatchWorkItem`。
@@ -136,7 +136,7 @@ class MessageBoxManager: ObservableObject {
         content: MessageBoxModel.Content,
         level: MessageBoxModel.Level,
         buttons: [MessageBoxModel.Button],
-        callback: ((MessageBoxResult) -> Void)?
+        callback: (@MainActor (MessageBoxResult) -> Void)?
     ) {
         log("正在显示模态框 \(title)")
         let model: MessageBoxModel = .init(
@@ -174,7 +174,7 @@ extension MessageBoxManager {
         content: String,
         level: MessageBoxModel.Level = .info,
         _ buttons: MessageBoxModel.Button...,
-        callback: ((Int) -> Void)? = nil
+        callback: (@MainActor (Int) -> Void)? = nil
     ) {
         let buttons: [MessageBoxModel.Button] = buttons.isEmpty ? [defaultButton] : buttons
         show(title: title, content: .text(text: content), level: level, buttons: buttons) { result in
@@ -195,7 +195,7 @@ extension MessageBoxManager {
     public func showList(
         title: String,
         items: [ListItem],
-        callback: ((Int?) -> Void)? = nil
+        callback: (@MainActor (Int?) -> Void)? = nil
     ) {
         show(
             title: title,
@@ -225,7 +225,7 @@ extension MessageBoxManager {
         title: String,
         initialContent: String? = nil,
         placeholder: String? = nil,
-        callback: ((String?) -> Void)? = nil
+        callback: (@MainActor (String?) -> Void)? = nil
     ) {
         show(
             title: title,
@@ -250,7 +250,7 @@ extension MessageBoxManager {
         content: MessageBoxModel.Content,
         level: MessageBoxModel.Level,
         buttons: [MessageBoxModel.Button],
-        callback: ((MessageBoxResult) -> Void)?
+        callback: (@MainActor (MessageBoxResult) -> Void)?
     ) {
         Task {
             await semaphore.wait()

@@ -83,7 +83,7 @@ struct MultiplayerPage: View {
                 MyListItem(.init(image: "MultiplayerPageIcon", imageSize: 28, name: "创建房间", description: "使用局域网世界创建房间，并邀请好友加入！"))
                     .onTapGesture {
                         Task {
-                            if await EasyTierManager.shared.hintInstall() {
+                            if EasyTierManager.shared.hintInstall() {
                                 return
                             }
                             try await checkDisclaimer()
@@ -106,7 +106,7 @@ struct MultiplayerPage: View {
                 MyListItem(.init(image: "IconAdd", imageSize: 28, name: "加入房间", description: "通过房主分享的房间码，加入游戏世界！"))
                     .onTapGesture {
                         Task {
-                            if await EasyTierManager.shared.hintInstall() {
+                            if EasyTierManager.shared.hintInstall() {
                                 return
                             }
                             try await checkDisclaimer()
@@ -203,7 +203,7 @@ struct MultiplayerPage: View {
     
     private func checkDisclaimer() async throws {
         if await LocaleUtils.isInChinaMainland(strict: false) == false {
-            _ = await MessageBoxManager.shared.showTextAsync(
+            MessageBoxManager.shared.showText(
                 title: "不支持的地区",
                 content: "PCL.Mac 目前只支持中国大陆地区。\n如果您在中国大陆，并使用了 VPN 等工具，请先关闭它们，然后再次尝试！",
                 level: .error

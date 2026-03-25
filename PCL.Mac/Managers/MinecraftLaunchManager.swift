@@ -87,34 +87,32 @@ class MinecraftLaunchManager: ObservableObject {
     }
     
     private func onGameCrash(instance: MinecraftInstance, options: LaunchOptions, logURL: URL) {
-        Task {
-            hint("检测到 Minecraft 发生崩溃，崩溃分析已开始……", type: .critical)
-            if await MessageBoxManager.shared.showTextAsync(
-                title: "Minecraft 发生崩溃",
-                content: "你的游戏发生了一些问题，无法继续运行。\n很抱歉，PCL.Mac 暂时没有崩溃分析功能……\n\n若要寻求帮助，请点击“导出崩溃报告”并将导出的文件发给他人，而不是发送关于此页面的图片！！！",
-                level: .error,
-                .no(label: "返回"),
-                .yes(label: "导出崩溃报告")
-            ) == 1 {
+        hint("检测到 Minecraft 发生崩溃，崩溃分析已开始……", type: .critical)
+        MessageBoxManager.shared.showText(
+            title: "Minecraft 发生崩溃",
+            content: "你的游戏发生了一些问题，无法继续运行。\n很抱歉，PCL.Mac 暂时没有崩溃分析功能……\n\n若要寻求帮助，请点击“导出崩溃报告”并将导出的文件发给他人，而不是发送关于此页面的图片！！！",
+            level: .error,
+            .no(label: "返回"),
+            .yes(label: "导出崩溃报告")
+        ) { result in
+            if result == 1 {
                 let dateFormatter: DateFormatter = .init()
                 dateFormatter.dateFormat = "yyyy_MM_dd_HH_mm_SS"
                 let fileName: String = "崩溃报告-\(dateFormatter.string(from: .now)).zip"
-                let url: URL? = await Task { @MainActor in
-                    let panel = NSSavePanel()
-                    panel.title = "选择报告位置"
-                    panel.allowedContentTypes = [.zip]
-                    panel.canCreateDirectories = true
-                    panel.nameFieldStringValue = fileName
-                    await panel.beginSheetModal(for: NSApplication.shared.windows.first!)
-                    return panel.url
-                }.value
-                guard let url else { return }
-                do {
-                    try exportCrashReport(for: instance, to: url, with: fileName, options: options, logURL: logURL)
-                    log("导出崩溃报告成功")
-                } catch {
-                    err("导出崩溃报告失败：\(error.localizedDescription)")
-                    hint("导出崩溃报告失败：\(error.localizedDescription)", type: .critical)
+                let panel = NSSavePanel()
+                panel.title = "选择报告位置"
+                panel.allowedContentTypes = [.zip]
+                panel.canCreateDirectories = true
+                panel.nameFieldStringValue = fileName
+                panel.beginSheetModal(for: NSApplication.shared.windows.first!) { result in
+                    guard let url: URL = panel.url else { return }
+                    do {
+                        try self.exportCrashReport(for: instance, to: url, with: fileName, options: options, logURL: logURL)
+                        log("导出崩溃报告成功")
+                    } catch {
+                        err("导出崩溃报告失败：\(error.localizedDescription)")
+                        hint("导出崩溃报告失败：\(error.localizedDescription)", type: .critical)
+                    }
                 }
             }
         }
