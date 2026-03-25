@@ -10,31 +10,38 @@ import Core
 
 struct TasksPage: View {
     @ObservedObject private var taskManager: TaskManager = .shared
+    @StateObject private var loadingVM: MyLoadingViewModel = .init(text: "没有正在执行的任务")
     
     var body: some View {
         CardContainer {
-            MyCard("", titled: false) {
-                HStack {
-                    MyButton("添加一个任务") {
-                        let task: MyTask<EmptyModel> = .init(
-                            name: "一个任务", model: EmptyModel(),
-                            .init(0, "子任务1（等待 1s）") { _, _ in try await Task.sleep(seconds: 1) },
-                            .init(0, "子任务2（与 子任务1 同时执行，等待 2s）") { task, _ in
-                                try await Task.sleep(seconds: 1)
-                                await task.setProgressAsync(0.5)
-                                try await Task.sleep(seconds: 1)
-                            },
-                            .init(1, "子任务3（等待 1s）") { _, _ in try await Task.sleep(seconds: 1) }
-                        )
-                        taskManager.execute(task: task)
+            if Metadata.debugMode {
+                MyCard("", titled: false) {
+                    HStack {
+                        MyButton("添加一个任务") {
+                            let task: MyTask<EmptyModel> = .init(
+                                name: "一个任务", model: EmptyModel(),
+                                .init(0, "子任务1（等待 1s）") { _, _ in try await Task.sleep(seconds: 1) },
+                                .init(0, "子任务2（与 子任务1 同时执行，等待 2s）") { task, _ in
+                                    try await Task.sleep(seconds: 1)
+                                    await task.setProgressAsync(0.5)
+                                    try await Task.sleep(seconds: 1)
+                                },
+                                .init(1, "子任务3（等待 1s）") { _, _ in try await Task.sleep(seconds: 1) }
+                            )
+                            taskManager.execute(task: task)
+                        }
+                        .frame(width: 100)
+                        Spacer()
                     }
-                    .frame(width: 100)
-                    Spacer()
+                    .frame(height: 40)
                 }
-                .frame(height: 40)
             }
-            ForEach(taskManager.tasks.filter(\.display)) { task in
-                TaskCard(task)
+            if taskManager.tasks.isEmpty {
+                MyLoading(viewModel: loadingVM)
+            } else {
+                ForEach(taskManager.tasks.filter(\.display)) { task in
+                    TaskCard(task)
+                }
             }
         }
     }
