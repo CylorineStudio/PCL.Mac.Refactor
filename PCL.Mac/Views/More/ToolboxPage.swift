@@ -18,7 +18,7 @@ struct ToolboxPage: View {
                     MyButton("今日人品") {
                         let lucky: Int = viewModel.todayLucky
                         Task {
-                            _ = await MessageBoxManager.shared.showText(
+                            _ = await MessageBoxManager.shared.showTextAsync(
                                 title: "今日人品 - \(viewModel.todayDate)",
                                 content: "你今天的人品值是：\(viewModel.formatLucky(lucky))",
                                 level: lucky <= 30 ? .error : .info
@@ -29,7 +29,7 @@ struct ToolboxPage: View {
                     
                     MyButton("千万别点", type: .red) {
                         Task {
-                            _ = await MessageBoxManager.shared.showText(
+                            _ = await MessageBoxManager.shared.showTextAsync(
                                 title: "警告",
                                 content: "PCL.Mac 作者不会受理由于点击千万别点造成的任何 Bug。\n这是最后的警告，是否继续操作？",
                                 level: .error,

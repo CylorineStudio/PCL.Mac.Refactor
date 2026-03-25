@@ -37,7 +37,7 @@ class AccountViewModel: ObservableObject {
     public func requestAddAccount() {
         Task {
             log("开始请求添加账号")
-            guard let idx: Int = await MessageBoxManager.shared.showList(
+            guard let idx: Int = await MessageBoxManager.shared.showListAsync(
                 title: "选择账号类型",
                 items: [
                     .init(image: "IconMicrosoftAccount", imageSize: 32, name: "正版账号", description: nil),
@@ -164,20 +164,20 @@ class AccountViewModel: ObservableObject {
                             "https://www.minecraft.net/msaprofile/mygames/editprofile"
                         )
                     default:
-                        _ = await MessageBoxManager.shared.showText(
+                        _ = await MessageBoxManager.shared.showTextAsync(
                             title: "Xbox 验证失败",
                             content: "发生未知错误。错误代码：\(code)",
                             level: .error
                         )
                     }
                 case .apiError(let description):
-                    _ = await MessageBoxManager.shared.showText(
+                    _ = await MessageBoxManager.shared.showTextAsync(
                         title: "添加正版账号失败",
                         content: "响应体：\(description)",
                         level: .error
                     )
                 case .internalError:
-                    _ = await MessageBoxManager.shared.showText(
+                    _ = await MessageBoxManager.shared.showTextAsync(
                         title: "添加正版账号失败",
                         content: "发生内部错误。\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。",
                         level: .error
@@ -190,7 +190,7 @@ class AccountViewModel: ObservableObject {
                     )
                 }
             } catch {
-                _ = await MessageBoxManager.shared.showText(
+                _ = await MessageBoxManager.shared.showTextAsync(
                     title: "添加正版账号失败",
                     content: "\(error.localizedDescription)\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。"
                 )
@@ -198,7 +198,7 @@ class AccountViewModel: ObservableObject {
             }
         }
         
-        if await MessageBoxManager.shared.showText(
+        if await MessageBoxManager.shared.showTextAsync(
             title: "添加正版账号",
             content: "请打开 \(code.verificationURL)，然后输入 \(code.code)，随后根据提示完成后续授权步骤。\n点击下方按钮可以一键复制并跳转！",
             .init(id: 0, label: "复制并跳转", type: .highlight) {
@@ -214,7 +214,7 @@ class AccountViewModel: ObservableObject {
     }
     
     private func showErrorMessageBox(_ title: String, _ content: String, _ link: String) async {
-        if await MessageBoxManager.shared.showText(
+        if await MessageBoxManager.shared.showTextAsync(
             title: title,
             content: content,
             level: .error,
@@ -226,7 +226,7 @@ class AccountViewModel: ObservableObject {
     }
     
     private func requestAddOfflineAccount() async {
-        guard let playerName: String = await MessageBoxManager.shared.showInput(title: "玩家名") else {
+        guard let playerName: String = await MessageBoxManager.shared.showInputAsync(title: "玩家名") else {
             log("用户取消了添加")
             return
         }

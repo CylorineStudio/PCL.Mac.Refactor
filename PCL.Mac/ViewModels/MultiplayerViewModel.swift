@@ -67,7 +67,7 @@ class MultiplayerViewModel: ObservableObject {
                             guard await Scaffolding.checkMinecraftServer(on: serverPort, timeout: 5) else {
                                 log("局域网世界验活失败")
                                 await self.stopHost()
-                                _ = await MessageBoxManager.shared.showText(title: "房间已关闭", content: "局域网世界已关闭，房间已自动关闭。")
+                                _ = await MessageBoxManager.shared.showTextAsync(title: "房间已关闭", content: "局域网世界已关闭，房间已自动关闭。")
                                 break
                             }
                         }
@@ -172,7 +172,7 @@ class MultiplayerViewModel: ObservableObject {
     }
     
     private func showErrorAsync(title: String, body: String) async {
-        _ = await MessageBoxManager.shared.showText(
+        _ = await MessageBoxManager.shared.showTextAsync(
             title: title,
             content: body + "\n若要反馈此问题，请向对方发送完整日志，而不是发送关于此页面的图片。",
             level: .error
@@ -206,7 +206,7 @@ class MultiplayerViewModel: ObservableObject {
     private func handleHeartbeatFailure(_ error: Swift.Error) async {
         switch error {
         case RoomError.roomClosed:
-            _ = await MessageBoxManager.shared.showText(
+            _ = await MessageBoxManager.shared.showTextAsync(
                 title: "房间已被关闭",
                 content: "房间连接中断，可能是由于房间被关闭或网络不稳定。"
             )
@@ -244,7 +244,7 @@ class MultiplayerViewModel: ObservableObject {
             }
             Task {
                 await self.stopHost()
-                _ = await MessageBoxManager.shared.showText(
+                _ = await MessageBoxManager.shared.showTextAsync(
                     title: "房间被强制关闭",
                     content: "房间被管理员强制关闭。\n原因：\(parts[1])"
                 )

@@ -87,7 +87,7 @@ class EasyTierManager {
     public func hintInstall() async -> Bool {
         if isInstalled() { return false }
         log("用户未安装 EasyTier")
-        if await MessageBoxManager.shared.showText(
+        if await MessageBoxManager.shared.showTextAsync(
             title: "错误",
             content: "你需要安装 EasyTier 才能使用这个功能！",
             level: .error,

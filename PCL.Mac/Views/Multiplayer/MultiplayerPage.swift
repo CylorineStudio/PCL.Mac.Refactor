@@ -87,13 +87,13 @@ struct MultiplayerPage: View {
                                 return
                             }
                             try await checkDisclaimer()
-                            guard await MessageBoxManager.shared.showText(
+                            guard await MessageBoxManager.shared.showTextAsync(
                                 title: "开启房间",
                                 content: "请按照以下步骤操作：\n   1. 进入世界，按下 ESC\n    2. 点击 “对局域网开放” > “创建局域网世界”\n    3. 回到启动器，点击 “确定” 并输入聊天栏中的端口号",
                                 .init(id: 0, label: "取消", type: .normal),
                                 .init(id: 1, label: "确定", type: .highlight)
                             ) == 1 else { return }
-                            guard let rawPort: String = await MessageBoxManager.shared.showInput(title: "输入端口号") else {
+                            guard let rawPort: String = await MessageBoxManager.shared.showInputAsync(title: "输入端口号") else {
                                 return
                             }
                             guard let port: UInt16 = .init(rawPort), await Scaffolding.checkMinecraftServer(on: port, timeout: 1) else {
@@ -112,7 +112,7 @@ struct MultiplayerPage: View {
                             try await checkDisclaimer()
                             if let type: AccountType = AccountViewModel().currentAccount?.type,
                                type == .offline {
-                                guard await MessageBoxManager.shared.showText(
+                                guard await MessageBoxManager.shared.showTextAsync(
                                     title: "警告",
                                     content: "你正在使用离线账号，可能会导致无法加入游戏！\n如果房主安装了 LAN Server Properties 等模组，可以忽略此警告。\n如果你拥有正版账号，请返回主页面并切换为正版账号。\n\n如果出现了“无效会话”等错误，请不要反馈给他人！",
                                     level: .error,
@@ -121,7 +121,7 @@ struct MultiplayerPage: View {
                                 ) == 1 else { return }
                             }
                             
-                            if let roomCode: String = await MessageBoxManager.shared.showInput(title: "输入房间码", placeholder: "U/XXXX-XXXX-XXXX-XXXX") {
+                            if let roomCode: String = await MessageBoxManager.shared.showInputAsync(title: "输入房间码", placeholder: "U/XXXX-XXXX-XXXX-XXXX") {
                                 if RoomCode.isValid(code: roomCode) {
                                     viewModel.join(roomCode: roomCode)
                                 } else {
@@ -167,7 +167,7 @@ struct MultiplayerPage: View {
                                 ActionView("IconExit", "关闭房间", color: .red) {
                                     Task {
                                         if room.members.count > 1 {
-                                            if await MessageBoxManager.shared.showText(
+                                            if await MessageBoxManager.shared.showTextAsync(
                                                 title: "警告",
                                                 content: "你确定要关闭房间吗？\n这会让除了你以外的所有玩家退出游戏！",
                                                 level: .error,
@@ -203,7 +203,7 @@ struct MultiplayerPage: View {
     
     private func checkDisclaimer() async throws {
         if await LocaleUtils.isInChinaMainland(strict: false) == false {
-            _ = await MessageBoxManager.shared.showText(
+            _ = await MessageBoxManager.shared.showTextAsync(
                 title: "不支持的地区",
                 content: "PCL.Mac 目前只支持中国大陆地区。\n如果您在中国大陆，并使用了 VPN 等工具，请先关闭它们，然后再次尝试！",
                 level: .error
@@ -211,7 +211,7 @@ struct MultiplayerPage: View {
             throw SimpleError("不支持的地区")
         }
         if LauncherConfig.shared.multiplayerDisclaimerAgreed { return }
-        if await MessageBoxManager.shared.showText(
+        if await MessageBoxManager.shared.showTextAsync(
             title: "免责声明",
             content: "在多人联机过程中，您须严格遵守所在国家和地区的相关法律法规。因违法使用本功能导致的后果将由用户自行承担。\n\n点击“同意”即表示您已阅读并同意上述全部内容。",
             level: .info,

@@ -56,7 +56,7 @@ struct ResourceInstallPage: View {
             log("当前实例不满足该版本要求：\(error.localizedDescription)")
             switch error {
             case .versionUnsupported:
-                if await MessageBoxManager.shared.showText(
+                if await MessageBoxManager.shared.showTextAsync(
                     title: "当前实例不符合要求",
                     content: "\(error.localizedDescription)\n你可以选择继续安装，但游戏可能会发生崩溃或无法正常游玩。\n是否继续安装？",
                     level: .error,
@@ -66,7 +66,7 @@ struct ResourceInstallPage: View {
                     return
                 }
             default:
-                _ = await MessageBoxManager.shared.showText(
+                _ = await MessageBoxManager.shared.showTextAsync(
                     title: "当前实例不符合要求",
                     content: error.localizedDescription,
                     level: .error
@@ -75,7 +75,7 @@ struct ResourceInstallPage: View {
             }
         }
         
-        if await MessageBoxManager.shared.showText(
+        if await MessageBoxManager.shared.showTextAsync(
             title: "确认",
             content: "确定要安装 \(viewModel.project.title) \(version.version) 吗？",
             level: .info,
@@ -96,7 +96,7 @@ struct ResourceInstallPage: View {
             return
         }
         
-        guard await MessageBoxManager.shared.showText(
+        guard await MessageBoxManager.shared.showTextAsync(
             title: "确认",
             content: "确定要安装整合包 \(viewModel.project.title) \(version.version) 吗？",
             level: .info,
@@ -133,7 +133,7 @@ struct ResourceInstallPage: View {
             return
         }
         
-        guard var name: String = await MessageBoxManager.shared.showInput(
+        guard var name: String = await MessageBoxManager.shared.showInputAsync(
             title: "安装整合包 - 输入实例名",
             initialContent: index.name
         ) else { return }

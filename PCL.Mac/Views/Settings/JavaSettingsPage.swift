@@ -30,7 +30,7 @@ struct JavaSettingsPage: View {
                         Task {
                             do {
                                 let downloads: [MojangJavaList.JavaDownload] = try await viewModel.javaDownloads()
-                                if let index: Int = await MessageBoxManager.shared.showList(
+                                if let index: Int = await MessageBoxManager.shared.showListAsync(
                                     title: "选择 Java 版本",
                                     items: downloads.map(viewModel.listItem(forJavaDownload:))
                                 ) {

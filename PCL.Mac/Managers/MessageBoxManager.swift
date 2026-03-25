@@ -15,76 +15,77 @@ class MessageBoxManager: ObservableObject {
     @Published public private(set) var currentMessageBox: MessageBoxModel?
     private let defaultButton: MessageBoxModel.Button = .init(id: 0, label: "确定", type: .normal)
     private let semaphore: AsyncSemaphore = .init(value: 1)
-    private var continuation: CheckedContinuation<MessageBoxResult, Never>?
+    private var callback: ((MessageBoxResult) -> Void)?
     /// 在弹出下一个弹窗时，是否需要等待。
     private var shouldWait: Bool = false
     /// 清除等待状态的 `DispatchWorkItem`。
     private var clearWaitStateWorkItem: DispatchWorkItem?
     
-    /// 弹出一个带有纯文本内容的模态框。
+    /// 弹出一个带有纯文本内容的模态框。（Swift Concurrency）
     /// - Parameters:
     ///   - title: 模态框标题。
     ///   - content: 文本内容。
     ///   - level: 模态框等级，控制了模态框的颜色。
     ///   - buttons: 按钮列表。
     /// - Returns: 被点击的按钮的 `id`。
-    public func showText(title: String, content: String, level: MessageBoxModel.Level = .info, _ buttons: MessageBoxModel.Button...) async -> Int {
+    public func showTextAsync(title: String, content: String, level: MessageBoxModel.Level = .info, _ buttons: MessageBoxModel.Button...) async -> Int {
         let buttons: [MessageBoxModel.Button] = buttons.isEmpty ? [defaultButton] : buttons
-        let result: MessageBoxResult = await show(title: title, content: .text(text: content), level: level, buttons: buttons)
-        if case .button(let id) = result {
-            return id
+        let result: MessageBoxResult = await showAsync(title: title, content: .text(text: content), level: level, buttons: buttons)
+        guard case .button(let id) = result else {
+            warn("期望 result 类型（button）与实际类型（\(result)）不匹配")
+            return buttons[0].id
         }
-        warn("期望获得 button(id:)，但实际为 \(result)")
-        return buttons[0].id
+        return id
     }
     
-    /// 弹出一个带有列表的模态框。
+    /// 弹出一个带有列表的模态框。（Swift Concurrency）
     /// - Parameters:
     ///   - title: 模态框标题。
     ///   - items: 列表项。
     /// - Returns: 选择的列表项的索引。如果用户点击了取消，或发生内部错误，返回 `nil`。
-    public func showList(title: String, items: [ListItem]) async -> Int? {
-        let result: MessageBoxResult = await show(
+    public func showListAsync(title: String, items: [ListItem]) async -> Int? {
+        let result: MessageBoxResult = await showAsync(
             title: title,
             content: .list(items: items),
             level: .info,
             buttons: [.init(id: MessageBoxManager.cancelButtonID, label: "取消", type: .normal), .init(id: MessageBoxManager.okButtonID, label: "确定", type: .highlight)]
         )
-        if case .listSelection(let index) = result {
-            return index
+        guard case .listSelection(let index) = result else {
+            warn("期望 result 类型（listSelection）与实际类型（\(result)）不匹配")
+            return nil
         }
-        warn("期望获得 listSelection(index:)，但实际为 \(result)")
-        return nil
+        return index
     }
     
-    /// 弹出一个带有输入框的模态框。
+    /// 弹出一个带有输入框的模态框。（Swift Concurrency）
     /// - Parameters:
     ///   - title: 模态框标题。
     ///   - initialContent: 输入框的起始文本。
     ///   - placeholder: 占位符。
     /// - Returns: 输入的文本。如果用户点击了取消，或发生内部错误，返回 `nil`。
-    public func showInput(title: String, initialContent: String? = nil, placeholder: String? = nil) async -> String? {
-        let result: MessageBoxResult = await show(
+    public func showInputAsync(title: String, initialContent: String? = nil, placeholder: String? = nil) async -> String? {
+        let result: MessageBoxResult = await showAsync(
             title: title,
             content: .input(initialContent: initialContent, placeholder: placeholder),
             level: .info,
             buttons: [.init(id: MessageBoxManager.cancelButtonID, label: "取消", type: .normal), .init(id: MessageBoxManager.okButtonID, label: "确定", type: .highlight)]
         )
-        if case .input(let text) = result {
-            return text
+        guard case .input(let text) = result else {
+            warn("期望 result 类型（input）与实际类型（\(result)）不匹配")
+            return nil
         }
-        warn("期望获得 input(text:)，但实际为 \(result)")
-        return nil
+        return text
     }
     
     /// 关闭当前模态框。
     /// - Parameter result: 附带的结果。
+    @MainActor
     public func complete(with result: MessageBoxResult) {
-        DispatchQueue.main.async {
-            self.continuation?.resume(returning: result)
-            self.continuation = nil
-            self.currentMessageBox = nil
-        }
+        callback?(result)
+        callback = nil
+        currentMessageBox = nil
+        Task { await semaphore.signal() }
+        
         let workItem: DispatchWorkItem = .init {
             self.shouldWait = false
         }
@@ -92,6 +93,7 @@ class MessageBoxManager: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: workItem)
     }
     
+    @MainActor
     public func onButtonTap(_ button: MessageBoxModel.Button) {
         log("按钮 \(button.label) 被点击")
         if let onClick = button.onClick {
@@ -101,15 +103,17 @@ class MessageBoxManager: ObservableObject {
         }
     }
     
+    @MainActor
     public func onListSelect(index: Int?) {
         complete(with: .listSelection(index: index))
     }
     
+    @MainActor
     public func onInputFinished(text: String?) {
         complete(with: .input(text: text))
     }
     
-    private func show(
+    private func showAsync(
         title: String,
         content: MessageBoxModel.Content,
         level: MessageBoxModel.Level,
@@ -122,22 +126,29 @@ class MessageBoxManager: ObservableObject {
         } else {
             shouldWait = true
         }
+        return await withCheckedContinuation { continuation in
+            _show(title: title, content: content, level: level, buttons: buttons) { continuation.resume(returning: $0) }
+        }
+    }
+    
+    private func _show(
+        title: String,
+        content: MessageBoxModel.Content,
+        level: MessageBoxModel.Level,
+        buttons: [MessageBoxModel.Button],
+        callback: ((MessageBoxResult) -> Void)?
+    ) {
         log("正在显示模态框 \(title)")
-        defer { Task { await semaphore.signal() } }
-        
         let model: MessageBoxModel = .init(
             title: title,
             content: content,
             level: level,
             buttons: buttons
         )
-        await MainActor.run {
+        DispatchQueue.main.async {
             self.currentMessageBox = model
         }
-        
-        return await withCheckedContinuation { continuation in
-            self.continuation = continuation
-        }
+        self.callback = callback
     }
     
     public enum MessageBoxResult {
@@ -147,4 +158,109 @@ class MessageBoxManager: ObservableObject {
     }
     
     private init() {}
+}
+
+// MARK: - 传统回调版本
+extension MessageBoxManager {
+    /// 弹出一个带有纯文本内容的模态框。
+    /// - Parameters:
+    ///   - title: 模态框标题。
+    ///   - content: 文本内容。
+    ///   - level: 模态框等级，控制了模态框的颜色。
+    ///   - buttons: 按钮列表。
+    ///   - callback: 结果回调。
+    public func showText(
+        title: String,
+        content: String,
+        level: MessageBoxModel.Level = .info,
+        _ buttons: MessageBoxModel.Button...,
+        callback: ((Int) -> Void)? = nil
+    ) {
+        let buttons: [MessageBoxModel.Button] = buttons.isEmpty ? [defaultButton] : buttons
+        show(title: title, content: .text(text: content), level: level, buttons: buttons) { result in
+            guard case .button(let id) = result else {
+                warn("期望 result 类型（button）与实际类型（\(result)）不匹配")
+                callback?(buttons[0].id)
+                return
+            }
+            callback?(id)
+        }
+    }
+    
+    /// 弹出一个带有列表的模态框。
+    /// - Parameters:
+    ///   - title: 模态框标题。
+    ///   - items: 列表项。
+    ///   - callback: 结果回调。
+    public func showList(
+        title: String,
+        items: [ListItem],
+        callback: ((Int?) -> Void)? = nil
+    ) {
+        show(
+            title: title,
+            content: .list(items: items),
+            level: .info,
+            buttons: [
+                .init(id: MessageBoxManager.cancelButtonID, label: "取消", type: .normal),
+                .init(id: MessageBoxManager.okButtonID, label: "确定", type: .highlight)
+            ]
+        ) { result in
+            guard case .listSelection(let index) = result else {
+                warn("期望 result 类型（listSelection）与实际类型（\(result)）不匹配")
+                callback?(nil)
+                return
+            }
+            callback?(index)
+        }
+    }
+    
+    /// 弹出一个带有输入框的模态框。
+    /// - Parameters:
+    ///   - title: 模态框标题。
+    ///   - initialContent: 输入框的起始文本。
+    ///   - placeholder: 占位符。
+    ///   - callback: 结果回调。
+    public func showInput(
+        title: String,
+        initialContent: String? = nil,
+        placeholder: String? = nil,
+        callback: ((String?) -> Void)? = nil
+    ) {
+        show(
+            title: title,
+            content: .input(initialContent: initialContent, placeholder: placeholder),
+            level: .info,
+            buttons: [
+                .init(id: MessageBoxManager.cancelButtonID, label: "取消", type: .normal),
+                .init(id: MessageBoxManager.okButtonID, label: "确定", type: .highlight)
+            ]
+        ) { result in
+            guard case .input(let text) = result else {
+                warn("期望 result 类型（input）与实际类型（\(result)）不匹配")
+                callback?(nil)
+                return
+            }
+            callback?(text)
+        }
+    }
+    
+    private func show(
+        title: String,
+        content: MessageBoxModel.Content,
+        level: MessageBoxModel.Level,
+        buttons: [MessageBoxModel.Button],
+        callback: ((MessageBoxResult) -> Void)?
+    ) {
+        Task {
+            await semaphore.wait()
+            clearWaitStateWorkItem?.cancel()
+            if shouldWait {
+                try? await Task.sleep(seconds: 0.5)
+            } else {
+                shouldWait = true
+            }
+            _show(title: title, content: content, level: level, buttons: buttons, callback: callback)
+        }
+    }
 }

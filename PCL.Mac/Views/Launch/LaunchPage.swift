@@ -61,11 +61,11 @@ struct LaunchPage: View {
                     MyButton(".tasks") {
                         AppRouter.shared.append(.tasks)
                     }
-                    .frame(width: 80)
+                    .frame(width: 120)
                     
                     MyButton("弹窗") {
                         Task {
-                            _ = await MessageBoxManager.shared.showText(
+                            _ = await MessageBoxManager.shared.showTextAsync(
                                 title: "普通弹窗",
                                 content: "Hello, world!",
                                 .init(id: 0, label: "hint（点击这个按钮不会关闭弹窗！）", type: .normal) {
@@ -74,8 +74,8 @@ struct LaunchPage: View {
                                 .init(id: 1, label: "确认", type: .highlight),
                             )
                             
-                            let index: Int? = await MessageBoxManager.shared.showList(title: "列表选择", items: listItems)
-                            let text: String? = await MessageBoxManager.shared.showInput(title: "文本输入", initialContent: "111", placeholder: "请输入文本")
+                            let index: Int? = await MessageBoxManager.shared.showListAsync(title: "列表选择", items: listItems)
+                            let text: String? = await MessageBoxManager.shared.showInputAsync(title: "文本输入", initialContent: "111", placeholder: "请输入文本")
                             if let index {
                                 hint("你选择的是：\(listItems[index].name)", type: .finish)
                             }
@@ -84,36 +84,16 @@ struct LaunchPage: View {
                             }
                         }
                     }
-                    .frame(width: 80)
+                    .frame(width: 120)
                     
                     MyButton("错误弹窗", type: .red) {
-                        Task {
-                            _ = await MessageBoxManager.shared.showText(
-                                title: "Minecraft 发生崩溃",
-                                content: "你的游戏发生了一些问题，无法继续运行。\n很抱歉，PCL.Mac 暂时没有崩溃分析功能……\n\n若要寻求帮助，请点击“导出崩溃报告”并将导出的文件发给他人，而不是发送关于此页面的图片！！！",
-                                level: .error
-                            )
-                        }
+                        MessageBoxManager.shared.showText(
+                            title: "Minecraft 发生崩溃",
+                            content: "你的游戏发生了一些问题，无法继续运行。\n很抱歉，PCL.Mac 暂时没有崩溃分析功能……\n\n若要寻求帮助，请点击“导出崩溃报告”并将导出的文件发给他人，而不是发送关于此页面的图片！！！",
+                            level: .error
+                        )
                     }
-                    .frame(width: 80)
-                    
-                    MyButton("[临时] Java 安装弹窗") {
-                        Task {
-                            if await MessageBoxManager.shared.showText(
-                                title: "没有可用的 Java",
-                                content: "这个实例需要 Java 21 才能启动，但你的电脑上没有安装。\nPCL.Mac.Refactor 暂时没有 Java 安装功能，但是可以帮你打开下载网页。",
-                                level: .error,
-                                .init(id: 0, label: "取消", type: .normal),
-                                .init(id: 1, label: "打开下载网页", type: .normal)
-                            ) == 1 {
-                                let version: String = "java-21-lts"
-                                let arch: String = Architecture.systemArchitecture() == .arm64 ? "arm-64-bit" : "x86-64-bit"
-                                let url: String = "https://www.azul.com/downloads/?version=\(version)&os=macos&architecture=\(arch)&package=jdk#zulu"
-                                NSWorkspace.shared.open(URL(string: url)!)
-                            }
-                        }
-                    }
-                    .frame(width: 160)
+                    .frame(width: 120)
                 }
                 .frame(height: 40)
             }

@@ -43,7 +43,7 @@ public enum MinecraftLaunchTask {
             runtime = javaRuntime
         } else {
             if let javaRuntime: JavaRuntime = model.instance.searchJava() {
-                if await MessageBoxManager.shared.showText(
+                if await MessageBoxManager.shared.showTextAsync(
                     title: "未设置 Java",
                     content: "你还没有设置这个实例使用的 Java！\nPCL.Mac 找到了一个可用的 Java：\(javaRuntime.version)，是否切换并继续启动？",
                     level: .info,
@@ -56,7 +56,7 @@ public enum MinecraftLaunchTask {
                     try task.cancel()
                 }
             } else {
-                if await MessageBoxManager.shared.showText(
+                if await MessageBoxManager.shared.showTextAsync(
                     title: "没有可用的 Java",
                     content: "这个实例需要 Java \(model.instance.manifest.javaVersion.majorVersion) 才能启动，但你的电脑上没有安装。\n点击下方按钮可以跳转到安装页面！",
                     level: .error,
@@ -84,7 +84,7 @@ public enum MinecraftLaunchTask {
             } catch is CancellationError {
             } catch {
                 err("刷新 accessToken 失败")
-                if await MessageBoxManager.shared.showText(
+                if await MessageBoxManager.shared.showTextAsync(
                     title: "刷新访问令牌失败",
                     content: "在刷新访问令牌时发生错误：\(error.localizedDescription)\n\n如果继续启动，可能会导致无法加入部分需要正版验证的服务器！\n是否继续启动？\n\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。",
                     level: .error,
@@ -106,7 +106,7 @@ public enum MinecraftLaunchTask {
         for entry in entries {
             switch entry {
             case .javaVersionTooLow(let min):
-                _ = await MessageBoxManager.shared.showText(
+                _ = await MessageBoxManager.shared.showTextAsync(
                     title: "Java 版本过低",
                     content: "你正在使用 Java \(model.options.javaRuntime.majorVersion) 启动游戏，但这个版本需要 \(min)！",
                     level: .error
@@ -122,7 +122,7 @@ public enum MinecraftLaunchTask {
                     if [3, 8, 15, 30, 50, 70, 90, 110, 130, 180, 220, 280, 330, 380, 450, 550, 660, 750, 880, 950, 1100, 1300, 1500, 1700, 1900]
                         .contains(LauncherConfig.shared.launchCount) {
                         Task {
-                            if await MessageBoxManager.shared.showText(
+                            if await MessageBoxManager.shared.showTextAsync(
                                 title: "考虑一下正版？",
                                 content: "你已经启动了 \(LauncherConfig.shared.launchCount) 次 Minecraft 啦！\n如果觉得 Minecraft 还不错，可以购买正版支持一下，毕竟开发游戏也真的很不容易……不要一直白嫖啦。\n\n在登录一次正版账号后，就不会再出现这个提示了！",
                                 level: .info,
@@ -134,7 +134,7 @@ public enum MinecraftLaunchTask {
                         }
                     }
                 } else {
-                    let result: Int = await MessageBoxManager.shared.showText(
+                    let result: Int = await MessageBoxManager.shared.showTextAsync(
                         title: "正版验证",
                         content: "你必须先登录正版账号，才能进行离线登录！",
                         level: .info,
@@ -157,7 +157,7 @@ public enum MinecraftLaunchTask {
                 }
             case .armNotSupported:
                 if let runtime: JavaRuntime = model.instance.searchJava(arch: .x64) {
-                    if await MessageBoxManager.shared.showText(
+                    if await MessageBoxManager.shared.showTextAsync(
                         title: "不支持的 Java 架构",
                         content: "你正在启动的版本（\(model.instance.version)）不支持使用 ARM64 架构的 Java！\nPCL.Mac 找到了一个可用的 Java，是否切换并继续启动？",
                         level: .error,
@@ -207,7 +207,7 @@ public enum MinecraftLaunchTask {
         } catch is CancellationError {
         } catch {
             err("启动游戏失败：\(error.localizedDescription)")
-            _ = await MessageBoxManager.shared.showText(
+            _ = await MessageBoxManager.shared.showTextAsync(
                 title: "启动游戏失败",
                 content: "启动游戏时发生错误：\(error.localizedDescription)",
                 level: .error
