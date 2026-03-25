@@ -131,10 +131,6 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
             do {
                 log("正在加载实例 \(content.lastPathComponent)")
                 instance = try MinecraftInstance.load(from: content)
-            } catch MinecraftError.unknownManifestFormat {
-                err("加载实例失败：不支持的客户端清单格式。")
-                errorInstances.append(.init(name: content.lastPathComponent, message: "不支持的客户端清单格式。"))
-                continue
             } catch MinecraftError.incomplete {
                 log("实例未完成安装，正在尝试自动删除")
                 do {
@@ -146,6 +142,7 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
                 continue
             } catch {
                 err("加载实例失败：\(error.localizedDescription)")
+                errorInstances.append(.init(name: content.lastPathComponent, message: error.localizedDescription))
                 continue
             }
             instances.append(instance)
