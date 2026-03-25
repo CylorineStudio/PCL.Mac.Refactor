@@ -104,6 +104,8 @@ struct ResourceInstallPage: View {
             .init(id: 1, label: "确定", type: .highlight)
         ) == 1 else { return }
         
+        hint("开始下载整合包……")
+        
         let (downloadTask, destination): (MyTask<EmptyModel>, URL)
         do {
             (downloadTask, destination) = try viewModel.createModpackDownloadTask(version)

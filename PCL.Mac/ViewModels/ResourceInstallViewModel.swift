@@ -189,7 +189,7 @@ extension ResourceInstallViewModel {
             throw SimpleError("这个版本中没有主要文件！")
         }
         
-        let destination: URL = URLConstants.tempURL.appending(path: "modpack-download-\(UUID().uuidString.lowercased())")
+        let destination: URL = URLConstants.tempURL.appending(path: "modpack-download-\(version.id)")
         let task: MyTask<EmptyModel> = .init(
             name: "下载整合包 - \(project.title) \(version.version)",
             .init(0, "下载文件") { task, _ in
