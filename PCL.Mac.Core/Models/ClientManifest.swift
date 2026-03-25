@@ -413,7 +413,7 @@ public extension ClientManifest {
             case .formatError:
                 "客户端清单格式错误。"
             case .missingParentManifest:
-                "未找到客户端清单的父清单。"
+                "未找到父清单。"
             case .failedToRead(let underlying):
                 "读取客户端清单失败：\(underlying.localizedDescription)"
             }
