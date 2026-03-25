@@ -52,6 +52,7 @@ public enum ModrinthModpackInstallTask {
                 },
                 .init(7, "应用整合包修改") { task, model in
                     let tempDirectory: URL = URLConstants.tempURL.appending(path: "modpack-install-\(UUID().uuidString.lowercased())")
+                    defer { try? FileManager.default.removeItem(at: tempDirectory) }
                     try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
                     try FileManager.default.unzipItem(at: url, to: tempDirectory.appending(path: "modpack"))
                     
@@ -65,7 +66,6 @@ public enum ModrinthModpackInstallTask {
                             }
                         }
                     }
-                    try FileManager.default.removeItem(at: tempDirectory)
                 }
             ],
             at: subTasks.count - 2

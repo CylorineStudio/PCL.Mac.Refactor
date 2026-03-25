@@ -43,22 +43,14 @@ class MinecraftInstallOptionsViewModel: ObservableObject {
     }
     
     private func checkName() {
-        if name.isEmpty {
-            errorMessage = "实例名不能为空！"
-            return
+        do {
+            guard let repository: MinecraftRepository = InstanceManager.shared.currentRepository else {
+                throw SimpleError("检查实例名失败：请先添加并选择一个游戏目录！")
+            }
+            _ = try repository.checkInstanceName(name, trim: false)
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
         }
-        let invalidCharacters: [Character] = [
-            ":", ";", "/", "\\"
-        ]
-        if invalidCharacters.contains(where: name.contains(_:)) {
-            errorMessage = "实例名包含特殊字符！"
-            return
-        }
-        if let repository: MinecraftRepository = InstanceManager.shared.currentRepository,
-           FileManager.default.fileExists(atPath: repository.versionsURL.appending(path: name).path) {
-            errorMessage = "当前实例名已被使用！"
-            return
-        }
-        errorMessage = nil
     }
 }

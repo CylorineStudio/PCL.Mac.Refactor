@@ -131,13 +131,15 @@ struct ResourceInstallPage: View {
             return
         }
         
-        guard let name: String = await MessageBoxManager.shared.showInput(
+        guard var name: String = await MessageBoxManager.shared.showInput(
             title: "安装整合包 - 输入实例名",
             initialContent: index.name
         ) else { return }
         
-        if repository.contains(name) {
-            hint("该名称已被占用！", type: .critical)
+        do {
+            name = try repository.checkInstanceName(name)
+        } catch {
+            hint("该名称不可用：\(error.localizedDescription)", type: .critical)
             return
         }
         

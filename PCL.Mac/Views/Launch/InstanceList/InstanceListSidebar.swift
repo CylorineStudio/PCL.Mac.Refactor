@@ -66,7 +66,7 @@ struct InstanceListSidebar: Sidebar {
         
         if panel.runModal() == .OK {
             guard let url = panel.url else { return }
-            Task {
+            Task.detached {
                 await importModpack(url, repository: repository)
             }
         }
@@ -90,13 +90,15 @@ struct InstanceListSidebar: Sidebar {
                 .init(id: 1, label: "是", type: .highlight)
             ) == 1 else { return }
             
-            guard let name: String = await MessageBoxManager.shared.showInput(
+            guard var name: String = await MessageBoxManager.shared.showInput(
                 title: "导入整合包 - 输入实例名",
                 initialContent: result.name
             ) else { return }
             
-            if repository.contains(name) {
-                hint("该名称已被占用！", type: .critical)
+            do {
+                name = try repository.checkInstanceName(name)
+            } catch {
+                hint("该名称不可用：\(error.localizedDescription)", type: .critical)
                 return
             }
             

@@ -65,6 +65,61 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
         return FileManager.default.fileExists(atPath: versionsURL.appending(path: id).path)
     }
     
+    /// 检查实例名是否合法。
+    /// - Parameters:
+    ///   - name: 待检查的实例名。
+    ///   - trim: 是否删除首尾空白字符。
+    /// - Returns: 经过 `trimmingCharacters(in: .whitespacesAndNewlines)` 处理后的实例名。
+    /// - Throws: 如果非法，抛出 `NameCheckError`。
+    public func checkInstanceName(_ name: String, trim: Bool = true) throws -> String {
+        let trimmed: String = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trim && name != trimmed {
+            throw NameCheckError.hasWhitespaceEdges
+        }
+        if trimmed.isEmpty {
+            throw NameCheckError.empty
+        }
+        
+        let invalidCharacters: [Character] = [
+            ":", ";", "/", "\\"
+        ]
+        if invalidCharacters.contains(where: trimmed.contains(_:)) {
+            throw NameCheckError.containsInvalidCharacter
+        }
+        
+        if trimmed.starts(with: ".") {
+            throw NameCheckError.startsWithDot
+        }
+        
+        if self.contains(trimmed) {
+            throw NameCheckError.alreadyExists
+        }
+        return trimmed
+    }
+    
+    public enum NameCheckError: LocalizedError {
+        case empty
+        case hasWhitespaceEdges
+        case containsInvalidCharacter
+        case startsWithDot
+        case alreadyExists
+        
+        public var errorDescription: String? {
+            switch self {
+            case .empty:
+                "实例名不能为空。"
+            case .hasWhitespaceEdges:
+                "实例名首尾不能包含空白字符。"
+            case .containsInvalidCharacter:
+                "实例名中不能包含非法字符（如换行、冒号等）。"
+            case .startsWithDot:
+                "实例名不能以 . 开头。"
+            case .alreadyExists:
+                "该名称已被占用！"
+            }
+        }
+    }
+    
     
     private func getInstanceList() throws -> ([MinecraftInstance], [ErrorInstance]) {
         try createDirectories()

@@ -68,7 +68,7 @@ class ModpackViewModel {
             log("\(entry.path) 存在且解析成功")
             return index
         } catch let error as DecodingError {
-            err("\(entry.path) 存在但解析失败")
+            err("\(entry.path) 存在但解析失败：\(error)")
             throw Error.failedToParseIndex(underlying: error)
         }
     }
