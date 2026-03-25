@@ -30,7 +30,7 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
     public let id: UUID = .init()
     public let name: String
     public let subTasks: [SubTask]
-    private let model: Model
+    public let model: Model
     private let failureHandler: ((Error) -> Void)?
     private var cancellables: [AnyCancellable] = []
     

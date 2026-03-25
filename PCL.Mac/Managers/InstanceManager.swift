@@ -97,7 +97,7 @@ class InstanceManager: ObservableObject {
     
     /// 请求用户选择并添加游戏目录。
     public func requestAddRepository() throws {
-        let panel = NSOpenPanel()
+        let panel: NSOpenPanel = .init()
         panel.allowsMultipleSelection = false
         panel.canChooseFiles = false
         panel.canChooseDirectories = true

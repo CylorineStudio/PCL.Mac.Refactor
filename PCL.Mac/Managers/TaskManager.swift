@@ -14,7 +14,7 @@ public class TaskManager: ObservableObject {
     
     @Published public private(set) var tasks: [AnyMyTask] = []
     @Published public private(set) var downloadSpeed: Int64 = 0
-    private var executorTasks: [UUID: Task<Void, Never>] = [:]
+    private var executorTasks: [UUID: Task<Void, Error>] = [:]
     private var cancellables: [AnyCancellable] = []
     
     /// 开始执行一个任务。
@@ -22,13 +22,13 @@ public class TaskManager: ObservableObject {
     ///   - task: 待执行的任务。
     ///   - display: 是否显示与弹出 hint。
     ///   - completion: 任务完成回调。
-    /// - Returns: 任务的 `id`。
+    /// - Returns: 执行此任务的 Swift `Task`。
     @MainActor
     @discardableResult
-    public func execute<Model>(task: MyTask<Model>, display: Bool = true, completion: ((Error?) -> Void)? = nil) -> UUID {
+    public func execute<Model>(task: MyTask<Model>, display: Bool = true, completion: ((Error?) -> Void)? = nil) -> Task<Void, Error> {
         let id: UUID = task.id
         tasks.append(.init(task, display: display))
-        let executorTask = Task {
+        let executorTask: Task<Void, Error> = Task {
             var e: Error?
             do {
                 try await task.start()
@@ -48,9 +48,10 @@ public class TaskManager: ObservableObject {
                 completion?(error)
                 self.clean(for: id)
             }
+            if let error { throw error }
         }
         executorTasks[id] = executorTask
-        return id
+        return executorTask
     }
     
     /// 取消执行正在执行的任务.

@@ -7,15 +7,15 @@
 
 import Foundation
 
+public enum ModrinthCompatibility: String, Codable {
+    case required, optional, unsupported, unknown
+}
+
 public enum ModrinthProjectType: String, Codable {
     case mod, modpack, resourcepack, shader
 }
 
 public struct ModrinthProject: Decodable, Identifiable, Hashable, Equatable {
-    public enum Compatibility: String, Decodable {
-        case required, optional, unsupported, unknown
-    }
-    
     private enum CodingKeys: String, CodingKey {
         case projectId = "project_id", type = "project_type"
         case clientSide = "client_side"
@@ -35,7 +35,7 @@ public struct ModrinthProject: Decodable, Identifiable, Hashable, Equatable {
     public let downloads: Int
     public let lastUpdate: Date
     public let categories: [String]
-    public let clientCompatibility: Compatibility
+    public let clientCompatibility: ModrinthCompatibility
     public let versions: [String]?
     public let gameVersions: [String]?
     public let loaders: [ModLoader]?
@@ -51,7 +51,7 @@ public struct ModrinthProject: Decodable, Identifiable, Hashable, Equatable {
         self.downloads = try container.decode(Int.self, forKey: .downloads)
         self.lastUpdate = try container.decodeIfPresent(Date.self, forKey: .dateModified) ?? container.decode(Date.self, forKey: .updated)
         self.categories = try container.decode([String].self, forKey: .categories)
-        self.clientCompatibility = try container.decode(Compatibility.self, forKey: .clientSide)
+        self.clientCompatibility = try container.decode(ModrinthCompatibility.self, forKey: .clientSide)
         if let gameVersions: [String] = try container.decodeIfPresent([String].self, forKey: .gameVersions) {
             self.gameVersions = gameVersions
             self.versions = try container.decodeIfPresent([String].self, forKey: .versions)
