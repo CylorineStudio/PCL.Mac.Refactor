@@ -138,7 +138,7 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
             if self == another { return false }
             // 确保版本号格式相同
             if (self.major == 1 && another.major != 1) || (another.major == 1 && self.major != 1) {
-                let boundaryVersions: [String] = ["1.21.11", "26.1"]
+                let boundaryVersions: [String] = ["1.21", "26.1"]
                 return boundaryVersions.contains(self.rawVersion) && boundaryVersions.contains(another.rawVersion)
             }
             
