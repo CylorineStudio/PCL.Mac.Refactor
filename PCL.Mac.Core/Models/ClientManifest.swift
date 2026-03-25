@@ -424,7 +424,7 @@ public extension ClientManifest {
     /// - Parameters:
     ///   - url: 客户端清单文件 `URL`。
     ///   - loadParent: 是否加载父清单（`inhertsFrom`）。如果此参数为 `false`，且清单中包含 `inheritsFrom` 键，会抛出 `LoadError.missingParentManifest` 错误。
-    /// - Returns: 一个 `ClientManifest`。
+    /// - Returns: `ClientManifest` 和推测的 Mod Loader。
     /// - Throws: `LoadError`
     static func load(at url: URL, loadParent: Bool = true) throws -> (ClientManifest, ModLoader?) {
         guard FileManager.default.fileExists(atPath: url.path) else { throw LoadError.fileNotFound }
@@ -450,10 +450,18 @@ public extension ClientManifest {
         let manifest: ClientManifest = try .load(from: data)
         if let inheritsFrom: String = manifest.inheritsFrom {
             guard loadParent else { throw LoadError.missingParentManifest }
-            let parentURL: URL = url.deletingLastPathComponent().appending(path: ".parent/\(inheritsFrom).json")
-            guard FileManager.default.fileExists(atPath: parentURL.path) else { throw LoadError.missingParentManifest }
-            let parentManifest: ClientManifest = try .load(at: parentURL, loadParent: false).0
-            return (manifest.merge(to: parentManifest), modLoader)
+            let parentURLs: [URL] = [
+                url.deletingLastPathComponent().appending(path: ".parent/\(inheritsFrom).json"),
+                url.deletingLastPathComponent().deletingLastPathComponent().appending(path: "\(inheritsFrom)/\(inheritsFrom).json")
+            ]
+            for parentURL in parentURLs {
+                guard FileManager.default.fileExists(atPath: parentURL.path) else {
+                    continue
+                }
+                let parentManifest: ClientManifest = try .load(at: parentURL, loadParent: false).0
+                return (manifest.merge(to: parentManifest), modLoader)
+            }
+            throw LoadError.missingParentManifest
         }
         return (manifest, modLoader)
     }
