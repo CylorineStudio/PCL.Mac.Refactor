@@ -20,6 +20,9 @@ struct ResourcesSearchPage: View {
         CardContainer {
             if viewModel.type == .shader {
                 MyTip(text: "光影包需要搭配光影加载器使用。\n详细教程：https://cylorine.studio/helps/shader", theme: .blue)
+                    .onTapGesture {
+                        NSWorkspace.shared.open(URL(string: "https://cylorine.studio/helps/shader")!)
+                    }
             }
             MySearchBox(placeholder: "搜索\(viewModel.type.localizedName)") { query in
                 currentPage = 0
