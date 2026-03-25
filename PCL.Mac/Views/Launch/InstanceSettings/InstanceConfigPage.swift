@@ -30,6 +30,25 @@ struct InstanceConfigPage: View {
                                 NSWorkspace.shared.open(instance.runningDirectory)
                             }
                             .frame(width: 120)
+                            MyButton("删除实例", type: .red) {
+                                MessageBoxManager.shared.showText(
+                                    title: "确认",
+                                    content: "你确定要删除这个实例（\(instance.name)）吗？\n这个实例的所有存档、模组 、资源包等将会永久消失！（真的很久！）",
+                                    level: .error,
+                                    .no(),
+                                    .yes(type: .red)
+                                ) { result in
+                                    if result == 1 {
+                                        do {
+                                            try instanceVM.deleteInstance(instance)
+                                            AppRouter.shared.removeLast()
+                                        } catch {
+                                            hint("删除实例失败：\(error.localizedDescription)", type: .critical)
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(width: 120)
                             Spacer()
                         }
                         .frame(height: 35)

@@ -67,6 +67,13 @@ class InstanceManager: ObservableObject {
         }
     }
     
+    public func deleteInstance(_ instance: MinecraftInstance) throws {
+        guard let currentRepository else { return }
+        try FileManager.default.removeItem(at: currentRepository.versionsURL.appending(path: instance.name))
+        try? currentRepository.load()
+        switchRepository(to: currentRepository)
+    }
+    
     /// 切换当前仓库。
     /// - Parameter repository: 目标仓库。
     public func switchRepository(to repository: MinecraftRepository, alsoSwitchInstance: Bool = true) {
