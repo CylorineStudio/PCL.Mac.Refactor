@@ -20,10 +20,9 @@ class UpdateManager {
     }
     
     public func checkUpdates() async throws -> UpdateModel.Version? {
-//        if Metadata.debugMode || Metadata.bundleVersion == 0 { return nil }
+        if Metadata.debugMode || Metadata.bundleVersion == 0 { return nil }
         let model: UpdateModel = try await Requests.get(updateMetadataURL, noCache: true).decode(UpdateModel.self)
-//        return Metadata.bundleVersion >= model.latestVersion.bundleVersion ? nil : model.latestVersion
-        return model.latestVersion
+        return Metadata.bundleVersion >= model.latestVersion.bundleVersion ? nil : model.latestVersion
     }
     
     public func installUpdate(_ version: UpdateModel.Version, useMirror: Bool = true) async throws {
