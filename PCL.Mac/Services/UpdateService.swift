@@ -11,8 +11,12 @@ import Core
 class UpdateService {
     public static let shared: UpdateService = .init()
     
+    private let semaphore: AsyncSemaphore = .init(value: 1)
+    
     public func runInteractiveUpdateFlow(manually: Bool = false) {
         Task {
+            await semaphore.wait()
+            defer { Task { await semaphore.signal() } }
             if manually {
                 hint("正在检查更新……")
             }
@@ -37,8 +41,8 @@ class UpdateService {
                 title: "PCL.Mac 有更新可用",
                 content: "发现新版本：\(version.name)\n更新摘要：\(version.summary)\n\n是否下载并安装更新？",
                 level: .info,
-                buttons: version.updateLogLinks.map { link in
-                    return .init(id: .random(in: 100...200), label: link.name, type: .normal) {
+                buttons: version.updateLogLinks.enumerated().map { index, link in
+                    return .init(id: index + 2, label: link.name, type: .normal) {
                         NSWorkspace.shared.open(link.url)
                     }
                 } + [.no(), .yes(label: "下载并安装（\(formatSize(version.downloads.size))）", type: .highlight)]

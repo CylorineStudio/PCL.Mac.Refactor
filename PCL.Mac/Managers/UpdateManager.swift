@@ -20,9 +20,10 @@ class UpdateManager {
     }
     
     public func checkUpdates() async throws -> UpdateModel.Version? {
-        if Metadata.debugMode || Metadata.bundleVersion == 0 { return nil }
+//        if Metadata.debugMode || Metadata.bundleVersion == 0 { return nil }
         let model: UpdateModel = try await Requests.get(updateMetadataURL, noCache: true).decode(UpdateModel.self)
-        return Metadata.bundleVersion >= model.latestVersion.bundleVersion ? nil : model.latestVersion
+//        return Metadata.bundleVersion >= model.latestVersion.bundleVersion ? nil : model.latestVersion
+        return model.latestVersion
     }
     
     public func installUpdate(_ version: UpdateModel.Version, useMirror: Bool = true) async throws {
@@ -39,15 +40,18 @@ class UpdateManager {
         if !FileManager.default.fileExists(atPath: newBundle.path) {
             throw SimpleError("更新包格式错误，请手动安装更新。")
         }
-        try FileManager.default.removeItem(at: Bundle.main.bundleURL)
-        try FileManager.default.moveItem(at: newBundle, to: Bundle.main.bundleURL)
+        _ = try FileManager.default.replaceItemAt(
+            Bundle.main.bundleURL,
+            withItemAt: newBundle,
+            backupItemName: "PCL.Mac.app.backup",
+            options: [.usingNewMetadataOnly]
+        )
         
         log("App Bundle 替换完成，正在重启")
-        // 使用 bash 延迟开启新进程，确保同时只有一个进程存在
-        let command: String = "sleep 0.2; open -n \(Bundle.main.bundleURL.path)"
+        // 使用 /usr/bin/open 延迟开启新进程，确保同时只有一个进程存在
         let process: Process = .init()
-        process.executableURL = URL(fileURLWithPath: "/bin/bash")
-        process.arguments = ["-c", command]
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        process.arguments = ["-n", Bundle.main.bundleURL.path]
         try process.run()
         await NSApplication.shared.terminate(nil)
     }
