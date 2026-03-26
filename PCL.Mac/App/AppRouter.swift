@@ -80,6 +80,8 @@ class AppRouter: ObservableObject {
             MultiplayerSettingsPage()
         case .javaSettings:
             JavaSettingsPage()
+        case .otherSettings:
+            OtherSettingsPage()
         case .about:
             AboutPage()
         case .toolbox:
