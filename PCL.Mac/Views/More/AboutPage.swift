@@ -26,7 +26,7 @@ struct AboutPage: View {
                                 .init("GitHub 主页", "https://github.com/CylorineStudio"),
                                 .init("官方网站", "https://cylorine.studio"))
                     
-                    ProfileView("PCL.Mac", "PCL.Mac.Refactor", "当前版本：\(Metadata.appVersion)",
+                    ProfileView("PCL.Mac", "PCL.Mac.Refactor", "当前版本：\(Metadata.appVersion) (\(Metadata.bundleVersion))",
                                 .init("GitHub 仓库", "https://github.com/CylorineStudio/PCL.Mac.Refactor"),
                                 .init("官网页面", "https://cylorine.studio/projects/PCL.Mac.Refactor"))
                 }

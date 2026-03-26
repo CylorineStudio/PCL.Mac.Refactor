@@ -103,6 +103,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 LauncherConfig.shared.hasEnteredLauncher = true
             }
         }
+        Task {
+            let version: UpdateModel.Version?
+            do {
+                version = try await UpdateManager.shared.checkUpdates()
+            } catch {
+                err("检查更新失败：\(error.localizedDescription)")
+                return
+            }
+            guard let version else { return }
+            
+            guard await MessageBoxManager.shared.showTextAsync(
+                title: "PCL.Mac 有更新可用",
+                content: "发现新版本：\(version.name)\n更新摘要：\(version.summary)\n\n是否下载并安装更新？",
+                level: .info,
+                buttons: version.updateLogLinks.map { link in
+                    return .init(id: .random(in: 100...200), label: link.name, type: .normal) {
+                        NSWorkspace.shared.open(link.url)
+                    }
+                } + [.no(), .yes(label: "下载并安装（\(formatSize(version.downloads.size))）", type: .highlight)]
+            ) == 1 else { return }
+            hint("正在下载并安装更新，完成后 PCL.Mac 会自动重启……")
+            do {
+                try await UpdateManager.shared.installUpdate(version)
+            } catch {
+                err("更新启动器失败：\(error.localizedDescription)")
+                hint("更新失败：\(error.localizedDescription)", type: .critical)
+            }
+        }
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -117,5 +145,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             try LauncherConfig.save()
         }
         EasyTierManager.shared.terminateAll()
+    }
+    
+    private func formatSize(_ size: Int) -> String {
+        let units: [String] = ["B", "KB", "MB", "GB", "TB"]
+        var value: Double = .init(size)
+        var unitIndex: Int = 0
+        
+        while value >= 1024 && unitIndex < units.count - 1 {
+            value /= 1024
+            unitIndex += 1
+        }
+        
+        let formatted: String = .init(format: value < 10 && unitIndex > 0 ? "%.1f" : "%.0f", value)
+        return "\(formatted) \(units[unitIndex])"
     }
 }

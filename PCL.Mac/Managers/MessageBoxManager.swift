@@ -28,8 +28,12 @@ class MessageBoxManager: ObservableObject {
     ///   - level: 模态框等级，控制了模态框的颜色。
     ///   - buttons: 按钮列表。
     /// - Returns: 被点击的按钮的 `id`。
-    public func showTextAsync(title: String, content: String, level: MessageBoxModel.Level = .info, _ buttons: MessageBoxModel.Button...) async -> Int {
-        let buttons: [MessageBoxModel.Button] = buttons.isEmpty ? [defaultButton] : buttons
+    public func showTextAsync(
+        title: String,
+        content: String,
+        level: MessageBoxModel.Level = .info,
+        buttons: [MessageBoxModel.Button]
+    ) async -> Int {
         let result: MessageBoxResult = await showAsync(title: title, content: .text(text: content), level: level, buttons: buttons)
         guard case .button(let id) = result else {
             warn("期望 result 类型（button）与实际类型（\(result)）不匹配")
@@ -43,7 +47,10 @@ class MessageBoxManager: ObservableObject {
     ///   - title: 模态框标题。
     ///   - items: 列表项。
     /// - Returns: 选择的列表项的索引。如果用户点击了取消，或发生内部错误，返回 `nil`。
-    public func showListAsync(title: String, items: [ListItem]) async -> Int? {
+    public func showListAsync(
+        title: String,
+        items: [ListItem]
+    ) async -> Int? {
         let result: MessageBoxResult = await showAsync(
             title: title,
             content: .list(items: items),
@@ -63,7 +70,11 @@ class MessageBoxManager: ObservableObject {
     ///   - initialContent: 输入框的起始文本。
     ///   - placeholder: 占位符。
     /// - Returns: 输入的文本。如果用户点击了取消，或发生内部错误，返回 `nil`。
-    public func showInputAsync(title: String, initialContent: String? = nil, placeholder: String? = nil) async -> String? {
+    public func showInputAsync(
+        title: String,
+        initialContent: String? = nil,
+        placeholder: String? = nil
+    ) async -> String? {
         let result: MessageBoxResult = await showAsync(
             title: title,
             content: .input(initialContent: initialContent, placeholder: placeholder),
@@ -173,10 +184,9 @@ extension MessageBoxManager {
         title: String,
         content: String,
         level: MessageBoxModel.Level = .info,
-        _ buttons: MessageBoxModel.Button...,
+        buttons: [MessageBoxModel.Button],
         callback: (@MainActor (Int) -> Void)? = nil
     ) {
-        let buttons: [MessageBoxModel.Button] = buttons.isEmpty ? [defaultButton] : buttons
         show(title: title, content: .text(text: content), level: level, buttons: buttons) { result in
             guard case .button(let id) = result else {
                 warn("期望 result 类型（button）与实际类型（\(result)）不匹配")
@@ -262,5 +272,28 @@ extension MessageBoxManager {
             }
             _show(title: title, content: content, level: level, buttons: buttons, callback: callback)
         }
+    }
+}
+
+extension MessageBoxManager {
+    public func showTextAsync(
+        title: String,
+        content: String,
+        level: MessageBoxModel.Level = .info,
+        _ buttons: MessageBoxModel.Button...
+    ) async -> Int {
+        let buttons: [MessageBoxModel.Button] = buttons.isEmpty ? [defaultButton] : buttons
+        return await showTextAsync(title: title, content: content, level: level, buttons: buttons)
+    }
+    
+    public func showText(
+        title: String,
+        content: String,
+        level: MessageBoxModel.Level = .info,
+        _ buttons: MessageBoxModel.Button...,
+        callback: (@MainActor (Int) -> Void)? = nil
+    ) {
+        let buttons: [MessageBoxModel.Button] = buttons.isEmpty ? [defaultButton] : buttons
+        showText(title: title, content: content, level: level, buttons: buttons, callback: callback)
     }
 }
