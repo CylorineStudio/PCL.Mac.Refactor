@@ -19,13 +19,8 @@ class MinecraftDownloadPageViewModel: ObservableObject {
     public func load(revalidate: Bool = false) async throws -> VersionManifest {
         let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", revalidate: revalidate)
         let manifest: VersionManifest = try response.decode(VersionManifest.self)
+        let changed: Bool = CoreState.versionManifest != manifest
         CoreState.versionManifest = manifest
-        do {
-            try response.data.write(to: URLConstants.cacheURL.appending(path: "version_manifest.json"))
-        } catch {
-            err("保存版本列表缓存失败：\(error.localizedDescription)")
-        }
-        
         
         await MainActor.run {
             latestRelease = manifest.version(for: manifest.latestRelease)
@@ -37,6 +32,13 @@ class MinecraftDownloadPageViewModel: ObservableObject {
             versionMap[.aprilFool] = manifest.versions.filter { $0.type == .aprilFool }
             versionMap[.old] = manifest.versions.filter { $0.type == .old }
             loaded = true
+        }
+        if changed {
+            do {
+                try response.data.write(to: URLConstants.cacheURL.appending(path: "version_manifest.json"))
+            } catch {
+                err("保存版本列表缓存失败：\(error.localizedDescription)")
+            }
         }
         return manifest
     }

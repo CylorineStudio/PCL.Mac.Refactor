@@ -9,7 +9,7 @@ import Foundation
 import SwiftyJSON
 
 /// https://zh.minecraft.wiki/w/Version_manifest.json#JSON格式
-public struct VersionManifest: Decodable {
+public struct VersionManifest: Decodable, Equatable {
     public let latestRelease: String
     public let latestSnapshot: String?
     public let versions: [Version]
