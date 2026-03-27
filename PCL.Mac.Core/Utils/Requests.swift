@@ -32,7 +32,7 @@ public enum Requests {
         public let headers: [String: String]
         public let data: Data
         
-        fileprivate init(data: Data, response: HTTPURLResponse, isCached: Bool = false) {
+        fileprivate init(data: Data, response: HTTPURLResponse) {
             self.statusCode = response.statusCode
             self.headers = Self.parseHeaders(response.allHeaderFields)
             self.data = data
@@ -62,7 +62,7 @@ public enum Requests {
     ///   - headers: 请求头。
     ///   - body: 请求体，在请求方法为 `GET` 时被视为 URL params。
     ///   - encodeMethod: 请求体的编码方式。
-    ///   - noCache: 是否禁用缓存。
+    ///   - revalidate: 是否使用 `.reloadIgnoringLocalCacheData` 缓存策略（先判断本地缓存是否过期）。
     /// - Returns: 返回的响应。
     public static func request(
         url: URLConvertible,
@@ -70,7 +70,7 @@ public enum Requests {
         headers: [String: String?]?,
         body: [String: Any?]?,
         using encodeMethod: EncodeMethod,
-        noCache: Bool
+        revalidate: Bool
     ) async throws -> Response {
         guard let url = url.url else { throw RequestError.invalidURL }
         guard let scheme = url.scheme?.lowercased(),
@@ -84,8 +84,8 @@ public enum Requests {
         request.httpMethod = method
         request.allHTTPHeaderFields = headers
         request.setValue("PCL-Mac/\(Metadata.appVersion)", forHTTPHeaderField: "User-Agent")
-        if noCache {
-            request.cachePolicy = .reloadIgnoringLocalCacheData
+        if revalidate {
+            request.cachePolicy = .reloadRevalidatingCacheData
         }
         
         if let body {
@@ -118,15 +118,15 @@ public enum Requests {
     ///   - url: 目标 URL，可以是 `String` 与 `URL`。
     ///   - headers: 请求头。
     ///   - params: 请求的 URL params。
-    ///   - noCache: 是否禁用缓存。
+    ///   - revalidate: 是否使用 `.reloadIgnoringLocalCacheData` 缓存策略（先判断本地缓存是否过期）。
     /// - Returns: 返回的响应。
     public static func get(
         _ url: URLConvertible,
         headers: [String: String?]? = nil,
         params: [String: String?]? = nil,
-        noCache: Bool = false
+        revalidate: Bool = false
     ) async throws -> Response {
-        return try await request(url: url, method: "GET", headers: headers, body: params, using: .urlEncoded, noCache: noCache)
+        return try await request(url: url, method: "GET", headers: headers, body: params, using: .urlEncoded, revalidate: revalidate)
     }
     
     /// 向目标 URL 发送 `POST` 请求。
@@ -142,7 +142,7 @@ public enum Requests {
         body: [String: Any?]?,
         using encodeMethod: EncodeMethod
     ) async throws -> Response {
-        return try await request(url: url, method: "POST", headers: headers, body: body, using: encodeMethod, noCache: false)
+        return try await request(url: url, method: "POST", headers: headers, body: body, using: encodeMethod, revalidate: false)
     }
     
     private static func encode(_ body: [String: Any], using method: EncodeMethod) throws -> (Data, String) {
