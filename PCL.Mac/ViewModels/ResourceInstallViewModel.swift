@@ -28,7 +28,7 @@ class ResourceInstallViewModel: ObservableObject {
         let selectedInstanceKey: VersionMapKey? = selectedInstance.map { .init(loader: $0.modLoader, version: $0.version) }
         var selectedVersionGroup: VersionGroup? = selectedInstanceKey.map { ($0, []) }
         
-        let versions: [ModrinthVersion] = try await ModrinthAPIClient.shared.versions(ofProject: project.id)
+        let versions: [ModrinthVersion] = try await ModrinthAPIClient.shared.versions(ofProject: project.id, revalidate: true)
         
         var versionMap: [VersionMapKey: [ProjectVersionModel]] = [:]
         for version in versions {
