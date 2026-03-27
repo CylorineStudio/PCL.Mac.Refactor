@@ -16,8 +16,8 @@ class MinecraftDownloadPageViewModel: ObservableObject {
     @Published public var errorMessage: String?
     
     @discardableResult
-    public func load(noCache: Bool = false) async throws -> VersionManifest {
-        let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", noCache: noCache)
+    public func load(revalidate: Bool = false) async throws -> VersionManifest {
+        let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", revalidate: revalidate)
         let manifest: VersionManifest = try response.decode(VersionManifest.self)
         CoreState.versionManifest = manifest
         do {
@@ -46,7 +46,7 @@ class MinecraftDownloadPageViewModel: ObservableObject {
         loaded = false
         Task {
             do {
-                try await load(noCache: true)
+                try await load(revalidate: true)
                 log("Minecraft 版本列表刷新成功")
             } catch {
                 err("Minecraft 版本列表刷新失败：\(error.localizedDescription)")
