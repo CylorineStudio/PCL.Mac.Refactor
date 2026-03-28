@@ -14,9 +14,9 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     @Published public var instances: [MinecraftInstance]?
     @Published public var errorInstances: [ErrorInstance]?
     
-    public lazy var assetsURL: URL = { url.appending(path: "assets") }()
-    public lazy var librariesURL: URL = { url.appending(path: "libraries") }()
-    public lazy var versionsURL: URL = { url.appending(path: "versions") }()
+    public private(set) lazy var assetsURL: URL = { url.appending(path: "assets") }()
+    public private(set) lazy var librariesURL: URL = { url.appending(path: "libraries") }()
+    public private(set) lazy var versionsURL: URL = { url.appending(path: "versions") }()
     
     public init(name: String, url: URL, instances: [MinecraftInstance]? = nil) {
         self.name = name

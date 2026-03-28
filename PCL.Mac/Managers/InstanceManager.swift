@@ -16,6 +16,14 @@ class InstanceManager: ObservableObject {
     @Published public var reloadErrorMessage: String?
     
     private init() {
+        if LauncherConfig.shared.minecraftRepositories.isEmpty {
+            let defaultDirectory: URL = FileManager.default.homeDirectoryForCurrentUser
+                .appending(path: "Library/Application Support/minecraft")
+            LauncherConfig.shared.minecraftRepositories.append(
+                .init(name: "默认目录", url: defaultDirectory)
+            )
+            LauncherConfig.shared.currentRepository = 0
+        }
         self.repositories = LauncherConfig.shared.minecraftRepositories
         if let currentRepository: Int = LauncherConfig.shared.currentRepository {
             self.currentRepository = LauncherConfig.shared.minecraftRepositories[currentRepository]
