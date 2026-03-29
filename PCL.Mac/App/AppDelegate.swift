@@ -13,6 +13,7 @@ import SwiftScaffolding
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: AppWindow!
     private lazy var isUnderTesting: Bool = ProcessInfo.processInfo.environment["PCL_MAC_TESTING"] != nil
+    private var keyMonitor: Any?
     
     private func executeTask(_ name: String, silent: Bool = false, _ start: @escaping () throws -> Void) {
         do {
@@ -87,6 +88,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.window = AppWindow()
         self.window.makeKeyAndOrderFront(nil)
         log("成功创建窗口")
+        addEscapeMonitor()
+        
         if !LauncherConfig.shared.hasEnteredLauncher {
             MessageBoxManager.shared.showText(
                 title: "欢迎使用 PCL.Mac！",
@@ -118,5 +121,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             try LauncherConfig.save()
         }
         EasyTierManager.shared.terminateAll()
+    }
+    
+    private func addEscapeMonitor() {
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown]) { event in
+            if event.keyCode == 53 {
+                DispatchQueue.main.async {
+                    guard AppRouter.shared.isSubPage, MessageBoxManager.shared.currentMessageBox == nil else { return }
+                    AppRouter.shared.removeLast()
+                }
+            } else {
+                return event
+            }
+            return nil
+        }
     }
 }
