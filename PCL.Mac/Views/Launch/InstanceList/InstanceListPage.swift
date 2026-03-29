@@ -22,11 +22,14 @@ struct InstanceListPage: View {
             if let instances = repository.instances {
                 CardContainer {
                     MyCard("当前目录：\(repository.name)", foldable: false) {
-                        infoLine(label: "路径") {
-                            MyText(repository.url.path).textSelection(.enabled)
-                        }
-                        .padding(.top, 6)
-                        HStack(spacing: 30) {
+                        infoLine(label: "路径") { MyText(repository.url.path).textSelection(.enabled) }
+                            .padding(.top, 6)
+                        infoLine(label: "实例数") { MyText(instances.count.description) }
+                        HStack(spacing: 15) {
+                            MyButton("打开文件夹") {
+                                NSWorkspace.shared.open(repository.url)
+                            }
+                            .frame(width: 150)
                             MyButton("更改显示名称") {
                                 MessageBoxManager.shared.showInput(title: "输入新名称") { name in
                                     guard let name, !name.isEmpty else { return }
@@ -123,6 +126,7 @@ struct InstanceListPage: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 6)
+        .padding(.vertical, 1)
     }
 }
 
