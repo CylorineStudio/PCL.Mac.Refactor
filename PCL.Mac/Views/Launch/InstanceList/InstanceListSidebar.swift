@@ -25,7 +25,7 @@ struct InstanceListSidebar: Sidebar {
                     routeList: instanceViewModel.repositories.map({ .init(AppRoute.instanceList($0), nil, $0.name) })
                 ) { route in
                     if case .instanceList(let repository) = route {
-                        viewModel.load(repository)
+                        viewModel.reloadAsync(repository)
                     }
                 }
             }
