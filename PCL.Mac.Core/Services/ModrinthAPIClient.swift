@@ -50,24 +50,30 @@ public class ModrinthAPIClient {
     }
     
     /// 获取指定 id 或 slug 对应的 `ModrinthProject`。
-    /// - Parameter slug: 指定 id 或 slug。
+    /// - Parameters:
+    ///   - slug: 指定 id 或 slug。
+    ///   - revalidate: 是否验证本地缓存有效性。
     /// - Returns: 对应的 `ModrinthProject`。
-    public func project(_ slug: String) async throws -> ModrinthProject {
-        return try await Requests.get(apiRoot.appending(path: "/v2/project/\(slug)")).decode(ModrinthProject.self)
+    public func project(_ slug: String, revalidate: Bool = false) async throws -> ModrinthProject {
+        return try await Requests.get(apiRoot.appending(path: "/v2/project/\(slug)"), revalidate: revalidate).decode(ModrinthProject.self)
     }
     
     /// 获取指定 project 的所有 `ModrinthVersion`。
-    /// - Parameter slug: 指定 project 的 id 或 slug。
+    /// - Parameters:
+    ///   - slug: 指定 project 的 id 或 slug。
+    ///   - revalidate: 是否验证本地缓存有效性。
     /// - Returns: 该 project 的所有 `ModrinthVersion`（`[ModrinthVersion]`）。
-    public func versions(ofProject slug: String) async throws -> [ModrinthVersion] {
-        return try await Requests.get(apiRoot.appending(path: "/v2/project/\(slug)/version")).decode([ModrinthVersion].self)
+    public func versions(ofProject slug: String, revalidate: Bool = false) async throws -> [ModrinthVersion] {
+        return try await Requests.get(apiRoot.appending(path: "/v2/project/\(slug)/version"), revalidate: revalidate).decode([ModrinthVersion].self)
     }
     
     /// 获取指定 project 的所有 `ModrinthVersion`。
-    /// - Parameter slug: 指定 `ModrinthProject`。
+    /// - Parameters:
+    ///   - slug: 指定 `ModrinthProject`。
+    ///   - revalidate: 是否验证本地缓存有效性。
     /// - Returns: 该 project 的所有 `ModrinthVersion`（`[ModrinthVersion]`）。
-    public func versions(ofProject project: ModrinthProject) async throws -> [ModrinthVersion] {
-        return try await versions(ofProject: project.slug)
+    public func versions(ofProject project: ModrinthProject, revalidate: Bool = false) async throws -> [ModrinthVersion] {
+        return try await versions(ofProject: project.slug, revalidate: revalidate)
     }
     
     /// 获取指定 id 对应的 `ModrinthVersion`。

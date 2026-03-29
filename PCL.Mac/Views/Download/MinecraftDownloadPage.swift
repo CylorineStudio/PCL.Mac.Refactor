@@ -12,6 +12,11 @@ import SwiftyJSON
 struct MinecraftDownloadPage: View {
     @EnvironmentObject private var viewModel: MinecraftDownloadPageViewModel
     @StateObject private var loadingModel: MyLoadingViewModel = .init(text: "加载中")
+    private static let dateFormatter: DateFormatter = {
+        let formatter: DateFormatter = .init()
+        formatter.dateFormat = "yyyy/MM/dd HH:mm"
+        return formatter
+    }()
     
     var body: some View {
         CardContainer {
@@ -46,9 +51,9 @@ struct MinecraftDownloadPage: View {
             if let latestRelease = viewModel.latestRelease {
                 MyCard("最新版本", foldable: false) {
                     VStack(spacing: 0) {
-                        VersionView(latestRelease, prefix: "最新正式版，更新于 ")
+                        VersionView(latestRelease, description: "最新正式版，发布于 \(Self.dateFormatter.string(from: latestRelease.releaseTime))")
                         if let latestSnapshot = viewModel.latestSnapshot {
-                            VersionView(latestSnapshot, prefix: "最新快照版，更新于 ")
+                            VersionView(latestSnapshot, description: "最新快照版，发布于  \(Self.dateFormatter.string(from: latestSnapshot.releaseTime))")
                         }
                     }
                 }
@@ -62,7 +67,7 @@ struct MinecraftDownloadPage: View {
         MyCard("\(category.localizedName)（\(versions.count)）") {
             LazyVStack(spacing: 0) {
                 ForEach(versions, id: \.id) { version in
-                    VersionView(version)
+                    VersionView(version, description: version.type == .aprilFool ? viewModel.aprilFoolVersionDescription(version.id) : Self.dateFormatter.string(from: version.releaseTime))
                 }
             }
         }
@@ -78,15 +83,15 @@ private struct VersionView: View {
         return formatter
     }()
     private let version: VersionManifest.Version
-    private let prefix: String
+    private let description: String
     
-    init(_ version: VersionManifest.Version, prefix: String = "") {
+    init(_ version: VersionManifest.Version, description: String) {
         self.version = version
-        self.prefix = prefix
+        self.description = description
     }
     
     var body: some View {
-        MyListItem(.init(image: version.type.icon, name: version.id, description: prefix + Self.dateFormatter.string(from: version.releaseTime)))
+        MyListItem(.init(image: version.type.icon, name: version.id, description: description))
         .onTapGesture {
             guard viewModel.currentRepository != nil else {
                 warn("试图安装 \(version.id)，但没有设置游戏仓库")

@@ -33,8 +33,9 @@ struct ToolboxPage: View {
                             .init(id: 0, label: "确定", type: .red),
                             .init(id: 1, label: "确定", type: .normal),
                             .init(id: 2, label: "确定", type: .normal)
-                        )
-                        viewModel.executeEasterEgg()
+                        ) { _ in
+                            viewModel.executeEasterEgg()
+                        }
                     }
                     .frame(width: 100)
                     Spacer()

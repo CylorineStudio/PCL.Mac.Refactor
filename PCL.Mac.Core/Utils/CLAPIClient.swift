@@ -39,7 +39,7 @@ public class CLAPIClient {
             headers: [:],
             body: body,
             using: .json,
-            noCache: true
+            revalidate: false
         ).json()
         return .init(json: json)
     }
