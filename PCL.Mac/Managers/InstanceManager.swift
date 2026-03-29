@@ -101,6 +101,14 @@ class InstanceManager: ObservableObject {
         }
     }
     
+    public func removeRepository(_ repository: MinecraftRepository) {
+        repositories.removeAll { $0.url == repository.url }
+        LauncherConfig.shared.minecraftRepositories = repositories
+        if currentRepository?.url == repository.url {
+            currentRepository = nil
+        }
+    }
+    
     /// 添加游戏目录
     /// - Parameters:
     ///   - name: 目录名。

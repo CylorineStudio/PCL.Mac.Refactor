@@ -21,6 +21,41 @@ struct InstanceListPage: View {
         VStack {
             if let instances = repository.instances {
                 CardContainer {
+                    MyCard("当前目录：\(repository.name)", foldable: false) {
+                        infoLine(label: "路径") {
+                            MyText(repository.url.path).textSelection(.enabled)
+                        }
+                        .padding(.top, 6)
+                        HStack(spacing: 30) {
+                            MyButton("更改显示名称") {
+                                MessageBoxManager.shared.showInput(title: "输入新名称") { name in
+                                    guard let name, !name.isEmpty else { return }
+                                    repository.name = name
+                                    AppRouter.shared.setRoot(.launch)
+                                    AppRouter.shared.append(.instanceList(repository))
+                                    hint("已将目录名称更改为 \(name)！", type: .finish)
+                                }
+                            }
+                            .frame(width: 150)
+                            MyButton("移除目录", type: .red) {
+                                MessageBoxManager.shared.showText(
+                                    title: "确认",
+                                    content: "你确定要移除这个目录（\(repository.url.path)）吗？\n这只会把它从启动器的目录列表中移除，而不会删除任何文件。",
+                                    level: .info,
+                                    .no(), .yes()
+                                ) { button in
+                                    guard button == 1 else { return }
+                                    instanceViewModel.removeRepository(repository)
+                                    AppRouter.shared.removeLast()
+                                    hint("移除成功！", type: .finish)
+                                }
+                            }
+                            .frame(width: 150)
+                            Spacer()
+                        }
+                        .frame(height: 35)
+                        .padding(.top, 6)
+                    }
                     if let errorInstances = repository.errorInstances, !errorInstances.isEmpty {
                         MyCard("错误的实例") {
                             VStack(spacing: 0) {
@@ -74,6 +109,20 @@ struct InstanceListPage: View {
                     }
             }
         }
+    }
+    
+    @ViewBuilder
+    private func infoLine(label: String,  @ViewBuilder body: () -> some View) -> some View {
+        HStack(spacing: 20) {
+            MyText(label)
+                .frame(width: 120, alignment: .leading)
+            HStack {
+                Spacer(minLength: 0)
+                body()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 6)
     }
 }
 

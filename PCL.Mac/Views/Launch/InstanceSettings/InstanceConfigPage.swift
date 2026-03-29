@@ -75,47 +75,45 @@ struct InstanceConfigPage: View {
     @ViewBuilder
     private var jvmCard: some View {
         MyCard("JVM 设置", foldable: false) {
-            VStack {
-                configLine(label: "使用的 Java") {
-                    MyText(viewModel.javaDescription)
-                }
-                configLine(label: "内存分配") {
-                    MyTextField(text: $viewModel.jvmHeapSize)
-                        .onChange(of: viewModel.jvmHeapSize) { newValue in
-                            if let jvmHeapSize: UInt64 = .init(newValue) { viewModel.setHeapSize(jvmHeapSize) }
-                        }
-                    MyText("MB")
-                }
-                HStack(spacing: 30) {
-                    MyButton("切换 Java") {
-                        let runtimes: [JavaRuntime] = viewModel.javaList()
-                        MessageBoxManager.shared.showList(
-                            title: "切换 Java",
-                            items: runtimes.map { .init(name: $0.description, description: $0.executableURL.path) }
-                        ) { index in
-                            guard let index else { return }
-                            let runtime: JavaRuntime = runtimes[index]
-                            do {
-                                try viewModel.switchJava(to: runtime)
-                            } catch let error as InstanceConfigViewModel.Error {
-                                switch error {
-                                case .invalidJavaVersion(let min):
-                                    MessageBoxManager.shared.showText(
-                                        title: "Java 版本不满足要求",
-                                        content: "这个实例需要 Java \(min) 才能启动，但你选择的是 Java \(runtime.version)！",
-                                        level: .error
-                                    )
-                                }
-                            } catch {}
-                        }
-                    }
-                    .frame(minWidth: 150)
-                    .fixedSize(horizontal: true, vertical: false)
-                    Spacer()
-                }
-                .frame(height: 35)
-                .padding(.top, 12)
+            configLine(label: "使用的 Java") {
+                MyText(viewModel.javaDescription)
             }
+            configLine(label: "内存分配") {
+                MyTextField(text: $viewModel.jvmHeapSize)
+                    .onChange(of: viewModel.jvmHeapSize) { newValue in
+                        if let jvmHeapSize: UInt64 = .init(newValue) { viewModel.setHeapSize(jvmHeapSize) }
+                    }
+                MyText("MB")
+            }
+            HStack(spacing: 30) {
+                MyButton("切换 Java") {
+                    let runtimes: [JavaRuntime] = viewModel.javaList()
+                    MessageBoxManager.shared.showList(
+                        title: "切换 Java",
+                        items: runtimes.map { .init(name: $0.description, description: $0.executableURL.path) }
+                    ) { index in
+                        guard let index else { return }
+                        let runtime: JavaRuntime = runtimes[index]
+                        do {
+                            try viewModel.switchJava(to: runtime)
+                        } catch let error as InstanceConfigViewModel.Error {
+                            switch error {
+                            case .invalidJavaVersion(let min):
+                                MessageBoxManager.shared.showText(
+                                    title: "Java 版本不满足要求",
+                                    content: "这个实例需要 Java \(min) 才能启动，但你选择的是 Java \(runtime.version)！",
+                                    level: .error
+                                )
+                            }
+                        } catch {}
+                    }
+                }
+                .frame(minWidth: 150)
+                .fixedSize(horizontal: true, vertical: false)
+                Spacer()
+            }
+            .frame(height: 35)
+            .padding(.top, 12)
         }
     }
     
