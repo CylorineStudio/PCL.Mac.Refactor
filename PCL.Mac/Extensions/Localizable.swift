@@ -19,8 +19,8 @@ extension MinecraftVersion.VersionType: Localizable {
         switch self {
         case .release: "GrassBlock"
         case .snapshot: "Dirt"
-        case .old: "Dirt"
-        case .aprilFool: "Dirt"
+        case .old: "Cobblestone"
+        case .aprilFool: "GoldBlock"
         }
     }
     
