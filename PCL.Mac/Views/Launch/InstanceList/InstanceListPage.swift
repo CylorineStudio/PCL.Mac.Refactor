@@ -19,14 +19,14 @@ struct InstanceListPage: View {
     
     var body: some View {
         VStack {
-            if let instances = repository.instances {
+            if let instances = viewModel.instances {
                 CardContainer {
                     MyCard("当前目录：\(repository.name)", foldable: false) {
-                        infoLine(label: "路径") {
-                            MyText(repository.url.path).textSelection(.enabled)
-                        }
-                        .padding(.top, 6)
-                        HStack(spacing: 30) {
+                        infoLine(label: "路径") { MyText(repository.url.path).textSelection(.enabled) }
+                            .padding(.top, 6)
+                        infoLine(label: "实例数量") { MyText(instances.count.description) }
+                        
+                        HStack(spacing: 15) {
                             MyButton("更改显示名称") {
                                 MessageBoxManager.shared.showInput(title: "输入新名称") { name in
                                     guard let name, !name.isEmpty else { return }
@@ -56,7 +56,7 @@ struct InstanceListPage: View {
                         .frame(height: 35)
                         .padding(.top, 6)
                     }
-                    if let errorInstances = repository.errorInstances, !errorInstances.isEmpty {
+                    if let errorInstances = viewModel.errorInstances, !errorInstances.isEmpty {
                         MyCard("错误的实例") {
                             VStack(spacing: 0) {
                                 ForEach(errorInstances, id: \.name) { instance in
@@ -86,7 +86,7 @@ struct InstanceListPage: View {
         }
         .onAppear {
             if repository.instances != nil { return }
-            viewModel.reloadAsync(repository)
+            viewModel.load(repository)
         }
         .id(repository.url)
     }
@@ -123,6 +123,7 @@ struct InstanceListPage: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 6)
+        .padding(.vertical, 1)
     }
 }
 

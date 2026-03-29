@@ -9,45 +9,38 @@ import Foundation
 import Core
 
 class InstanceListViewModel: ObservableObject {
-    @Published var loadingViewModel: MyLoadingViewModel = .init(text: "加载中")
-    @Published var loadTask: Task<Void, Error>?
+    @Published public var instances: [MinecraftInstance]?
+    @Published public var errorInstances: [MinecraftRepository.ErrorInstance]?
+    @Published public var loadTask: Task<Void, Error>?
+    public let loadingViewModel: MyLoadingViewModel = .init(text: "加载中")
     
-    /// 重新加载 `MinecraftRepository` 的实例列表。
+    /// 启动 `MinecraftRepository` 加载任务。
     @MainActor
-    public func reload(_ repository: MinecraftRepository) {
-        reset()
-        repository.instances = nil
-        do {
-            try repository.load()
-        } catch {
-            err("加载实例列表失败：\(error.localizedDescription)")
-            loadingViewModel.fail(with: "加载失败：\(error.localizedDescription)")
-        }
-    }
-    
-    /// 异步重新加载 `MinecraftRepository` 的实例列表。
-    @MainActor
-    public func reloadAsync(_ repository: MinecraftRepository) {
+    public func load(_ repository: MinecraftRepository) {
         if loadTask != nil { return }
         reset()
         repository.instances = nil
-        loadTask = Task {
+        loadTask = Task.detached {
             do {
                 try await repository.loadAsync()
             } catch {
                 err("加载实例列表失败：\(error.localizedDescription)")
                 await MainActor.run {
-                    loadingViewModel.fail(with: "加载失败：\(error.localizedDescription)")
+                    self.loadingViewModel.fail(with: "加载失败：\(error.localizedDescription)")
                 }
             }
             await MainActor.run {
-                loadTask = nil
+                self.instances = repository.instances
+                self.errorInstances = repository.errorInstances
+                self.loadTask = nil
             }
         }
     }
     
     @MainActor
     public func reset() {
+        instances = nil
+        errorInstances = nil
         loadingViewModel.reset()
     }
 }
