@@ -9,10 +9,6 @@ on:
         description: "macOS 15"
         type: boolean
         default: false
-      macos_12:
-        description: "macOS 12"
-        type: boolean
-        default: false
 
 jobs:
   test_macos_26:
@@ -78,41 +74,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-15.xcresult
-          path: result.xcresult
-      
-      - name: Fail job if tests failed
-        run: |
-          exit_code="${XCODEBUILD_TEST_EXIT_CODE:-0}"
-          exit "${exit_code}"
-
-  test_macos_12:
-    name: Test on macOS 12
-    if: ${{ github.event.inputs.macos_12 == 'true' }}
-    runs-on: macos-12
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - name: Run tests
-        run: |
-          set +e
-
-          xcodebuild test \
-            -project PCL.Mac.xcodeproj -scheme PCL.Mac \
-            -resultBundlePath ./result.xcresult
-          
-          exit_code=$?
-          echo "TEST_EXIT_CODE=$exit_code" >> "$GITHUB_ENV"
-
-          set -e
-        continue-on-error: true
-      
-      - name: Upload result
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-12.xcresult
           path: result.xcresult
       
       - name: Fail job if tests failed
