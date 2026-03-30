@@ -1,10 +1,10 @@
 <div align="center">
   <img alt="Logo" src="/.github/assets/icon.png" width="140">
   <h1>PCL.Mac</h1>
-  <img src="https://img.shields.io/github/stars/CylorineStudio/PCL.Mac.Refactor?style=flat&color=e0bb00" alt="Stars">
-  <img src="https://img.shields.io/badge/macOS-12.0+-510fb7?logo=macos" alt="Minimum OS Version">
-  <img src="https://img.shields.io/github/commit-activity/m/CylorineStudio/PCL.Mac.Refactor?style=flat&color=0f4cb7" alt="Activity">
-  <img src="https://img.shields.io/github/contributors/CylorineStudio/PCL.Mac.Refactor?style=flat&color=0fb778" alt="Contributors">
+  <img src="https://img.shields.io/github/stars/CylorineStudio/PCL.Mac.Refactor?style=flat&color=yellow" alt="Stars">
+  <img src="https://img.shields.io/badge/macOS-12.0+-blue?logo=macos" alt="Minimum OS Version">
+  <img src="https://img.shields.io/github/commit-activity/m/CylorineStudio/PCL.Mac.Refactor?style=flat&color=blue" alt="Activity">
+  <img src="https://img.shields.io/github/contributors/CylorineStudio/PCL.Mac.Refactor?style=flat&color=green" alt="Contributors">
 </div>
 
 PCL.Mac 是 [Plain Craft Launcher](https://github.com/Meloong-Git/PCL) 的**非官方**衍生版，使用 SwiftUI 框架**完全重构**了 PCL 以支持 macOS！  
