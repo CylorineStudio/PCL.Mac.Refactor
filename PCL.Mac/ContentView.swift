@@ -67,6 +67,7 @@ struct ContentView: View {
             .animation(.easeOut(duration: 0.2), value: hintManager.hints)
             .padding(.bottom, 100)
         }
+        .background(Color(0xC0DEF5))
         .rotation3DEffect(easterEggManager.rotationAngle, axis: easterEggManager.rotationAxis)
         .contrast(easterEggManager.modifyColor ? -1 : 1)
         .onAppear {
@@ -75,7 +76,6 @@ struct ContentView: View {
                 sidebarContentAnimationProgress = 1.0
             }
         }
-        .background(Color(0xC0DEF5))
     }
 }
 
