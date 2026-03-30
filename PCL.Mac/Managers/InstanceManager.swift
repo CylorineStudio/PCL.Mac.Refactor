@@ -16,6 +16,14 @@ class InstanceManager: ObservableObject {
     @Published public var reloadErrorMessage: String?
     
     private init() {
+        if LauncherConfig.shared.minecraftRepositories.isEmpty {
+            let defaultDirectory: URL = FileManager.default.homeDirectoryForCurrentUser
+                .appending(path: "Library/Application Support/minecraft")
+            LauncherConfig.shared.minecraftRepositories.append(
+                .init(name: "默认目录", url: defaultDirectory)
+            )
+            LauncherConfig.shared.currentRepository = 0
+        }
         self.repositories = LauncherConfig.shared.minecraftRepositories
         if let currentRepository: Int = LauncherConfig.shared.currentRepository {
             self.currentRepository = LauncherConfig.shared.minecraftRepositories[currentRepository]
@@ -93,10 +101,20 @@ class InstanceManager: ObservableObject {
         }
     }
     
+    public func removeRepository(_ repository: MinecraftRepository) {
+        repositories.removeAll { $0.url == repository.url }
+        LauncherConfig.shared.minecraftRepositories = repositories
+        if currentRepository?.url == repository.url {
+            currentRepository = nil
+        }
+    }
+    
     /// 添加游戏目录
-    /// - Parameter url: 游戏目录的 `URL`。
-    public func addRepository(url: URL) {
-        let repository: MinecraftRepository = .init(name: "自定义目录", url: url)
+    /// - Parameters:
+    ///   - name: 目录名。
+    ///   - url: 游戏目录的 `URL`。
+    public func addRepository(name: String, url: URL) {
+        let repository: MinecraftRepository = .init(name: name, url: url)
         repositories.append(repository)
         LauncherConfig.shared.minecraftRepositories.append(repository)
         switchRepository(to: repository)
@@ -114,7 +132,13 @@ class InstanceManager: ObservableObject {
             if repositories.contains(where: { $0.url == url }) {
                 throw SimpleError("该目录已存在！")
             }
-            addRepository(url: url)
+            MessageBoxManager.shared.showInput(
+                title: "输入目录名",
+                initialContent: "自定义目录"
+            ) { name in
+                guard let name else { return }
+                self.addRepository(name: name, url: url)
+            }
         }
     }
     
