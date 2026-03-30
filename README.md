@@ -7,8 +7,21 @@
   <img src="https://img.shields.io/github/contributors/CylorineStudio/PCL.Mac.Refactor" alt="Contributors">
 </div>
 
-PCL.Mac 是 [Plain Craft Launcher](https://github.com/Meloong-Git/PCL) 的非官方衍生版，使用 SwiftUI 框架完全重构了 PCL 以支持 macOS。<br>
-系统版本要求：`macOS 12.0` 及以上。
+PCL.Mac 是 [Plain Craft Launcher](https://github.com/Meloong-Git/PCL) 的非官方衍生版，使用 SwiftUI 框架**完全重构**了 PCL 以支持 macOS！  
+
+用户群（QQ）：
+
+| 编号 | 群号                                         |
+|------|----------------------------------------------|
+| #1   | [1047463389](https://qm.qq.com/q/CnTInZfUSk) |
+| #2   | [1084907102](https://qm.qq.com/q/oTB8qOsXU4) |
+
+**请不要在 PCL 官方版本相关仓库或群聊中反馈关于 PCL.Mac 的问题。**
+
+## 环境要求
+
+- 普通使用：macOS 12.0+
+- 开发：macOS 14.5+ (Xcode 16+)
 
 ## 下载
 你可以在 [Releases](https://github.com/CylorineStudio/PCL.Mac.Refactor/releases) 中下载 PCL.Mac（Universal）。<br>
@@ -19,7 +32,6 @@ PCL.Mac 是 [Plain Craft Launcher](https://github.com/Meloong-Git/PCL) 的非官
 > 2. 进入「隐私与安全性」。
 > 3. 滑到底部，点击「仍然打开」。
 > 
-<br>
 
 ## 许可证
 - PCL.Mac 使用与 [PCL](https://github.com/Meloong-Git/PCL) 相同的许可证，并遵守其中关于“重度使用”的规定。
