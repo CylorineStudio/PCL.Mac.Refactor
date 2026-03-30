@@ -49,7 +49,8 @@ public struct ModrinthProject: Decodable, Identifiable, Hashable, Equatable {
         self.description = try container.decode(String.self, forKey: .description)
         self.iconURL = try container.decodeIfPresent(String.self, forKey: .iconURL).flatMap(URL.init(string:))
         self.downloads = try container.decode(Int.self, forKey: .downloads)
-        self.lastUpdate = try container.decodeIfPresent(Date.self, forKey: .dateModified) ?? container.decode(Date.self, forKey: .updated)
+        
+        self.lastUpdate = try decodeDate(from: container.decodeIfPresent(String.self, forKey: .dateModified) ?? container.decode(String.self, forKey: .updated), codingPath: container.codingPath)
         self.categories = try container.decode([String].self, forKey: .categories)
         self.clientCompatibility = try container.decode(ModrinthCompatibility.self, forKey: .clientSide)
         if let gameVersions: [String] = try container.decodeIfPresent([String].self, forKey: .gameVersions) {
@@ -129,11 +130,24 @@ public struct ModrinthVersion: Decodable, Identifiable {
         self.name = try container.decode(String.self, forKey: .name)
         self.versionNumber = try container.decode(String.self, forKey: .versionNumber)
         self.downloads = try container.decode(Int.self, forKey: .downloads)
-        self.datePublished = try container.decode(Date.self, forKey: .datePublished)
+        self.datePublished = try decodeDate(from: container.decode(String.self, forKey: .datePublished), codingPath: container.codingPath)
         self.dependencies = try container.decode([Dependency].self, forKey: .dependencies)
         self.type = try container.decode(VersionType.self, forKey: .type)
         self.gameVersions = try container.decode([String].self, forKey: .gameVersions)
         self.loaders = try container.decode([String].self, forKey: .loaders).compactMap(ModLoader.init(rawValue:))
         self.files = try container.decode([File].self, forKey: .files)
     }
+}
+
+fileprivate func decodeDate(from string: String, codingPath: [any CodingKey]) throws -> Date {
+    var string: String = string
+    let endsWithZ: Bool = string.hasSuffix("Z")
+    if string.count > (endsWithZ ? 20 : 25) {
+        string = String(string.prefix(19) + string.suffix(endsWithZ ? 1 : 6))
+    }
+    let formatter: ISO8601DateFormatter = .init()
+    guard let date: Date = formatter.date(from: string) else {
+        throw DecodingError.dataCorrupted(.init(codingPath: codingPath, debugDescription: "Expected date string to be ISO8601-formatted."))
+    }
+    return date
 }

@@ -74,7 +74,7 @@ struct ResourcesSearchPage: View {
                 try await viewModel.search("")
             } catch is CancellationError {
             } catch {
-                err("搜索\(viewModel.type.localizedName)失败：\(error.localizedDescription)")
+                err("搜索\(viewModel.type.localizedName)失败：\(error)")
                 await MainActor.run {
                     viewModel.loadingVM.fail(with: "搜索\(viewModel.type.localizedName)失败：\(error.localizedDescription)")
                 }

@@ -38,7 +38,7 @@ struct ResourceInstallPage: View {
                 try await viewModel.load(selectedInstance: InstanceManager.shared.currentInstance)
             } catch is CancellationError {
             } catch {
-                err("加载\(viewModel.project.type) \(viewModel.project.title) 版本列表失败：\(error.localizedDescription)")
+                err("加载\(viewModel.project.type) \(viewModel.project.title) 版本列表失败：\(error)")
                 viewModel.loadingVM.fail(with: "加载版本列表失败：\(error.localizedDescription)")
             }
         }
