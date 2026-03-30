@@ -1,6 +1,6 @@
 on:
   workflow_dispatch:
-    input:
+    inputs:
       macos_26:
         description: "macOS 26"
         type: boolean
