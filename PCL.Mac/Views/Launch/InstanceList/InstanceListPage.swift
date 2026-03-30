@@ -35,7 +35,9 @@ struct InstanceListPage: View {
                                     guard let name, !name.isEmpty else { return }
                                     repository.name = name
                                     AppRouter.shared.setRoot(.launch)
-                                    AppRouter.shared.append(.instanceList(repository))
+                                    DispatchQueue.main.async {
+                                        AppRouter.shared.append(.instanceList(repository))
+                                    }
                                     hint("已将目录名称更改为 \(name)！", type: .finish)
                                 }
                             }
