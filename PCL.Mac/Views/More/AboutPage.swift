@@ -44,6 +44,15 @@ struct AboutPage: View {
                                 .init("前往赞助", "https://afdian.com/a/bangbang93"))
                 }
             }
+            
+            MyCard("许可与版权声明", foldable: false) {
+                VStack(spacing: 0) {
+                    LicenseListItem("SwiftyJSON", license: "MIT", github: "SwiftyJSON/SwiftyJSON")
+                    LicenseListItem("ZIPFoundation", license: "MIT", github: "weichsel/ZIPFoundation")
+                    LicenseListItem("SwiftScaffolding", license: "MIT", github: "CylorineStudio/SwiftScaffolding")
+                    LicenseListItem("EasyTier", license: "LGPL-3.0", github: "EasyTier/EasyTier")
+                }
+            }
         }
     }
     
@@ -113,6 +122,22 @@ struct AboutPage: View {
                 self.buttonName = buttonName
                 self.url = url
             }
+        }
+    }
+    
+    private struct LicenseListItem: View {
+        private let name: String
+        private let license: String
+        private let github: String
+        
+        init(_ name: String, license: String, github: String) {
+            self.name = name
+            self.license = license
+            self.github = github
+        }
+        
+        var body: some View {
+            MyListItem(.init(name: name, description: "\(license) license | https://github.com/\(github)"))
         }
     }
 }
