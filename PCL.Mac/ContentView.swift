@@ -42,7 +42,6 @@ struct ContentView: View {
                 
                 router.content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(0xC0DEF5))
             }
             .overlay {
                 HStack {
@@ -76,6 +75,7 @@ struct ContentView: View {
                 sidebarContentAnimationProgress = 1.0
             }
         }
+        .background(Color(0xC0DEF5))
     }
 }
 
