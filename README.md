@@ -1,5 +1,5 @@
 <div align="center">
-  <img alt="Logo" src="/.github/assets/icon.png" width="180">
+  <img alt="Logo" src="/.github/assets/icon.png" width="140">
   <h1>PCL.Mac</h1>
   <img src="https://img.shields.io/badge/macOS-12.0+-81AD18" alt="Minimum OS Version">
   <img src="https://img.shields.io/github/stars/CylorineStudio/PCL.Mac.Refactor?style=flat" alt="Stars">
@@ -16,7 +16,7 @@ PCL.Mac 是 [Plain Craft Launcher](https://github.com/Meloong-Git/PCL) 的非官
 | #1   | [1047463389](https://qm.qq.com/q/CnTInZfUSk) |
 | #2   | [1084907102](https://qm.qq.com/q/oTB8qOsXU4) |
 
-**请不要在 PCL 官方版本相关仓库或群聊中反馈关于 PCL.Mac 的问题。**
+**请不要在 PCL 官方版本 / 其它版本相关仓库或群聊中反馈关于 PCL.Mac 的问题。**
 
 ## 环境要求
 
