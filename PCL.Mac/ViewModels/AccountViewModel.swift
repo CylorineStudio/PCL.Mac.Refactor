@@ -121,7 +121,7 @@ class AccountViewModel: ObservableObject {
                     defer {
                         DispatchQueue.main.async {
                             NSApplication.shared.activate(ignoringOtherApps: true)
-                            MessageBoxManager.shared.complete(with: .button(id: 0))
+                            MessageBoxManager.shared.complete(with: .button(id: 1))
                         }
                     }
                     for i in 0..<pollCount {
