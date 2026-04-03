@@ -28,6 +28,15 @@ public struct VersionManifest: Decodable, Equatable {
     
     public struct Version: Decodable, Hashable {
         private static let aprilFoolVersions: [String] = ["15w14a", "1.rv-pre1", "3d shareware v1.34", "20w14infinite", "22w13oneblockatatime", "23w13a_or_b", "24w14potato", "25w14craftmine"]
+        private static let calendar: Calendar? = {
+            var calendar: Calendar = .init(identifier: .gregorian)
+            guard let timeZome: TimeZone = .init(identifier: "Europe/Stockholm") else {
+                err("创建 Europe/Stockholm 时区失败")
+                return nil
+            }
+            calendar.timeZone = timeZome
+            return calendar
+        }()
         
         public let id: String
         public let type: MinecraftVersion.VersionType
@@ -43,20 +52,27 @@ public struct VersionManifest: Decodable, Equatable {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             self.id = try container.decode(String.self, forKey: .id)
                 .replacingOccurrences(of: " Pre-Release ", with: "-pre")
+            self.releaseTime = try container.decode(Date.self, forKey: .releaseTime)
             var type: MinecraftVersion.VersionType = try container.decode(MinecraftVersion.VersionType.self, forKey: .type)
-            if type == .snapshot && Self.isAprilFoolVersion(id: id, type: type) {
+            if type == .snapshot && Self.isAprilFoolVersion(id: id, releaseTime: releaseTime) {
                 type = .aprilFool
             }
             self.type = type
             self.url = try container.decode(URL.self, forKey: .url)
             self.time = try container.decode(Date.self, forKey: .time)
-            self.releaseTime = try container.decode(Date.self, forKey: .releaseTime)
         }
         
-        private static func isAprilFoolVersion(id: String, type: MinecraftVersion.VersionType) -> Bool {
+        private static func isAprilFoolVersion(id: String, releaseTime: Date) -> Bool {
             if aprilFoolVersions.contains(id.lowercased()) { return true }
-            return type == .snapshot // 是快照
-            && !(id.count == 6 && Array(id)[2] == "w") // 且不是标准快照格式 (如 23w33a)
+            
+            if let calendar {
+                let components: DateComponents = calendar.dateComponents([.month, .day], from: releaseTime)
+                if let month: Int = components.month, let day: Int = components.day {
+                    return month == 4 && day == 1
+                }
+            }
+            
+            return !(id.count == 6 && Array(id)[2] == "w" && !id.starts(with: "26")) // 不是标准快照版本号格式 (如 23w33a)
             && id.rangeOfCharacter(from: .letters) != nil // 至少有一个字母 (筛掉 1.x 与 1.x.x)
             && !id.contains("-pre") && !id.contains("-rc") // 不是 Pre Release 或 Release Candidate
             && !id.contains("snapshot") // 不是新版本号格式的快照（如 26.1-snapshot-1）

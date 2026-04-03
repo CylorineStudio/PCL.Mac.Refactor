@@ -76,7 +76,8 @@ class MinecraftDownloadPageViewModel: ObservableObject {
         case "23w13a_or_b": "2023 | 研究表明：玩家喜欢作出选择——越多越好！"
         case "24w14potato": "2024 | 毒马铃薯一直都被大家忽视和低估，于是我们超级加强了它！"
         case "25w14craftmine": "2025 | 你可以合成任何东西——包括合成你的世界！"
-        default: "20?? | ???"
+        case "26w14a": "2026 | 为什么需要物品栏？让方块们跟着你走吧！"
+        default: "20?? | ???（当前版本的启动器中没有这个游戏版本的描述……）"
         }
     }
 }
