@@ -27,7 +27,6 @@ public struct VersionManifest: Decodable, Equatable {
     }
     
     public struct Version: Decodable, Hashable {
-        private static let aprilFoolVersions: [String] = ["15w14a", "1.rv-pre1", "3d shareware v1.34", "20w14infinite", "22w13oneblockatatime", "23w13a_or_b", "24w14potato", "25w14craftmine"]
         private static let calendar: Calendar? = {
             var calendar: Calendar = .init(identifier: .gregorian)
             guard let timeZome: TimeZone = .init(identifier: "Europe/Stockholm") else {
@@ -63,8 +62,6 @@ public struct VersionManifest: Decodable, Equatable {
         }
         
         private static func isAprilFoolVersion(id: String, releaseTime: Date) -> Bool {
-            if aprilFoolVersions.contains(id.lowercased()) { return true }
-            
             if let calendar {
                 let components: DateComponents = calendar.dateComponents([.month, .day], from: releaseTime)
                 if let month: Int = components.month, let day: Int = components.day {
