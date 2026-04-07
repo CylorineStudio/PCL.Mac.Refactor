@@ -108,13 +108,32 @@ public class YggdrasilService {
     public func fetchMetadata() async throws -> ServerMetadata {
         do {
             let response = try await request("GET", "/")
-            let json: JSON = try response.json()
+            let json = try response.json()
+            let meta: JSON = json["meta"]
             return .init(
-                serverName: json["serverName"].string,
-                implementationName: json["implementationName"].string,
-                implementationVersion: json["implementationVersion"].string,
+                serverName: meta["serverName"].string,
+                implementationName: meta["implementationName"].string,
+                implementationVersion: meta["implementationVersion"].string,
                 encoded: response.data.base64EncodedString()
             )
+        } catch let error as DecodingError {
+            throw Error.invalidResponseFormat(underlying: error)
+        }
+    }
+    
+    /// 查询某个角色的完整 `PlayerProfile`（包括角色属性）。
+    /// - Parameter uuid: 角色的 `UUID`。
+    /// - Returns: 完整 `PlayerProfile`。
+    public func fullProfile(for uuid: UUID) async throws -> PlayerProfile {
+        do {
+            let uuidString = UUIDUtils.string(of: uuid, withHyphens: false)
+            return try await request(
+                "GET", "/sessionserver/session/minecraft/profile/\(uuidString)",
+                body: [
+                    "unsigned": true
+                ]
+            )
+            .decode(PlayerProfile.self)
         } catch let error as DecodingError {
             throw Error.invalidResponseFormat(underlying: error)
         }
@@ -165,21 +184,20 @@ public class YggdrasilService {
         headers: [String: String]? = nil,
         body: [String: Any?]? = nil
     ) async throws -> Requests.Response {
-        let response = try await Requests.post(authServerURL.appending(path: path), headers: headers, body: body, using: .json)
-        let json: JSON = try response.json()
-        
-        if let error: String = json["error"].string {
-            let errorMessage: String = json["errorMessage"].stringValue
-            let cause: String? = json["cause"].string
-            throw Error.apiError(error: error, errorMessage: errorMessage, cause: cause)
-        }
+        let response = try await Requests.request(url: authServerURL.appending(path: path), method: method, headers: headers, body: body, using: .json, revalidate: false)
         if !(200..<300).contains(response.statusCode) {
+            if let json: JSON = try? response.json(),
+               let error: String = json["error"].string {
+                let errorMessage: String = json["errorMessage"].stringValue
+                let cause: String? = json["cause"].string
+                throw Error.apiError(error: error, errorMessage: errorMessage, cause: cause)
+            }
+            
             guard let string = String(data: response.data, encoding: .utf8) else {
                 throw Error.internalError(description: "解码响应体失败。")
             }
             throw Error.apiError(error: response.statusCode.description, errorMessage: string, cause: nil)
         }
-        
         return response
     }
 }

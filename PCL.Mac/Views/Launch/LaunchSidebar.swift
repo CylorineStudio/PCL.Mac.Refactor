@@ -28,24 +28,28 @@ struct LaunchSidebar: Sidebar {
     private var normalBody: some View {
         VStack {
             Spacer()
-            if showingAccountEditor {
-                accountEditorView
-                    .opacity(accountEditAppeared ? 1 : 0)
-                    .scaleEffect(accountEditAppeared ? 1 : 0.95)
-                    .animation(.spring(response: 0.2), value: accountEditAppeared)
-                    .onAppear {
-                        accountEditAppeared = true
+            if accountViewModel.addingYggdrasilAccount {
+                addYggdrasilAccountBody
+            } else {
+                if showingAccountEditor {
+                    accountEditorView
+                        .opacity(accountEditAppeared ? 1 : 0)
+                        .scaleEffect(accountEditAppeared ? 1 : 0.95)
+                        .animation(.spring(response: 0.2), value: accountEditAppeared)
+                        .onAppear {
+                            accountEditAppeared = true
+                        }
+                } else if let account = accountViewModel.currentAccount {
+                    MyListItem {
+                        VStack(spacing: 15) {
+                            PlayerAvatar(account)
+                            MyText(account.profile.name, size: 16)
+                        }
                     }
-            } else if let account = accountViewModel.currentAccount {
-                MyListItem {
-                    VStack(spacing: 15) {
-                        PlayerAvatar(account)
-                        MyText(account.profile.name, size: 16)
+                    .fixedSize()
+                    .onTapGesture {
+                        showingAccountEditor = true
                     }
-                }
-                .fixedSize()
-                .onTapGesture {
-                    showingAccountEditor = true
                 }
             }
             Spacer()
@@ -139,7 +143,7 @@ struct LaunchSidebar: Sidebar {
                         PlayerAvatar(account, length: 36)
                         VStack(alignment: .leading) {
                             MyText(account.profile.name)
-                            MyText(account.type.localizedName, color: .colorGray3)
+                            MyText(account.localizedTypeName, color: .colorGray3)
                         }
                         Spacer()
                         if hovered {
@@ -163,6 +167,34 @@ struct LaunchSidebar: Sidebar {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: accountViewModel.currentAccount?.id)
+    }
+    
+    private var addYggdrasilAccountBody: some View {
+        VStack {
+            fieldLine("服务器") {
+                MyTextField(text: $accountViewModel.yggdrasilServer)
+            }
+            fieldLine("用户名") {
+                MyTextField(text: $accountViewModel.yggdrasilUsername)
+            }
+            fieldLine("密码") {
+                MyTextField(text: $accountViewModel.yggdrasilPassword, secure: true)
+            }
+            HStack {
+                MyButton("返回") {
+                    accountViewModel.addingYggdrasilAccount = false
+                }
+                .frame(width: 50)
+                MyButton("登录", type: .highlight) {
+                    Task {
+                        await accountViewModel.addYggdrasilAccount()
+                    }
+                }
+                .frame(width: 50)
+            }
+            .frame(height: 30)
+            .padding(.top, 4)
+        }
     }
     
     private var launchingBody: some View {
@@ -241,6 +273,16 @@ struct LaunchSidebar: Sidebar {
                 .opacity(0.5)
             value()
         }
+    }
+    
+    @ViewBuilder
+    private func fieldLine(_ name: String, content: () -> some View) -> some View {
+        HStack(spacing: 0) {
+            MyText(name)
+                .frame(width: 50, alignment: .leading)
+            content()
+        }
+        .padding(.horizontal)
     }
 }
 

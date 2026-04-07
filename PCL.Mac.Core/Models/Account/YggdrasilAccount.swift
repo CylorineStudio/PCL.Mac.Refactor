@@ -40,7 +40,8 @@ public class YggdrasilAccount: Account {
         let response = try await service.refresh(accessToken, clientToken: clientToken)
         self.accessToken = response.accessToken
         if let profile = response.selectedProfile {
-            self.profile = profile
+            let fullProfile: PlayerProfile = try await service.fullProfile(for: profile.id)
+            self.profile = fullProfile
         }
     }
     

@@ -28,6 +28,11 @@ class AccountViewModel: ObservableObject {
         return nil
     }
     
+    @Published public var addingYggdrasilAccount: Bool = false
+    @Published public var yggdrasilServer: String = ""
+    @Published public var yggdrasilUsername: String = ""
+    @Published public var yggdrasilPassword: String = ""
+    
     public init() {
         self.accounts = LauncherConfig.shared.accounts
         self.currentAccountId = LauncherConfig.shared.currentAccountId
@@ -35,23 +40,23 @@ class AccountViewModel: ObservableObject {
     
     /// 请求用户添加账号。
     public func requestAddAccount() {
-        Task {
-            log("开始请求添加账号")
+        Task { @MainActor in
+            log("正在请求添加账号")
             guard let idx: Int = await MessageBoxManager.shared.showListAsync(
-                title: "选择账号类型",
+                title: "添加账号 - 选择验证类型",
                 items: [
-                    .init(image: "IconMicrosoftAccount", imageSize: 32, name: "正版账号", description: nil),
-                    .init(image: "IconOfflineAccount", imageSize: 32, name: "离线账号", description: nil)
+                    .init(image: "IconMicrosoftAccount", imageSize: 32, name: "正版验证", description: nil),
+                    .init(image: "IconThirdpartyAccount", imageSize: 32, name: "第三方验证", description: nil),
+                    .init(image: "IconOfflineAccount", imageSize: 32, name: "离线验证", description: nil)
                 ]
             ) else {
-                log("用户取消了添加")
                 return
             }
             if idx == 0 {
-                log("用户选择了添加正版账号")
                 await requestAddMicrosoftAccount()
+            } else if idx == 1 {
+                addingYggdrasilAccount = true
             } else {
-                log("用户选择了添加离线账号")
                 await requestAddOfflineAccount()
             }
         }
@@ -80,9 +85,6 @@ class AccountViewModel: ObservableObject {
         let defaultSkin: Data = .init(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAdVBMVEUAAAAKvLwAzMwmGgokGAgrHg0zJBE/KhW3g2uzeV5SPYn///+qclmbY0mQWT8Af38AaGhVVVWUYD52SzOBUzmPXj5JJRBCHQp3QjVqQDA0JRIoKCg3Nzc/Pz9KSko6MYlBNZtGOqUDenoFiIgElZUApKQAr6/wvakZAAAAAXRSTlMAQObYZgAAAolJREFUeNrt1l1rHucZReFrj/whu5hSCCQtlOTE/f+/Jz4q9Cu0YIhLcFVpVg+FsOCVehi8jmZgWOzZz33DM4CXlum3gH95GgeAzQZVeL4gTm6Cbp4vqFkD8HwBazPY8wWbMq9utu3mNZ5fotVezbzOE3kBEFbaZuc8kb00NTMUbWJp678Xf2GV7RRtx1TDQQ6XBNvsmL2+2vHq1TftmMPIyAWujtN2cl274ua2jpVpZneXEjjo7XW1q53V9ds4ODO5xIuhvGHvfLI3aixauig415uuO2+vl9+cncfsFw25zL650fXn687jqnXuP68/X3+eV3zE7y6u9eB73MlfAcfbTf3yR8CfAX+if8S/H5/EAbAxj5LN48tULvEBOh8V1AageMTXe2YHAOwHbZxrzPkSR3+ffr8TR2JDzE/4Fj8CDgEwDsW+q+9GsR07hhg2CsALBgMo2v5wNxXnQXMeGQVW7gUAyKI2m6KDsJ8Au3++F5RZO+kKNQjQcLLWgjwUjBXLltFgWWMUUlviocBgNoxNGgMjSxiYAA7zgLFo2hgIENiDU8gQCzDOmViGFAsEuBcQSDCothhpJaDRA8E5fHqH2nTbYm5fHLo1V0u3B7DAuheoeScRYabjjjuzs17cHVaTrTXmK78m9swP34d9oK/dfeXSIH2PW/MXwPvxN/bJlxw8zlYAcEyeI6gNgA/O8P8neN8xe1IHP2gTzegjvhUDfuRygmwEs2GE4mkCDIAzm2R4yAuPsIdR9k8AvMc+3L9+2UEjo4WP0FpgP19O0MzCsqxIoMsdDBvYcQyGmO0ZJRoYCKjLJWY0BAhYwGUBCgkh8MRdOKt+ruqMwAB2OcEX94U1TPbYJP0PkyyAI1S6cSIAAAAASUVORK5CYII=")!
         do {
             guard let textures: Data = account.profile.property(forName: "textures") else {
-                if !(account is OfflineAccount) {
-                    warn("玩家档案中不存在 textures 属性")
-                }
                 return defaultSkin
             }
             let json: JSON = try .init(data: textures)
@@ -224,6 +226,64 @@ class AccountViewModel: ObservableObject {
             if result == 1 {
                 NSWorkspace.shared.open(link.url!)
             }
+        }
+    }
+    
+    public func addYggdrasilAccount() async {
+        guard let authServerURL = URL(string: yggdrasilServer.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            hint("验证服务器地址错误！", type: .critical)
+            return
+        }
+        let username: String = yggdrasilUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        let password: String = yggdrasilPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !username.isEmpty && !password.isEmpty else {
+            hint("用户名与密码不能为空！", type: .critical)
+            return
+        }
+        let service: YggdrasilService = .init(authServerURL: authServerURL)
+        do {
+            log("正在进行验证，服务器地址：\(authServerURL)")
+            let authResponse = try await service.authenticate(username, password: password)
+            log("验证成功")
+            
+            let profile: PlayerProfile
+            if let selectedProfile = authResponse.selectedProfile {
+                profile = selectedProfile
+            } else {
+                // TODO: 弹窗并让用户选择
+                guard let firstProfile = authResponse.availableProfiles.first else {
+                    hint("错误：这个账号中没有角色！", type: .critical)
+                    return
+                }
+                profile = firstProfile
+            }
+            // 获取带有角色属性的 PlayerProfile
+            let fullProfile: PlayerProfile = try await service.fullProfile(for: profile.id)
+            let serverMetadata = try await service.fetchMetadata()
+            let account: YggdrasilAccount = .init(
+                profile: fullProfile,
+                authServer: serverMetadata.serverName ?? authServerURL.host ?? "未知",
+                authServerURL: authServerURL,
+                accessToken: authResponse.accessToken,
+                clientToken: authResponse.clientToken
+            )
+            log("添加第三方账号（\(account.authServer)）成功：\(fullProfile.name)")
+            await MainActor.run {
+                addAccount(account)
+                hint("添加成功！", type: .finish)
+                addingYggdrasilAccount = false
+                yggdrasilServer = ""
+                yggdrasilUsername = ""
+                yggdrasilPassword = ""
+            }
+        } catch {
+            log("添加第三方账号失败：\(error.localizedDescription)")
+            MessageBoxManager.shared.showText(
+                title: "添加第三方账号失败",
+                content: "在验证时发生错误：\(error.localizedDescription)",
+                level: .error,
+                .yes()
+            )
         }
     }
     
