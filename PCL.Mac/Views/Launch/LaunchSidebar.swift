@@ -43,7 +43,10 @@ struct LaunchSidebar: Sidebar {
                     MyListItem {
                         VStack(spacing: 15) {
                             PlayerAvatar(account)
-                            MyText(account.profile.name, size: 16)
+                            VStack(spacing: 4) {
+                                MyText(account.profile.name, size: 16)
+                                MyText(account.localizedTypeName, size: 12, color: .colorGray4)
+                            }
                         }
                     }
                     .fixedSize()
