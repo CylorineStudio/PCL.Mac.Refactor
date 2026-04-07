@@ -1,0 +1,185 @@
+//
+//  YggdrasilService.swift
+//  PCL.Mac
+//
+//  Created by AnemoFlower on 2026/4/7.
+//
+
+import Foundation
+import SwiftyJSON
+
+public class YggdrasilService {
+    private let authServerURL: URL
+    
+    public init(authServerURL: URL) {
+        self.authServerURL = authServerURL
+    }
+    
+    /// 使用密码进行身份验证，并分配一个新的令牌。
+    ///
+    /// 参见 [Yggdrasil 服务端技术规范#登录](https://github.com/yushijinhun/authlib-injector/wiki/Yggdrasil-服务端技术规范#登录)
+    /// - Parameters:
+    ///   - username: 邮箱或用户名。
+    ///   - password: 密码。
+    /// - Returns: 包含 `accessToken`、`clientToken` 和角色列表的 `AuthResponse`。
+    public func authenticate(_ username: String, password: String) async throws -> AuthResponse {
+        let response = try await request(
+            "POST", "/authserver/authenticate",
+            body: [
+                "username": username,
+                "password": password,
+                "requestUser": true,
+                "agent": [
+                    "name": "Minecraft",
+                    "version": 1
+                ]
+            ]
+        )
+        
+        do {
+            return try response.decode(AuthResponse.self)
+        } catch let error as DecodingError {
+            throw Error.invalidResponseFormat(underlying: error)
+        }
+    }
+    
+    /// 检验令牌是否有效。
+    ///
+    /// 参见 [Yggdrasil 服务端技术规范#验证令牌](https://github.com/yushijinhun/authlib-injector/wiki/Yggdrasil-服务端技术规范#验证令牌)
+    /// - Parameters:
+    ///   - accessToken: 令牌的 `accessToken`。
+    ///   - clientToken: 令牌的 `refreshToken`（可选）。
+    /// - Returns: 一个 `Bool`，表示令牌是否有效。
+    public func validateToken(_ accessToken: String, clientToken: String? = nil) async throws -> Bool {
+        do {
+            let response = try await request(
+                "POST", "/authserver/validate",
+                body: [
+                    "accessToken": accessToken,
+                    "clientToken": clientToken
+                ]
+            )
+            return response.statusCode == 204
+        } catch let error as Error {
+            if case .apiError(let error, _, _) = error, error == "ForbiddenOperationException" {
+                return false
+            }
+            throw error
+        }
+    }
+    
+    /// 吊销原令牌，并颁发一个新的令牌。
+    ///
+    /// 参见 [Yggdrasil 服务端技术规范#刷新](https://github.com/yushijinhun/authlib-injector/wiki/Yggdrasil-服务端技术规范#刷新)
+    /// - Parameters:
+    ///   - accessToken: 令牌的 `accessToken`。
+    ///   - clientToken: 令牌的 `clientToken`（可选）。
+    /// - Returns: 包含新 `accessToken` 和新角色档案（若发生变更）的 `RefreshResponse`。
+    public func refresh(_ accessToken: String, clientToken: String? = nil) async throws -> RefreshResponse {
+        let response = try await request(
+            "POST", "/authserver/refresh",
+            body: [
+                "accessToken": accessToken,
+                "clientToken": clientToken,
+                "requestUser": true
+            ]
+        )
+        
+        do {
+            let refreshResponse = try response.decode(RefreshResponse.self)
+            if let clientToken {
+                guard refreshResponse.clientToken == clientToken else {
+                    throw Error.invalidResponseFormat(underlying: SimpleError("颁发的新令牌的 clientToken 与原令牌的不同。"))
+                }
+            }
+            return refreshResponse
+        } catch let error as DecodingError {
+            throw Error.invalidResponseFormat(underlying: error)
+        }
+    }
+    
+    /// 获取 API 元数据。
+    ///
+    /// 参见：
+    /// - [Yggdrasil 服务端技术规范#API 元数据获取](https://github.com/yushijinhun/authlib-injector/wiki/Yggdrasil-服务端技术规范#api-元数据获取)
+    /// - [启动器技术规范#配置预获取](https://github.com/yushijinhun/authlib-injector/wiki/启动器技术规范#配置预获取)
+    ///
+    /// - Returns: 包含部分字段和 Base64 编码的元数据的 `ServerMetadata`。
+    public func fetchMetadata() async throws -> ServerMetadata {
+        do {
+            let response = try await request("GET", "/")
+            let json: JSON = try response.json()
+            return .init(
+                serverName: json["serverName"].string,
+                implementationName: json["implementationName"].string,
+                implementationVersion: json["implementationVersion"].string,
+                encoded: response.data.base64EncodedString()
+            )
+        } catch let error as DecodingError {
+            throw Error.invalidResponseFormat(underlying: error)
+        }
+    }
+    
+    public enum Error: LocalizedError {
+        case apiError(error: String, errorMessage: String, cause: String?)
+        case internalError(description: String)
+        case invalidResponseFormat(underlying: Swift.Error)
+        
+        public var errorDescription: String? {
+            switch self {
+            case .apiError(let error, let errorMessage, let cause):
+                "调用 API 失败：(\(error)) \(errorMessage)" + (cause.map { "，原因：\($0)" } ?? "")
+            case .internalError(let description):
+                "发生内部错误：\(description)"
+            case .invalidResponseFormat(let underlying):
+                "响应格式错误：\(underlying.localizedDescription)"
+            }
+        }
+    }
+    
+    public struct AuthResponse: Codable {
+        public let accessToken: String
+        public let clientToken: String
+        public let availableProfiles: [PlayerProfile]
+        public let selectedProfile: PlayerProfile?
+    }
+    
+    public struct RefreshResponse: Codable {
+        public let accessToken: String
+        public let clientToken: String
+        public let selectedProfile: PlayerProfile?
+    }
+    
+    public struct ServerMetadata {
+        public let serverName: String?
+        public let implementationName: String?
+        public let implementationVersion: String?
+        
+        /// 经过 Base64 编码后的字符串。
+        public let encoded: String
+    }
+    
+    private func request(
+        _ method: String,
+        _ path: String,
+        headers: [String: String]? = nil,
+        body: [String: Any?]? = nil
+    ) async throws -> Requests.Response {
+        let response = try await Requests.post(authServerURL.appending(path: path), headers: headers, body: body, using: .json)
+        let json: JSON = try response.json()
+        
+        if let error: String = json["error"].string {
+            let errorMessage: String = json["errorMessage"].stringValue
+            let cause: String? = json["cause"].string
+            throw Error.apiError(error: error, errorMessage: errorMessage, cause: cause)
+        }
+        if !(200..<300).contains(response.statusCode) {
+            guard let string = String(data: response.data, encoding: .utf8) else {
+                throw Error.internalError(description: "解码响应体失败。")
+            }
+            throw Error.apiError(error: response.statusCode.description, errorMessage: string, cause: nil)
+        }
+        
+        return response
+    }
+}
