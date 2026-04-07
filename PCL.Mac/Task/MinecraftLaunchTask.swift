@@ -77,16 +77,33 @@ public enum MinecraftLaunchTask {
     }
     
     private static func refreshAccount(task: SubTask, model: Model) async throws {
-        if model.account.shouldRefresh() {
+        let shouldRefresh: Bool
+        do {
+            shouldRefresh = try await model.account.shouldRefresh()
+        } catch {
+            err("验证令牌有效性失败：\(error.localizedDescription)")
+            if await MessageBoxManager.shared.showTextAsync(
+                title: "验证令牌有效性失败",
+                content: "在验证访问令牌有效性时发生错误：\(error.localizedDescription)\n\n如果继续启动，可能会导致无法加入部分需要验证的服务器！\n是否继续启动？\n\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。",
+                level: .error,
+                .no(),
+                .yes(label: "继续", type: .red)
+            ) == 0 {
+                try task.cancel()
+            }
+            model.options.accessToken = model.account.accessToken
+            return
+        }
+        if shouldRefresh {
             do {
                 try await model.account.refresh()
                 log("刷新 accessToken 成功")
             } catch is CancellationError {
             } catch {
-                err("刷新 accessToken 失败")
+                err("刷新 accessToken 失败：\(error.localizedDescription)")
                 if await MessageBoxManager.shared.showTextAsync(
                     title: "刷新访问令牌失败",
-                    content: "在刷新访问令牌时发生错误：\(error.localizedDescription)\n\n如果继续启动，可能会导致无法加入部分需要正版验证的服务器！\n是否继续启动？\n\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。",
+                    content: "在刷新访问令牌时发生错误：\(error.localizedDescription)\n\n如果继续启动，可能会导致无法加入部分需要验证的服务器！\n是否继续启动？\n\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。",
                     level: .error,
                     .no(),
                     .yes(label: "继续", type: .red)
@@ -95,7 +112,7 @@ public enum MinecraftLaunchTask {
                 }
             }
         }
-        model.options.accessToken = model.account.accessToken()
+        model.options.accessToken = model.account.accessToken
     }
     
     private static func precheck(task: SubTask, model: Model) async throws {

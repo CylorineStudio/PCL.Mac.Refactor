@@ -13,13 +13,12 @@ public class YggdrasilAccount: Account {
     public let authServer: String
     public let authServerURL: URL
     
-    private var _accessToken: String
-    private var refreshToken: String
-    private var lastRefresh: Date
+    private lazy var service: YggdrasilService = .init(authServerURL: authServerURL)
+    public private(set) var accessToken: String
+    private var clientToken: String
     
     private enum CodingKeys: String, CodingKey {
-        case id, profile, authServer, authServerURL, refreshToken, lastRefresh
-        case _accessToken = "accessToken"
+        case id, profile, authServer, authServerURL, accessToken, clientToken
     }
     
     public init(
@@ -27,26 +26,25 @@ public class YggdrasilAccount: Account {
         authServer: String,
         authServerURL: URL,
         accessToken: String,
-        refreshToken: String
+        clientToken: String
     ) {
         self.id = .init()
         self.profile = profile
         self.authServer = authServer
         self.authServerURL = authServerURL
-        self._accessToken = accessToken
-        self.refreshToken = refreshToken
-        self.lastRefresh = .now
-    }
-    
-    public func accessToken() -> String {
-        _accessToken
+        self.accessToken = accessToken
+        self.clientToken = clientToken
     }
     
     public func refresh() async throws {
-        // not implemented
+        let response = try await service.refresh(accessToken, clientToken: clientToken)
+        self.accessToken = response.accessToken
+        if let profile = response.selectedProfile {
+            self.profile = profile
+        }
     }
     
-    public func shouldRefresh() -> Bool {
-        return Date.now.timeIntervalSince(lastRefresh) >= 86400
+    public func shouldRefresh() async throws -> Bool {
+        return try await service.validateToken(accessToken, clientToken: clientToken)
     }
 }

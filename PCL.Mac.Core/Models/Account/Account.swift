@@ -10,9 +10,9 @@ import Foundation
 public protocol Account: Codable {
     var profile: PlayerProfile { get }
     var id: UUID { get }
-    func accessToken() -> String
+    var accessToken: String { get }
     func refresh() async throws
-    func shouldRefresh() -> Bool
+    func shouldRefresh() async throws -> Bool
 }
 
 public enum AccountType: String, Codable {
