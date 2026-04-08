@@ -35,7 +35,7 @@ jobs:
 
       - name: Prepare release assets
         run: |
-          cp build.xcarchive/Products/Applications/PCL.Mac.app ./PCL.Mac.app
+          cp -r build.xcarchive/Products/Applications/PCL.Mac.app ./PCL.Mac.app
           zip -r "PCL.Mac-${{ env.TAG_NAME }}.zip" ./PCL.Mac.app/*
           zip -r build.xcarchive.zip ./build.xcarchive
       
