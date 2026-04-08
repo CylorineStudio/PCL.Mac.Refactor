@@ -35,18 +35,15 @@ jobs:
 
       - name: Prepare release assets
         run: |
-          mv build.xcarchive/Products/Applications/PCL.Mac.app ./PCL.Mac.app
+          cp build.xcarchive/Products/Applications/PCL.Mac.app ./PCL.Mac.app
           zip -r "PCL.Mac-${{ env.TAG_NAME }}.zip" ./PCL.Mac.app/*
-          mkdir dSYMs
-          mv build.xcarchive/dSYMs/PCL.Mac.app.dSYM ./dSYMs/PCL.Mac.app.dSYM
-          mv build.xcarchive/dSYMs/Core.framework.dSYM ./dSYMs/Core.framework.dSYM
-          zip -r "PCL.Mac-${{ env.TAG_NAME }}-dSYMs.zip" ./dSYMs/*
+          zip -r build.xcarchive.zip ./build.xcarchive
       
       - name: Create release
         run: |
           gh release create $TAG_NAME \
             "PCL.Mac-${{ env.TAG_NAME }}.zip" \
-            "PCL.Mac-${{ env.TAG_NAME }}-dSYMs.zip" \
+            "build.xcarchive.zip" \
             --title $VERSION_NUMBER \
             --generate-notes \
             --draft
