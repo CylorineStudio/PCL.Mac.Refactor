@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir "PCL.Mac-artifact"
           cp -r ./build.xcarchive/Products/Applications/PCL.Mac.app ./PCL.Mac-artifact/PCL.Mac.app
-          cp -r ./build.xcarchive ./PCL.Mac-archive/build.xcarchive
+          cp -r ./build.xcarchive ./PCL.Mac-artifact/build.xcarchive
 
       - name: Upload app artifact
         uses: actions/upload-artifact@v4
