@@ -24,6 +24,7 @@ struct WindowButton: View {
                 .scaledToFit()
                 .frame(width: 18, height: 18)
                 .padding(.top, 3)
+                .foregroundStyle(.white)
             Circle()
                 .fill(.white.opacity(hovered ? 0.15 : 0))
                 .frame(width: hovered ? 30 : 20)
