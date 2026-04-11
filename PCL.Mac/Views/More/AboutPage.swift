@@ -61,12 +61,18 @@ struct AboutPage: View {
         @Environment(\.disableHoverAnimation) private var cardAppearAnimationPlaying: Bool
         
         private let avatar: Avatar
+        private let avatarURL: URL?
         private let nickname: String
         private let description: String
         private let links: [Link]
         
         init(_ avatar: Avatar, _ nickname: String, _ description: String, _ links: Link...) {
             self.avatar = avatar
+            if case .network(let url) = avatar {
+                self.avatarURL = URL(string: url)
+            } else {
+                self.avatarURL = nil
+            }
             self.nickname = nickname
             self.description = description
             self.links = links
@@ -78,9 +84,9 @@ struct AboutPage: View {
                     Group {
                         switch avatar {
                         case .local(let imageResource): Image(imageResource).resizable()
-                        case .network(let url):
-                            if let url: URL = .init(string: url) {
-                                NetworkImage(url: url)
+                        case .network(_):
+                            if let avatarURL {
+                                NetworkImage(url: avatarURL)
                             } else {
                                 Image(nsImage: .init())
                             }

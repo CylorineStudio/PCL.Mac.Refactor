@@ -26,6 +26,6 @@ struct ListItem {
     
     enum Image {
         case resource(ImageResource)
-        case data(Data)
+        case nsImage(NSImage)
     }
 }

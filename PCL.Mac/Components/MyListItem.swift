@@ -35,7 +35,7 @@ struct MyListItem<Content: View>: View {
                             Group {
                                 switch image {
                                 case .resource(let imageResource): Image(imageResource).resizable()
-                                case .data(let data): Image(nsImage: NSImage(data: data) ?? .init()).resizable()
+                                case .nsImage(let nsImage): Image(nsImage: nsImage).resizable()
                                 }
                             }
                             .scaledToFit()
