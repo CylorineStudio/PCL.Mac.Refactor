@@ -40,8 +40,8 @@ class AccountViewModel: ObservableObject {
             guard let idx: Int = await MessageBoxManager.shared.showListAsync(
                 title: "选择账号类型",
                 items: [
-                    .init(image: .resource(.iconMicrosoftAccount), imageSize: 32, name: "正版账号", description: nil),
-                    .init(image: .resource(.iconOfflineAccount), imageSize: 32, name: "离线账号", description: nil)
+                    .init(image: .iconMicrosoftAccount, imageSize: 32, name: "正版账号", description: nil),
+                    .init(image: .iconOfflineAccount, imageSize: 32, name: "离线账号", description: nil)
                 ]
             ) else {
                 log("用户取消了添加")
