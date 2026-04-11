@@ -17,12 +17,12 @@ struct AboutPage: View {
                                 .init("GitHub 主页", "https://github.com/LTCatt"),
                                 .init("前往赞助", "https://afdian.com/a/LTCat"))
                     
-                    ProfileView(.local(.anemoFlower), "风花AnemoFlower", "PCL.Mac 的作者",
+                    ProfileView(.network(url: "https://cylorine.studio/img/avatar/AnemoFlower.png"), "风花AnemoFlower", "PCL.Mac 的作者",
                                 .init("GitHub 主页", "https://github.com/AnemoFlower"),
                                 .init("Bilibili 主页", "https://space.bilibili.com/3461564927576750"),
                                 .init("前往赞助", "https://afdian.com/a/AnemoFlower"))
                     
-                    ProfileView(.network(url: "https://cylorine.studio/img/cylorine-studio.png"), "Cylorine Studio", "PCL.Mac 的开发团队",
+                    ProfileView(.network(url: "https://cylorine.studio/img/avatar/CylorineStudio.png"), "Cylorine Studio", "PCL.Mac 的开发团队",
                                 .init("GitHub 主页", "https://github.com/CylorineStudio"),
                                 .init("官方网站", "https://cylorine.studio"))
                     
