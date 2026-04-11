@@ -15,12 +15,12 @@ protocol Localizable {
 }
 
 extension MinecraftVersion.VersionType: Localizable {
-    var icon: String {
+    var icon: ImageResource {
         switch self {
-        case .release: "GrassBlock"
-        case .snapshot: "Dirt"
-        case .old: "Cobblestone"
-        case .aprilFool: "GoldBlock"
+        case .release: .iconGrassBlock
+        case .snapshot: .iconDirt
+        case .old: .iconCobblestone
+        case .aprilFool: .iconGoldBlock
         }
     }
     
@@ -34,13 +34,23 @@ extension MinecraftVersion.VersionType: Localizable {
     }
 }
 
-extension SubTaskState {
-    var image: String {
+extension ModrinthVersion.VersionType {
+    var icon: ImageResource {
         switch self {
-        case .waiting: "TaskWaiting"
-        case .executing: ""
-        case .finished: "TaskFinished"
-        case .failed: "TaskWaiting"
+        case .release: .iconRelease
+        case .beta: .iconBeta
+        case .alpha: .iconAlpha
+        }
+    }
+}
+
+extension SubTaskState {
+    var icon: ImageResource {
+        switch self {
+        case .waiting: .iconTaskWaiting
+        case .executing: .iconTaskWaiting
+        case .finished: .iconTaskFinished
+        case .failed: .iconTaskFailed
         }
     }
 }
@@ -86,11 +96,11 @@ extension ModrinthVersion.VersionType: Localizable {
 }
 
 extension ModLoader {
-    var icon: String {
+    var icon: ImageResource {
         switch self {
-        case .fabric: "Fabric"
-        case .forge: "Forge"
-        case .neoforge: "Neoforge"
+        case .fabric: .iconFabric
+        case .forge: .iconForge
+        case .neoforge: .iconNeoforge
         }
     }
 }

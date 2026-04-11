@@ -32,11 +32,15 @@ struct MyListItem<Content: View>: View {
                     }
                     HStack {
                         if let image = model.image {
-                            Image(image)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: model.imageSize, height: model.imageSize)
-                                .foregroundStyle(Color.color1)
+                            Group {
+                                switch image {
+                                case .resource(let imageResource): Image(imageResource).resizable()
+                                case .nsImage(let nsImage): Image(nsImage: nsImage).resizable()
+                                }
+                            }
+                            .scaledToFit()
+                            .frame(width: model.imageSize, height: model.imageSize)
+                            .foregroundStyle(Color.color1)
                         }
                         VStack(alignment: .leading) {
                             MyText(model.name)

@@ -71,7 +71,7 @@ struct MyCard<Content: View, Action: View>: View {
                         .font(.custom("PingFangSC-Semibold", size: 14))
                     Spacer()
                     if foldable {
-                        Image("FoldArrow")
+                        Image(.btnFold)
                             .resizable()
                             .frame(width: 10, height: 6)
                             .rotationEffect(.degrees(folded ? 0 : -180), anchor: .center)

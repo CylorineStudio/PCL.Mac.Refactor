@@ -13,8 +13,8 @@ struct MultiplayerSidebar: Sidebar {
     var body: some View {
         VStack {
             MyNavigationList(
-                .init(.multiplayerSub, "MultiplayerPageIcon", "联机"),
-                .init(.multiplayerSettings, "SettingsPageIcon", "设置")
+                .init(.multiplayerSub, .iconMultiplayerPage, "联机"),
+                .init(.multiplayerSettings, .iconSettingsPage, "设置")
             )
             Spacer()
         }

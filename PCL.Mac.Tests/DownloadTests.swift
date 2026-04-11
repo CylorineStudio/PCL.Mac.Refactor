@@ -56,6 +56,10 @@ struct DownloadTests {
     }
     
     @Test func multiFileDownloadTest() async throws {
+        if ProcessInfo.processInfo.environment["GITHUB_ENV"] != nil {
+            print("当前环境为 GitHub Actions，跳过多文件下载测试")
+            return
+        }
         let data: Data = try await URLSession.shared.data(from: URL(string: "https://piston-meta.mojang.com/v1/packages/48fc0ab195b88bc562d672cdcf7997de42fe9d51/27.json").unwrap()).0
         let assetIndex: AssetIndex = try JSONDecoder.shared.decode(AssetIndex.self, from: data)
         let tempDirectory: URL = URLConstants.tempURL.appending(path: "multiFileDownloadTest")

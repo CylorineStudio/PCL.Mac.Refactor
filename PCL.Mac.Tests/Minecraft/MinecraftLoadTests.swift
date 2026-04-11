@@ -12,6 +12,9 @@ import Testing
 struct MinecraftLoadTests {
     @Test private func testLoad() throws {
         let directory: URL = FileManager.default.temporaryDirectory.appending(path: "testLoad")
+        if FileManager.default.fileExists(atPath: directory.path) {
+            try FileManager.default.removeItem(at: directory)
+        }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
         defer { try? FileManager.default.removeItem(at: directory) }
         

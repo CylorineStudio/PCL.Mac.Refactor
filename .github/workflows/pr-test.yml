@@ -15,7 +15,7 @@ jobs:
     runs-on: macos-26
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -25,10 +25,10 @@ jobs:
           if [ -z "$PR_NUMBER" ]; then PR_NUMBER=0; fi
           BUILD_NUMBER=$(printf "%d%05d" "$PR_NUMBER" "$(git rev-list --count HEAD)")
 
-          xcodebuild \
+          xcodebuild archive \
           -project PCL.Mac.xcodeproj -scheme PCL.Mac -configuration Debug \
             CURRENT_PROJECT_VERSION=$BUILD_NUMBER \
-            -archivePath build archive
+            -archivePath build
 
       - name: Check build artifacts
         run: |

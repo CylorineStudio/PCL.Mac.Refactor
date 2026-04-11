@@ -21,7 +21,7 @@ struct MySearchBox: View {
     var body: some View {
         MyCard("", titled: false) {
             HStack {
-                Image("IconSearch")
+                Image(.iconSearch)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16, height: 16)

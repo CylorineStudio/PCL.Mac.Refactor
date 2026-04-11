@@ -52,7 +52,7 @@ struct MinecraftInstallOptionsPage: View {
             .padding(EdgeInsets(top: 10, leading: 25, bottom: 25, trailing: 25))
         }
         .overlay(alignment: .bottom) {
-            MyExtraTextButton(image: "DownloadPageIcon", imageSize: 20, text: "开始下载") {
+            MyExtraTextButton(icon: .iconDownloadPage, imageSize: 20, text: "开始下载") {
                 if let errorMessage = viewModel.errorMessage {
                     hint(errorMessage, type: .critical)
                     return
@@ -79,11 +79,11 @@ struct MinecraftInstallOptionsPage: View {
         .animation(.spring(duration: 0.2), value: viewModel.errorMessage)
     }
     
-    private var icon: String {
+    private var icon: ImageResource {
         if let loader = viewModel.loader {
             return loader.type.icon
         } else {
-            return viewModel.version.type == .snapshot ? "Dirt" : "GrassBlock"
+            return viewModel.version.type.icon
         }
     }
 }

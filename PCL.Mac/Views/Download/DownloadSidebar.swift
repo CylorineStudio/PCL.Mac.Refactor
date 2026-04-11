@@ -20,7 +20,7 @@ struct DownloadSidebar: Sidebar {
                 .padding(.leading, 13)
                 .padding(.top, 10)
             MyNavigationList(
-                .init(.minecraftDownload, "IconBlock", "游戏下载")
+                .init(.minecraftDownload, .iconBlock, "游戏下载")
             ) { route in
                 switch route {
                 case .minecraftDownload:
@@ -34,10 +34,10 @@ struct DownloadSidebar: Sidebar {
                 .padding(.leading, 13)
                 .padding(.top, 20)
             MyNavigationList(
-                .init(.modDownload, "IconMod", "Mod"),
-                .init(.resourcepackDownload, "IconPicture", "资源包"),
-                .init(.shaderpackDownload, "IconSun", "光影包"),
-                .init(.modpackDownload, "IconBox", "整合包")
+                .init(.modDownload, .iconMod, "Mod"),
+                .init(.resourcepackDownload, .iconPicture, "资源包"),
+                .init(.shaderpackDownload, .iconSun, "光影包"),
+                .init(.modpackDownload, .iconBox, "整合包")
             )
             Spacer()
         }

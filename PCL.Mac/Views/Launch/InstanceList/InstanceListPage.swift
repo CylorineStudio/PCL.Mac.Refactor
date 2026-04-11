@@ -65,7 +65,7 @@ struct InstanceListPage: View {
                         MyCard("错误的实例") {
                             VStack(spacing: 0) {
                                 ForEach(errorInstances, id: \.name) { instance in
-                                    MyListItem(.init(image: "RedstoneBlock", name: instance.name, description: instance.message))
+                                    MyListItem(.init(image: .iconRedstoneBlock, name: instance.name, description: instance.message))
                                 }
                             }
                         }
@@ -135,19 +135,19 @@ struct InstanceListPage: View {
 private struct InstanceView: View {
     private let name: String
     private let version: MinecraftVersion
-    private let iconName: String
+    private let icon: ImageResource
     
     init(instance: MinecraftInstance) {
         self.name = instance.name
         self.version = instance.version
         if let modLoader = instance.modLoader {
-            self.iconName = modLoader.icon
+            self.icon = modLoader.icon
         } else {
-            self.iconName = "GrassBlock"
+            self.icon = .iconGrassBlock
         }
     }
     
     var body: some View {
-        MyListItem(.init(image: iconName, name: name, description: version.id))
+        MyListItem(.init(image: icon, name: name, description: version.id))
     }
 }

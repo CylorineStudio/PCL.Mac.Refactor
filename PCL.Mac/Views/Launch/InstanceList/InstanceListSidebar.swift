@@ -33,10 +33,10 @@ struct InstanceListSidebar: Sidebar {
                 .padding(.leading, 13)
                 .padding(.top, 18)
             VStack(spacing: 0) {
-                ImportButton("IconAdd", "添加已有目录") {
+                ImportButton(.iconAdd, "添加已有目录") {
                     try instanceViewModel.requestAddRepository()
                 }
-                ImportButton("IconImportModpack", "导入整合包", perform: onImportModpackClicked)
+                ImportButton(.iconImportModpack, "导入整合包", perform: onImportModpackClicked)
             }
             Spacer()
         }
@@ -130,12 +130,12 @@ struct InstanceListSidebar: Sidebar {
 }
 
 private struct ImportButton: View {
-    private let image: String
+    private let icon: ImageResource
     private let label: String
     private let perform: () throws -> Void
     
-    public init(_ image: String, _ label: String, perform: @escaping () throws -> Void) {
-        self.image = image
+    public init(_ icon: ImageResource, _ label: String, perform: @escaping () throws -> Void) {
+        self.icon = icon
         self.label = label
         self.perform = perform
     }
@@ -143,7 +143,7 @@ private struct ImportButton: View {
     var body: some View {
         MyListItem {
             HStack {
-                Image(image)
+                Image(icon)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 22)

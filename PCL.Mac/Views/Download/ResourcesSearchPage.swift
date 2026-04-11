@@ -116,9 +116,9 @@ struct ProjectListItemView: View {
                     }
                     
                     HStack {
-                        InformationView(icon: "SettingsPageIcon", text: project.supportDescription, width: 200)
-                        InformationView(icon: "DownloadPageIcon", text: project.downloads, width: 150)
-                        InformationView(icon: "IconUpload", text: project.lastUpdate, width: 150)
+                        InformationView(icon: .iconSettingsPage, text: project.supportDescription, width: 200)
+                        InformationView(icon: .iconDownloadPage, text: project.downloads, width: 150)
+                        InformationView(icon: .iconUpload, text: project.lastUpdate, width: 150)
                         Spacer()
                     }
                     
@@ -130,11 +130,11 @@ struct ProjectListItemView: View {
     }
     
     private struct InformationView: View {
-        private let icon: String
+        private let icon: ImageResource
         private let text: String
         private let width: CGFloat
         
-        init(icon: String, text: String, width: CGFloat) {
+        init(icon: ImageResource, text: String, width: CGFloat) {
             self.icon = icon
             self.text = text
             self.width = width

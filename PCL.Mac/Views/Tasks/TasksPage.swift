@@ -63,7 +63,7 @@ private struct TaskCard: View {
                             if subTask.state == .executing {
                                 MyText("\(Int(subTask.progress * 100))%", color: .color2)
                             } else {
-                                Image(subTask.state.image)
+                                Image(subTask.state.icon)
                                     .resizable()
                                     .scaledToFit()
                                     .foregroundStyle(Color.color2)

@@ -17,14 +17,14 @@ struct TitleBarView: View {
             Group {
                 if router.isSubPage {
                     HStack {
-                        WindowButton("BackButton") {
+                        WindowButton(.btnBack) {
                             router.removeLast()
                         }
                         MyText(router.title, size: 16, color: .white)
                     }
                 } else {
                     HStack {
-                        Image("Title")
+                        Image(.iconTitleLogo)
                             .resizable()
                             .scaledToFit()
                             .foregroundStyle(.white)
@@ -34,11 +34,11 @@ struct TitleBarView: View {
                     }
                     HStack {
                         Spacer()
-                        PageButton("启动", "LaunchPageIcon", .launch)
-                        PageButton("下载", "DownloadPageIcon", .download)
-                        PageButton("联机", "MultiplayerPageIcon", .multiplayer)
-                        PageButton("设置", "SettingsPageIcon", .settings)
-                        PageButton("更多", "MorePageIcon", .more)
+                        PageButton("启动", .iconLaunchPage, .launch)
+                        PageButton("下载", .iconDownloadPage, .download)
+                        PageButton("联机", .iconMultiplayerPage, .multiplayer)
+                        PageButton("设置", .iconSettingsPage, .settings)
+                        PageButton("更多", .iconMorePage, .more)
                         Spacer()
                     }
                 }
@@ -54,12 +54,12 @@ private struct PageButton: View {
     @State private var hovered: Bool = false
     private var isRoot: Bool { router.getRoot() == route }
     private let label: String
-    private let image: String
+    private let icon: ImageResource
     private let route: AppRoute
     
-    init(_ label: String, _ image: String, _ route: AppRoute) {
+    init(_ label: String, _ icon: ImageResource, _ route: AppRoute) {
         self.label = label
-        self.image = image
+        self.icon = icon
         self.route = route
     }
     
@@ -68,7 +68,7 @@ private struct PageButton: View {
             RoundedRectangle(cornerRadius: 13)
                 .fill(backgroundColor)
             HStack(spacing: 7) {
-                Image(image)
+                Image(icon)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16)

@@ -1,0 +1,83 @@
+name: Run Tests
+on:
+  workflow_dispatch:
+    inputs:
+      macos_26:
+        description: "macOS 26"
+        type: boolean
+        default: true
+      macos_15:
+        description: "macOS 15"
+        type: boolean
+        default: false
+
+jobs:
+  test_macos_26:
+    name: Test on macOS 26
+    if: ${{ github.event.inputs.macos_26 == 'true' }}
+    runs-on: macos-26
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      
+      - name: Run tests
+        run: |
+          set +e
+
+          xcodebuild test \
+            -project PCL.Mac.xcodeproj -scheme PCL.Mac \
+            -resultBundlePath ./result.xcresult
+          
+          exit_code=$?
+          echo "TEST_EXIT_CODE=$exit_code" >> "$GITHUB_ENV"
+
+          set -e
+        continue-on-error: true
+      
+      - name: Upload result
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-26.xcresult
+          path: result.xcresult
+      
+      - name: Fail job if tests failed
+        run: |
+          exit_code="${TEST_EXIT_CODE:-0}"
+          exit "${exit_code}"
+
+  test_macos_15:
+    name: Test on macOS 15
+    if: ${{ github.event.inputs.macos_15 == 'true' }}
+    runs-on: macos-15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      
+      - name: Run tests
+        run: |
+          set +e
+
+          xcodebuild test \
+            -project PCL.Mac.xcodeproj -scheme PCL.Mac \
+            -resultBundlePath ./result.xcresult
+          
+          exit_code=$?
+          echo "TEST_EXIT_CODE=$exit_code" >> "$GITHUB_ENV"
+
+          set -e
+        continue-on-error: true
+      
+      - name: Upload result
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-15.xcresult
+          path: result.xcresult
+      
+      - name: Fail job if tests failed
+        run: |
+          exit_code="${TEST_EXIT_CODE:-0}"
+          exit "${exit_code}"

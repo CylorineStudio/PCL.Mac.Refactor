@@ -63,7 +63,7 @@ struct MultiplayerPage: View {
     
     private var installEasyTierBody: some View {
         MyCard("安装 EasyTier", foldable: false) {
-            MyListItem(.init(image: "DownloadPageIcon", imageSize: 28, name: "安装 EasyTier", description: "联机功能使用 EasyTier 实现，所以你需要先安装 EasyTier 才能进行联机！"))
+            MyListItem(.init(image: .iconDownloadPage, imageSize: 28, name: "安装 EasyTier", description: "联机功能使用 EasyTier 实现，所以你需要先安装 EasyTier 才能进行联机！"))
                 .onTapGesture {
                     Task {
                         try await checkDisclaimer()
@@ -80,7 +80,7 @@ struct MultiplayerPage: View {
     private var readyBody: some View {
         MyCard("开始联机", foldable: false) {
             VStack(spacing: 0) {
-                MyListItem(.init(image: "MultiplayerPageIcon", imageSize: 28, name: "创建房间", description: "使用局域网世界创建房间，并邀请好友加入！"))
+                MyListItem(.init(image: .iconMultiplayerPage, imageSize: 28, name: "创建房间", description: "使用局域网世界创建房间，并邀请好友加入！"))
                     .onTapGesture {
                         Task {
                             if EasyTierManager.shared.hintInstall() {
@@ -103,7 +103,7 @@ struct MultiplayerPage: View {
                             viewModel.startHost(serverPort: port)
                         }
                     }
-                MyListItem(.init(image: "IconAdd", imageSize: 28, name: "加入房间", description: "通过房主分享的房间码，加入游戏世界！"))
+                MyListItem(.init(image: .iconAdd, imageSize: 28, name: "加入房间", description: "通过房主分享的房间码，加入游戏世界！"))
                     .onTapGesture {
                         Task {
                             if EasyTierManager.shared.hintInstall() {
@@ -130,7 +130,7 @@ struct MultiplayerPage: View {
                             }
                         }
                     }
-                MyListItem(.init(image: "IconAbout", imageSize: 28, name: "帮助文档", description: "点击这里可以查看联机教程！"))
+                MyListItem(.init(image: .iconAbout, imageSize: 28, name: "帮助文档", description: "点击这里可以查看联机教程！"))
                     .onTapGesture {
                         NSWorkspace.shared.open(URL(string: "https://cylorine.studio/helps/PCL.Mac#multiplayer")!)
                     }
@@ -159,12 +159,12 @@ struct MultiplayerPage: View {
                     MyCard("操作", foldable: false, limitHeight: false) {
                         VStack(spacing: 0) {
                             if viewModel.state == .hostReady, let roomCode = viewModel.roomCode() {
-                                ActionView("IconCopy", "复制房间码") {
+                                ActionView(.iconCopy, "复制房间码") {
                                     NSPasteboard.general.clearContents()
                                     NSPasteboard.general.setString(roomCode, forType: .string)
                                     hint("复制成功！", type: .finish)
                                 }
-                                ActionView("IconExit", "关闭房间", color: .red) {
+                                ActionView(.iconPower, "关闭房间", color: .red) {
                                     Task {
                                         if room.members.count > 1 {
                                             if await MessageBoxManager.shared.showTextAsync(
@@ -179,12 +179,12 @@ struct MultiplayerPage: View {
                                     }
                                 }
                             } else {
-                                ActionView("IconCopy", "复制地址") {
+                                ActionView(.iconCopy, "复制地址") {
                                     NSPasteboard.general.clearContents()
                                     NSPasteboard.general.setString("127.0.0.1:\(room.serverPort)", forType: .string)
                                     hint("复制成功！", type: .finish)
                                 }
-                                ActionView("IconExit", "退出房间", color: .red) {
+                                ActionView(.iconPower, "退出房间", color: .red) {
                                     viewModel.leave()
                                 }
                             }
@@ -245,13 +245,13 @@ private struct PlayerListView: View {
 }
 
 private struct ActionView: View {
-    private let imageName: String
+    private let icon: ImageResource
     private let text: String
     private let color: Color
     private let onClick: () -> Void
     
-    init(_ imageName: String, _ text: String, color: Color = .color1, onClick: @escaping () -> Void) {
-        self.imageName = imageName
+    init(_ icon: ImageResource, _ text: String, color: Color = .color1, onClick: @escaping () -> Void) {
+        self.icon = icon
         self.text = text
         self.color = color
         self.onClick = onClick
@@ -260,7 +260,7 @@ private struct ActionView: View {
     var body: some View {
         MyListItem {
             HStack(spacing: 7) {
-                Image(imageName)
+                Image(icon)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16, height: 16)

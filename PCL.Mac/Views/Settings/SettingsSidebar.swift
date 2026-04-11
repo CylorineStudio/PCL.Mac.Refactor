@@ -13,8 +13,8 @@ struct SettingsSidebar: Sidebar {
     var body: some View {
         VStack {
             MyNavigationList(
-                .init(.javaSettings, "IconJava", "Java 管理"),
-                .init(.otherSettings, "IconBox", "其它")
+                .init(.javaSettings, .iconJava, "Java 管理"),
+                .init(.otherSettings, .iconBox, "其它")
             )
             Spacer()
         }

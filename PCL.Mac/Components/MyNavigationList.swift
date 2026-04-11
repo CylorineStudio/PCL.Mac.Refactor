@@ -37,10 +37,10 @@ struct MyNavigationList: View {
     
     struct Route {
         let route: AppRoute
-        let image: String?
+        let image: ImageResource?
         let text: String
         
-        init(_ route: AppRoute, _ image: String?, _ text: String) {
+        init(_ route: AppRoute, _ image: ImageResource?, _ text: String) {
             self.route = route
             self.image = image
             self.text = text
@@ -54,7 +54,7 @@ private struct RouteView: View {
     @State private var selected: Bool
     @State private var lastRefresh: Date = .distantPast
     private let route: AppRoute
-    private let image: String?
+    private let image: ImageResource?
     private let label: String
     private let refresh: ((AppRoute) -> Void)?
     
@@ -81,7 +81,7 @@ private struct RouteView: View {
                 .font(.custom("PCLEnglish", size: 14))
             if selected, hovered, let refresh {
                 Spacer(minLength: 0)
-                Image("IconRefresh")
+                Image(.iconRefresh)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 13)
@@ -111,7 +111,7 @@ private struct RouteView: View {
 
 #Preview {
     MyNavigationList(
-        .init(.launch, "LaunchPageIcon", "启动")
+        .init(.launch, .iconLaunchPage, "启动")
     )
     .frame(width: 150)
     .padding()

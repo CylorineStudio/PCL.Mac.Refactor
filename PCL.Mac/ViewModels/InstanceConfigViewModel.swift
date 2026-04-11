@@ -23,11 +23,11 @@ class InstanceConfigViewModel: ObservableObject {
         return instance.version.description
     }
     
-    public var iconName: String {
+    public var icon: ImageResource {
         if let modLoader: ModLoader = instance?.modLoader {
             return modLoader.icon
         }
-        return "GrassBlock"
+        return .iconGrassBlock
     }
     
     public let id: String

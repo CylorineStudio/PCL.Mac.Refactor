@@ -21,7 +21,7 @@ struct InstanceConfigPage: View {
         CardContainer {
             if viewModel.loaded {
                 MyCard("", titled: false, padding: 10) {
-                    MyListItem(.init(image: viewModel.iconName, name: viewModel.id, description: viewModel.description))
+                    MyListItem(.init(image: viewModel.icon, name: viewModel.id, description: viewModel.description))
                 }
                 if let instance = viewModel.instance {
                     MyCard("", titled: false) {

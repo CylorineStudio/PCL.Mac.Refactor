@@ -10,13 +10,13 @@ import SwiftUI
 struct MyExtraTextButton: View {
     @State private var hovered: Bool = false
     @State private var pressed: Bool = false
-    private let image: String
+    private let icon: ImageResource
     private let imageSize: CGFloat
     private let text: String
     private let action: () -> Void
     
-    init(image: String, imageSize: CGFloat, text: String, action: @escaping () -> Void) {
-        self.image = image
+    init(icon: ImageResource, imageSize: CGFloat, text: String, action: @escaping () -> Void) {
+        self.icon = icon
         self.imageSize = imageSize
         self.text = text
         self.action = action
@@ -27,7 +27,7 @@ struct MyExtraTextButton: View {
             RoundedRectangle(cornerRadius: 1000)
                 .fill(hovered ? Color.color4 : .color3)
             HStack(spacing: 12) {
-                Image(image)
+                Image(icon)
                     .resizable()
                     .scaledToFit()
                     .foregroundStyle(.white)

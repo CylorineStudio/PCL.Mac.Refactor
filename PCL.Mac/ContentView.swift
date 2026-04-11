@@ -176,10 +176,10 @@ private struct ExtraButtonsOverlay: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ExtraButton("DownloadPageIcon", showTasksButton) {
+            ExtraButton(.iconDownloadPage, showTasksButton) {
                 router.append(.tasks)
             }
-            ExtraButton("IconPower", launchManager.isRunning) {
+            ExtraButton(.iconPower, launchManager.isRunning) {
                 launchManager.stop()
                 if launchManager.isLaunching {
                     hint("已取消启动！", type: .finish)
@@ -201,12 +201,12 @@ private struct ExtraButtonsOverlay: View {
     private struct ExtraButton: View {
         @State private var hovered: Bool = false
         @State private var pressed: Bool = false
-        private let imageName: String
+        private let icon: ImageResource
         private let show: Bool
         private let onClick: () -> Void
         
-        init(_ imageName: String, _ show: Bool, onClick: @escaping () -> Void) {
-            self.imageName = imageName
+        init(_ icon: ImageResource, _ show: Bool, onClick: @escaping () -> Void) {
+            self.icon = icon
             self.show = show
             self.onClick = onClick
         }
@@ -216,7 +216,7 @@ private struct ExtraButtonsOverlay: View {
                 .fill(hovered ? Color.color4 : .color3)
                 .frame(width: show ? 40 : 1)
                 .overlay {
-                    Image(imageName)
+                    Image(icon)
                         .resizable()
                         .scaledToFit()
                         .padding(10)

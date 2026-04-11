@@ -45,9 +45,9 @@ class AccountViewModel: ObservableObject {
             guard let idx: Int = await MessageBoxManager.shared.showListAsync(
                 title: "添加账号 - 选择验证类型",
                 items: [
-                    .init(image: "IconMicrosoftAccount", imageSize: 32, name: "正版验证", description: nil),
-                    .init(image: "IconThirdpartyAccount", imageSize: 32, name: "第三方验证", description: nil),
-                    .init(image: "IconOfflineAccount", imageSize: 32, name: "离线验证", description: nil)
+                    .init(image: .iconMicrosoftAccount, imageSize: 32, name: "正版验证", description: nil),
+                    .init(image: .iconThirdpartyAccount, imageSize: 32, name: "第三方验证", description: nil),
+                    .init(image: .iconOfflineAccount, imageSize: 32, name: "离线验证", description: nil)
                 ]
             ) else {
                 return

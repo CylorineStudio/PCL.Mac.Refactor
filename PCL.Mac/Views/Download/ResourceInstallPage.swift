@@ -209,7 +209,7 @@ struct ResourceInstallPage: View {
         
         init(version: ProjectVersionModel) {
             self.model = .init(
-                image: "\(version.type.rawValue.capitalized)Block",
+                image: version.type.icon,
                 name: version.name,
                 description: "\(version.version)，更新于\(version.datePublished)，\(version.type.localizedName)"
             )

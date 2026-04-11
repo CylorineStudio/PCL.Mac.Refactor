@@ -18,7 +18,7 @@ struct InstanceSettingsSidebar: Sidebar {
     var body: some View {
         VStack {
             MyNavigationList(
-                .init(.instanceConfig(id: id), "SettingsPageIcon", "配置")
+                .init(.instanceConfig(id: id), .iconSettingsPage, "配置")
             )
             Spacer()
         }

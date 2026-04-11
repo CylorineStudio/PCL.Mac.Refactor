@@ -45,11 +45,11 @@ struct PaginatedContainer<Content: View>: View {
             
             MyCard("", titled: false, padding: 8) {
                 HStack(alignment: .center, spacing: 0) {
-                    pageButton("first") {
+                    pageButton(.btnFirstPage) {
                         currentPage = 0
                     }
                     .opacity(currentPage == 0 ? 0.2 : 1)
-                    pageButton("prev") {
+                    pageButton(.btnPrevPage) {
                         if currentPage > 0 {
                             currentPage -= 1
                         }
@@ -59,7 +59,7 @@ struct PaginatedContainer<Content: View>: View {
                     MyText((currentPage + 1).description, size: 16, color: .colorGray2)
                         .padding(.horizontal, 8)
                     
-                    pageButton("next") {
+                    pageButton(.btnNextPage) {
                         if currentPage < pageCount - 1 {
                             currentPage += 1
                         }
@@ -79,8 +79,8 @@ struct PaginatedContainer<Content: View>: View {
     }
     
     @ViewBuilder
-    private func pageButton(_ type: String, onClick: @escaping () -> Void) -> some View {
-        Image("\(type.capitalized)PageButton")
+    private func pageButton(_ icon: ImageResource, onClick: @escaping () -> Void) -> some View {
+        Image(icon)
             .resizable()
             .scaledToFit()
             .frame(width: 23, height: 23)
