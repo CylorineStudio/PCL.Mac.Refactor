@@ -46,12 +46,30 @@ struct AboutPage: View {
             }
             
             MyCard("许可与版权声明", foldable: false) {
-                VStack(spacing: 0) {
-                    LicenseListItem("SwiftyJSON", license: "MIT", github: "SwiftyJSON/SwiftyJSON")
-                    LicenseListItem("ZIPFoundation", license: "MIT", github: "weichsel/ZIPFoundation")
-                    LicenseListItem("SwiftScaffolding", license: "MIT", github: "CylorineStudio/SwiftScaffolding")
-                    LicenseListItem("EasyTier", license: "LGPL-3.0", github: "EasyTier/EasyTier")
+                VStack(spacing: 15) {
+                    LicenseListItem(
+                        "SwiftyJSON", "Copyright (c) 2017 Ruoyu Fu\nLicensed under the MIT License.",
+                        sourceURL: "https://github.com/SwiftyJSON/SwiftyJSON",
+                        licenseURL: "https://github.com/SwiftyJSON/SwiftyJSON/blob/master/LICENSE"
+                    )
+                    LicenseListItem(
+                        "ZIPFoundation", "Copyright (c) 2017-2025 Thomas Zoechling (https://www.peakstep.com)\nLicensed under the MIT License.",
+                        sourceURL: "https://github.com/weichsel/ZIPFoundation",
+                        licenseURL: "https://github.com/weichsel/ZIPFoundation/blob/development/LICENSE"
+                    )
+                    LicenseListItem(
+                        "SwiftScaffolding", "Copyright (c) 2025 CeciliaStudio\nLicensed under the MIT License.",
+                        sourceURL: "https://github.com/CylorineStudio/SwiftScaffolding",
+                        licenseURL: "https://github.com/CylorineStudio/SwiftScaffolding/blob/main/LICENSE"
+                    )
+                    LicenseListItem(
+                        "EasyTier", "Copyright (c) 2024-present Easytier Programme within The Commons Conservancy\nLicensed under the LGPL 3.0 License.",
+                        sourceURL: "https://github.com/EasyTier/EasyTier",
+                        licenseURL: "https://github.com/EasyTier/EasyTier/blob/main/LICENSE"
+                    )
                 }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
             }
         }
     }
@@ -135,17 +153,39 @@ struct AboutPage: View {
     
     private struct LicenseListItem: View {
         private let name: String
-        private let license: String
-        private let github: String
+        private let info: String
+        private let sourceURL: URL
+        private let licenseURL: URL
         
-        init(_ name: String, license: String, github: String) {
+        init(_ name: String, _ info: String, sourceURL: String, licenseURL: String) {
             self.name = name
-            self.license = license
-            self.github = github
+            self.info = info
+            self.sourceURL = URL(string: sourceURL)!
+            self.licenseURL = URL(string: licenseURL)!
         }
         
         var body: some View {
-            MyListItem(.init(name: name, description: "\(license) license | https://github.com/\(github)"))
+            HStack(alignment: .top, spacing: 20) {
+                MyText(name)
+                    .frame(width: 120, alignment: .leading)
+                VStack(alignment: .leading, spacing: 7) {
+                    MyText(info)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 20) {
+                        MyButton("查看来源网站") {
+                            NSWorkspace.shared.open(sourceURL)
+                        }
+                        .frame(width: 140)
+                        MyButton("查看许可文档") {
+                            NSWorkspace.shared.open(licenseURL)
+                        }
+                        .frame(width: 140)
+                    }
+                    .frame(height: 38)
+                }
+                Spacer(minLength: 0)
+            }
         }
     }
 }
