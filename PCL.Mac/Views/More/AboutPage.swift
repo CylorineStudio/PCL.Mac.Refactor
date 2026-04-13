@@ -58,7 +58,7 @@ struct AboutPage: View {
                         licenseURL: "https://github.com/weichsel/ZIPFoundation/blob/development/LICENSE"
                     )
                     LicenseListItem(
-                        "SwiftScaffolding", "Copyright (c) 2025 CeciliaStudio\nLicensed under the MIT License.",
+                        "SwiftScaffolding", "Copyright (c) 2025-2026 CylorineStudio\nLicensed under the MIT License.",
                         sourceURL: "https://github.com/CylorineStudio/SwiftScaffolding",
                         licenseURL: "https://github.com/CylorineStudio/SwiftScaffolding/blob/main/LICENSE"
                     )
