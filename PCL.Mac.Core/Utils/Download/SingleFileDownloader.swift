@@ -27,6 +27,7 @@ public enum SingleFileDownloader {
             url: url,
             destination: destination,
             checksums: sha1.map { ["sha1": $0] } ?? [:],
+            executable: executable,
             replaceMethod: replaceMethod,
             progressHandler: progressHandler
         )

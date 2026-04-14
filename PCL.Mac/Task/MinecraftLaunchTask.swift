@@ -217,7 +217,6 @@ public enum MinecraftLaunchTask {
             return
         }
         let authlibInjectorURL = URLConstants.authlibInjectorURL
-        let authlibInjectorExists = FileManager.default.fileExists(atPath: authlibInjectorURL.path)
         
         model.options.authlibInjectorPath = authlibInjectorURL.path
         model.options.authServerURL = yggdrasilAccount.authServerURL
@@ -235,7 +234,7 @@ public enum MinecraftLaunchTask {
         do {
             log("正在获取 Authlib Injector 版本列表")
             let artifacts: AuthlibInjectorArtifacts = try await Requests.get("https://authlib-injector.yushi.moe/artifacts.json").decode(AuthlibInjectorArtifacts.self)
-            guard let buildNumber = artifacts.artifacts.first?.buildNumber else {
+            guard let buildNumber = artifacts.artifacts.max(by: { $0.buildNumber < $1.buildNumber })?.buildNumber else {
                 throw SimpleError("获取 Authlib Injector 最新版本失败：找不到任何有效版本。")
             }
             let latestArtifact: AuthlibInjectorArtifact = try await Requests.get("https://authlib-injector.yushi.moe/artifact/\(buildNumber).json").decode(AuthlibInjectorArtifact.self)
@@ -245,19 +244,21 @@ public enum MinecraftLaunchTask {
                 checksums: latestArtifact.checksums,
                 executable: false
             )
-            if authlibInjectorExists {
+            if FileManager.default.fileExists(atPath: authlibInjectorURL.path) {
                 if (try? FileUtils.check(downloadItem)) != true {
                     try FileManager.default.removeItem(at: authlibInjectorURL)
+                    log("正在更新 Authlib Injector \(latestArtifact.version)")
                 } else {
                     log("本地 Authlib Injector 有效")
                     return
                 }
+            } else {
+                log("正在下载 Authlib Injector \(latestArtifact.version)")
             }
-            log("正在下载 Authlib Injector \(latestArtifact.version)")
             try await SingleFileDownloader.download(downloadItem, replaceMethod: .skip, progressHandler: task.setProgress(_:))
         } catch let error as URLError where error.code == .notConnectedToInternet {
             log("似乎已断开与互联网的连接")
-            if authlibInjectorExists {
+            if FileManager.default.fileExists(atPath: authlibInjectorURL.path) {
                 log("尝试使用本地缓存的 Authlib Injector")
             } else {
                 err("本地缓存中没有 Authlib Injector")

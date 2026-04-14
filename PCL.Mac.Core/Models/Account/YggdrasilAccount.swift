@@ -47,10 +47,12 @@ public class YggdrasilAccount: Account {
     }
     
     public func shouldRefresh() async throws -> Bool {
-        return try await service.validateToken(accessToken, clientToken: clientToken)
+        return try await service.validateToken(accessToken, clientToken: clientToken) == false
     }
     
     public func fetchMetadata() async throws -> String {
-        return try await service.fetchMetadata().encoded
+        let metadata = try await service.fetchMetadata().encoded
+        self.cachedMetadata = metadata
+        return metadata
     }
 }
