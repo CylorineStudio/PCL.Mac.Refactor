@@ -49,7 +49,7 @@ public enum Requests {
         private static func parseHeaders(_ headers: [AnyHashable: Any]) -> [String: String] {
             return headers.reduce(into: [:]) { result, entry in
                 if let key = entry.key as? String, let value = entry.value as? String {
-                    result[key] = value
+                    result[key.lowercased()] = value
                 }
             }
         }

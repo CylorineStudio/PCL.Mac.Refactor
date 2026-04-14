@@ -9,10 +9,24 @@ import Foundation
 import SwiftyJSON
 
 public class YggdrasilService {
-    private let authServerURL: URL
+    private var authServerURL: URL
     
     public init(authServerURL: URL) {
         self.authServerURL = authServerURL
+    }
+    
+    /// 尝试将用户输入的地址解析为真正的 API 地址。
+    ///
+    /// 参见 [Yggdrasil 启动器技术规范#处理 API 地址指示（ALI）](https://github.com/yushijinhun/authlib-injector/wiki/启动器技术规范#处理-api-地址指示ali)
+    /// - Returns: 解析后的 `URL`，可能与原 URL 相同（不包含 ALI 头）。
+    public func resolveALI() async throws -> URL {
+        let response = try await request("HEAD", "/")
+        if let apiLocation: String = response.headers["x-authlib-injector-api-location"],
+           let resolvedServerURL: URL = .init(string: apiLocation) {
+            self.authServerURL = resolvedServerURL
+            return resolvedServerURL
+        }
+        return authServerURL
     }
     
     /// 使用密码进行身份验证，并分配一个新的令牌。

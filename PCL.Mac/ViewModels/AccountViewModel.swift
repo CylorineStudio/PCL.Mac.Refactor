@@ -230,9 +230,22 @@ class AccountViewModel: ObservableObject {
     }
     
     public func addYggdrasilAccount() async {
-        guard let authServerURL = URL(string: yggdrasilServer.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+        let trimmedServerLocation = yggdrasilServer.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard var authServerURL = URL(string: trimmedServerLocation) else {
             hint("验证服务器地址错误！", type: .critical)
             return
+        }
+        if let scheme: String = authServerURL.scheme {
+            guard scheme == "https" || scheme == "http" else {
+                hint("服务器地址无效！", type: .critical)
+                return
+            }
+        } else {
+            guard let newURL = URL(string: "https://\(trimmedServerLocation)") else {
+                hint("服务器地址无效！", type: .critical)
+                return
+            }
+            authServerURL = newURL
         }
         let username: String = yggdrasilUsername.trimmingCharacters(in: .whitespacesAndNewlines)
         let password: String = yggdrasilPassword.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -242,7 +255,12 @@ class AccountViewModel: ObservableObject {
         }
         let service: YggdrasilService = .init(authServerURL: authServerURL)
         do {
-            log("正在进行验证，服务器地址：\(authServerURL)")
+            let resolvedServerURL = try await service.resolveALI()
+            if authServerURL != resolvedServerURL {
+                log("解析 ALI 头成功，真实 API 地址：\(resolvedServerURL)")
+                authServerURL = resolvedServerURL
+            }
+            log("正在验证，服务器地址：\(authServerURL)")
             let authResponse = try await service.authenticate(username, password: password)
             log("验证成功")
             
