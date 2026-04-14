@@ -12,10 +12,19 @@ struct LaunchSidebar: Sidebar {
     @EnvironmentObject private var instanceViewModel: InstanceManager
     @ObservedObject private var launchManager: MinecraftLaunchManager = .shared
     @StateObject private var accountViewModel: AccountViewModel = .init()
-    @State private var showingAccountEditor: Bool = false
-    @State private var accountEditAppeared: Bool = false
+    @State private var addingYggdrasilAccount: Bool = false
     
     let width: CGFloat = 285
+    
+    private let insertTransition: AnyTransition =
+        .asymmetric(
+            insertion: .modifier(
+                active: ScaleOpacityEffect(scale: 0.95, opacity: 0.0),
+                identity: ScaleOpacityEffect(scale: 1.0, opacity: 1.0)
+            )
+            .animation(.spring(response: 0.2)),
+            removal: .opacity
+        )
     
     var body: some View {
         if launchManager.isLaunching {
@@ -28,26 +37,23 @@ struct LaunchSidebar: Sidebar {
     private var normalBody: some View {
         VStack {
             Spacer()
-            if showingAccountEditor {
-                accountEditorView
-                    .opacity(accountEditAppeared ? 1 : 0)
-                    .scaleEffect(accountEditAppeared ? 1 : 0.95)
-                    .animation(.spring(response: 0.2), value: accountEditAppeared)
-                    .onAppear {
-                        accountEditAppeared = true
+            Group {
+                switch accountViewModel.currentPanel {
+                case .normal:
+                    if let account = accountViewModel.currentAccount {
+                        normalPanel(account)
+                            .onTapGesture {
+                                accountViewModel.currentPanel = .accountList
+                            }
                     }
-            } else if let account = accountViewModel.currentAccount {
-                MyListItem {
-                    VStack(spacing: 15) {
-                        PlayerAvatar(account)
-                        MyText(account.profile.name, size: 16)
-                    }
-                }
-                .fixedSize()
-                .onTapGesture {
-                    showingAccountEditor = true
+                case .accountList:
+                    accountListPanel
+                case .addYggdrasil:
+                    addYggdrasilAccountPanel
                 }
             }
+            .transition(insertTransition)
+            
             Spacer()
             VStack(spacing: 11) {
                 Group {
@@ -61,7 +67,7 @@ struct LaunchSidebar: Sidebar {
                             if let account: Account = accountViewModel.currentAccount {
                                 instanceViewModel.launch(instance, account, in: repository)
                             } else {
-                                hint("你还没有添加账号！", type: .critical)
+                                hint("请先添加一个账号！", type: .critical)
                             }
                         }
                     } else {
@@ -88,20 +94,24 @@ struct LaunchSidebar: Sidebar {
                 .frame(height: 32)
             }
             .padding(21)
-            .onAppear {
-                if accountViewModel.currentAccount == nil { showingAccountEditor = true }
+        }
+    }
+    
+    @ViewBuilder
+    private func normalPanel(_ account: Account) -> some View {
+        MyListItem {
+            VStack(spacing: 15) {
+                PlayerAvatar(account)
+                VStack(spacing: 4) {
+                    MyText(account.profile.name, size: 16)
+                    MyText(account.localizedTypeName, size: 12, color: .colorGray4)
+                }
             }
         }
+        .fixedSize()
     }
     
-    private func hideAccountEditor() {
-        accountEditAppeared = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            showingAccountEditor = false
-        }
-    }
-    
-    private var accountEditorView: some View {
+    private var accountListPanel: some View {
         VStack {
             accountList
                 .padding(.horizontal, 8)
@@ -113,7 +123,7 @@ struct LaunchSidebar: Sidebar {
                 
                 if accountViewModel.currentAccount != nil {
                     MyButton("返回") {
-                        hideAccountEditor()
+                        accountViewModel.currentPanel = .normal
                     }
                     .frame(width: 50)
                 }
@@ -139,7 +149,7 @@ struct LaunchSidebar: Sidebar {
                         PlayerAvatar(account, length: 36)
                         VStack(alignment: .leading) {
                             MyText(account.profile.name)
-                            MyText(account.type.localizedName, color: .colorGray3)
+                            MyText(account.localizedTypeName, color: .colorGray3)
                         }
                         Spacer()
                         if hovered {
@@ -163,6 +173,39 @@ struct LaunchSidebar: Sidebar {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: accountViewModel.currentAccount?.id)
+    }
+    
+    private var addYggdrasilAccountPanel: some View {
+        VStack {
+            fieldLine("服务器") {
+                MyTextField(text: $accountViewModel.yggdrasilServer)
+            }
+            fieldLine("用户名") {
+                MyTextField(text: $accountViewModel.yggdrasilUsername)
+            }
+            fieldLine("密码") {
+                MyTextField(text: $accountViewModel.yggdrasilPassword, secure: true)
+            }
+            HStack {
+                MyButton("返回") {
+                    accountViewModel.currentPanel = .accountList
+                }
+                .frame(width: 50)
+                MyButton("登录", type: .highlight) {
+                    guard !addingYggdrasilAccount else { return }
+                    addingYggdrasilAccount = true
+                    Task {
+                        await accountViewModel.addYggdrasilAccount()
+                        await MainActor.run {
+                            addingYggdrasilAccount = false
+                        }
+                    }
+                }
+                .frame(width: 50)
+            }
+            .frame(height: 30)
+            .padding(.top, 4)
+        }
     }
     
     private var launchingBody: some View {
@@ -242,6 +285,16 @@ struct LaunchSidebar: Sidebar {
             value()
         }
     }
+    
+    @ViewBuilder
+    private func fieldLine(_ name: String, content: () -> some View) -> some View {
+        HStack(spacing: 0) {
+            MyText(name)
+                .frame(width: 50, alignment: .leading)
+            content()
+        }
+        .padding(.horizontal)
+    }
 }
 
 private struct AnimatablePercentText: View, Animatable {
@@ -254,5 +307,16 @@ private struct AnimatablePercentText: View, Animatable {
     var body: some View {
         let clamped: Double = min(max(progress, 0), 1)
         MyText(String(format: "%.2f %%", clamped * 100), size: 12.5)
+    }
+}
+
+private struct ScaleOpacityEffect: ViewModifier {
+    let scale: CGFloat
+    let opacity: Double
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(scale)
+            .opacity(opacity)
     }
 }

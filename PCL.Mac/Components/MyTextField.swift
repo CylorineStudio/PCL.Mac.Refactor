@@ -12,23 +12,31 @@ struct MyTextField: View {
     @State private var hovered: Bool = false
     @FocusState private var focused: Bool
     private let placeholder: String
+    private let secure: Bool
     
-    init(text: Binding<String>, placeholder: String = "") {
+    init(text: Binding<String>, placeholder: String = "", secure: Bool = false) {
         self._text = text
         self.placeholder = placeholder
+        self.secure = secure
     }
     
     var body: some View {
         ZStack(alignment: .leading) {
-            TextField("", text: _text)
-                .textFieldStyle(.plain)
-                .focused($focused)
-                .padding(4)
-                .foregroundStyle(Color.color1)
-                .background(backgroundColor)
-                .onSubmit {
-                    focused = false
+            Group {
+                if secure {
+                    SecureField("", text: _text)
+                } else {
+                    TextField("", text: _text)
                 }
+            }
+            .textFieldStyle(.plain)
+            .focused($focused)
+            .padding(4)
+            .foregroundStyle(Color.color1)
+            .background(backgroundColor)
+            .onSubmit {
+                focused = false
+            }
             RoundedRectangle(cornerRadius: 3)
                 .stroke(foregroundColor, lineWidth: 1)
                 .padding(.top, 1)
@@ -48,6 +56,7 @@ struct MyTextField: View {
                 self.text = newValue.replacingOccurrences(of: "\n", with: "")
             }
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
     
     private var foregroundColor: Color {

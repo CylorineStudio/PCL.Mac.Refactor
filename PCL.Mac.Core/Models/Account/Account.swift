@@ -10,13 +10,13 @@ import Foundation
 public protocol Account: Codable {
     var profile: PlayerProfile { get }
     var id: UUID { get }
-    func accessToken() -> String
+    var accessToken: String { get }
     func refresh() async throws
-    func shouldRefresh() -> Bool
+    func shouldRefresh() async throws -> Bool
 }
 
 public enum AccountType: String, Codable {
-    case offline, microsoft
+    case offline, microsoft, yggdrasil
 }
 
 public class AccountWrapper: Codable {
@@ -41,6 +41,8 @@ public class AccountWrapper: Codable {
             self.account = try container.decode(OfflineAccount.self, forKey: .account)
         case .microsoft:
             self.account = try container.decode(MicrosoftAccount.self, forKey: .account)
+        case .yggdrasil:
+            self.account = try container.decode(YggdrasilAccount.self, forKey: .account)
         }
     }
     
@@ -58,6 +60,8 @@ public extension Account {
             .offline
         case is MicrosoftAccount:
             .microsoft
+        case is YggdrasilAccount:
+            .yggdrasil
         default:
             fatalError() // unreachable
         }

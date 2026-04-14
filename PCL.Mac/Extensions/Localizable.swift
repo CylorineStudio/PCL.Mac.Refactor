@@ -60,7 +60,17 @@ extension AccountType: Localizable {
         switch self {
         case .offline: "离线账号"
         case .microsoft: "正版账号"
+        case .yggdrasil: "第三方账号"
         }
+    }
+}
+
+extension Account {
+    var localizedTypeName: String {
+        if let yggdrasilAccount = self as? YggdrasilAccount {
+            return "\(yggdrasilAccount.authServer) 账号"
+        }
+        return type.localizedName
     }
 }
 

@@ -150,7 +150,7 @@ public class MicrosoftAuthService {
             throw Error.xboxAuthenticationFailed(code: xerr)
         }
         if !(200..<300).contains(response.statusCode) {
-            err("调用 API 失败：发生未知错误：\(String(data: response.data, encoding: .utf8) ?? "解析失败")")
+            err("调用 API 失败：发生未知错误：\(string)")
             throw Error.apiError(description: string)
         }
         return json

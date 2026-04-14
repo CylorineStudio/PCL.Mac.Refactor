@@ -36,6 +36,7 @@ public class MinecraftLauncher {
             "assets_index_name": manifest.assetIndex.id,
             "auth_uuid": UUIDUtils.string(of: options.profile.id, withHyphens: false),
             "auth_access_token": options.accessToken,
+            "auth_session": options.accessToken,
             "user_type": "msa",
             "version_type": "PCL.Mac",
             "user_properties": "{}"
@@ -52,6 +53,13 @@ public class MinecraftLauncher {
         
         var arguments: [String] = []
         arguments.append(contentsOf: manifest.jvmArguments.flatMap { $0.rules.allSatisfy { $0.test(with: options) } ? $0.value : [] })
+        if let authlibInjectorPath = options.authlibInjectorPath,
+           let authServerURL = options.authServerURL,
+           let prefetchedMeta = options.prefetchedMeta {
+            arguments.append("-javaagent:\(authlibInjectorPath)=\(authServerURL)")
+            arguments.append("-Dauthlibinjector.yggdrasil.prefetched=\(prefetchedMeta)")
+            log("已添加 Authlib Injector 参数")
+        }
         arguments.append(manifest.mainClass)
         arguments.append(contentsOf: manifest.gameArguments.flatMap { $0.rules.allSatisfy { $0.test(with: options) } ? $0.value : [] })
         arguments = arguments.map { Utils.replace($0, withValues: values) }

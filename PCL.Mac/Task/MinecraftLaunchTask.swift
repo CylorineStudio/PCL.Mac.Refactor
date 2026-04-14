@@ -31,8 +31,9 @@ public enum MinecraftLaunchTask {
             .init(1, "刷新账号", refreshAccount(task:model:)),
             .init(2, "预检查", precheck(task:model:)),
             .init(3, "检查资源完整性", checkResources(task:model:)),
-            .init(4, "启动游戏", launch(task:model:)),
-            .init(5, "等待游戏窗口出现", display: false, waitForWindow(task:model:))
+            .init(4, "检查 Authlib Injector", checkAuthlibInjector(task:model:)),
+            .init(5, "启动游戏", launch(task:model:)),
+            .init(6, "等待游戏窗口出现", display: false, waitForWindow(task:model:))
         )
     }
     
@@ -77,16 +78,33 @@ public enum MinecraftLaunchTask {
     }
     
     private static func refreshAccount(task: SubTask, model: Model) async throws {
-        if model.account.shouldRefresh() {
+        let shouldRefresh: Bool
+        do {
+            shouldRefresh = try await model.account.shouldRefresh()
+        } catch {
+            err("验证令牌有效性失败：\(error.localizedDescription)")
+            if await MessageBoxManager.shared.showTextAsync(
+                title: "验证令牌有效性失败",
+                content: "在验证访问令牌有效性时发生错误：\(error.localizedDescription)\n\n如果继续启动，可能会导致无法加入部分需要验证的服务器！\n是否继续启动？\n\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。",
+                level: .error,
+                .no(),
+                .yes(label: "继续", type: .red)
+            ) == 0 {
+                try task.cancel()
+            }
+            model.options.accessToken = model.account.accessToken
+            return
+        }
+        if shouldRefresh {
             do {
                 try await model.account.refresh()
                 log("刷新 accessToken 成功")
             } catch is CancellationError {
             } catch {
-                err("刷新 accessToken 失败")
+                err("刷新 accessToken 失败：\(error.localizedDescription)")
                 if await MessageBoxManager.shared.showTextAsync(
                     title: "刷新访问令牌失败",
-                    content: "在刷新访问令牌时发生错误：\(error.localizedDescription)\n\n如果继续启动，可能会导致无法加入部分需要正版验证的服务器！\n是否继续启动？\n\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。",
+                    content: "在刷新访问令牌时发生错误：\(error.localizedDescription)\n\n如果继续启动，可能会导致无法加入部分需要验证的服务器！\n是否继续启动？\n\n若要寻求帮助，请将完整日志发送给他人，而不是发送此页面相关的图片。",
                     level: .error,
                     .no(),
                     .yes(label: "继续", type: .red)
@@ -95,7 +113,7 @@ public enum MinecraftLaunchTask {
                 }
             }
         }
-        model.options.accessToken = model.account.accessToken()
+        model.options.accessToken = model.account.accessToken
     }
     
     private static func precheck(task: SubTask, model: Model) async throws {
@@ -192,6 +210,61 @@ public enum MinecraftLaunchTask {
             repository: model.repository,
             progressHandler: task.setProgress(_:)
         )
+    }
+    
+    private static func checkAuthlibInjector(task: SubTask, model: Model) async throws {
+        guard let yggdrasilAccount = model.account as? YggdrasilAccount else {
+            return
+        }
+        let authlibInjectorURL = URLConstants.authlibInjectorURL
+        
+        model.options.authlibInjectorPath = authlibInjectorURL.path
+        model.options.authServerURL = yggdrasilAccount.authServerURL
+        do {
+            model.options.prefetchedMeta = try await yggdrasilAccount.fetchMetadata()
+        } catch {
+            err("获取验证服务器元数据失败：\(error.localizedDescription)")
+            guard let cachedMetadata = yggdrasilAccount.cachedMetadata else {
+                throw SimpleError("获取验证服务器元数据失败：\(error.localizedDescription)")
+            }
+            log("正在使用本地缓存")
+            model.options.prefetchedMeta = cachedMetadata
+        }
+        
+        do {
+            log("正在获取 Authlib Injector 版本列表")
+            let artifacts: AuthlibInjectorArtifacts = try await Requests.get("https://authlib-injector.yushi.moe/artifacts.json").decode(AuthlibInjectorArtifacts.self)
+            guard let buildNumber = artifacts.artifacts.max(by: { $0.buildNumber < $1.buildNumber })?.buildNumber else {
+                throw SimpleError("获取 Authlib Injector 最新版本失败：找不到任何有效版本。")
+            }
+            let latestArtifact: AuthlibInjectorArtifact = try await Requests.get("https://authlib-injector.yushi.moe/artifact/\(buildNumber).json").decode(AuthlibInjectorArtifact.self)
+            let downloadItem: DownloadItem = .init(
+                url: latestArtifact.downloadURL,
+                destination: authlibInjectorURL,
+                checksums: latestArtifact.checksums,
+                executable: false
+            )
+            if FileManager.default.fileExists(atPath: authlibInjectorURL.path) {
+                if (try? FileUtils.check(downloadItem)) != true {
+                    try FileManager.default.removeItem(at: authlibInjectorURL)
+                    log("正在更新 Authlib Injector \(latestArtifact.version)")
+                } else {
+                    log("本地 Authlib Injector 有效")
+                    return
+                }
+            } else {
+                log("正在下载 Authlib Injector \(latestArtifact.version)")
+            }
+            try await SingleFileDownloader.download(downloadItem, replaceMethod: .skip, progressHandler: task.setProgress(_:))
+        } catch let error as URLError where error.code == .notConnectedToInternet {
+            log("似乎已断开与互联网的连接")
+            if FileManager.default.fileExists(atPath: authlibInjectorURL.path) {
+                log("尝试使用本地缓存的 Authlib Injector")
+            } else {
+                err("本地缓存中没有 Authlib Injector")
+                throw error
+            }
+        }
     }
     
     private static func launch(task: SubTask, model: Model) async throws {

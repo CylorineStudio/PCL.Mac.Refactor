@@ -238,7 +238,7 @@ public enum MinecraftInstallTask {
         try await SingleFileDownloader.download(
             url: version.url,
             destination: destination,
-            sha1: nil,
+            checksums: nil,
             replaceMethod: .skip,
             progressHandler: progressHandler
         )

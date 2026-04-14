@@ -180,8 +180,9 @@ class MinecraftLaunchManager: ObservableObject {
         case 1: "刷新账号"
         case 2: "预检查"
         case 3: "检查资源完整性"
-        case 4: "启动游戏"
-        case 5: "等待游戏窗口出现"
+        case 4: "检查 Authlib Injector"
+        case 5: "启动游戏"
+        case 6: "等待游戏窗口出现"
         default: "\(ordinal)"
         }
     }

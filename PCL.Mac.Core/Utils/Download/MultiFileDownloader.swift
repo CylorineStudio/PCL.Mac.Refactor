@@ -14,10 +14,12 @@ public class MultiFileDownloader {
     private let progressHandler: (@MainActor (Double) -> Void)?
     private var progress: [UUID: Double] = [:]
     
-    public init(items: [DownloadItem],
-                concurrentLimit: Int,
-                replaceMethod: ReplaceMethod,
-                progressHandler: (@MainActor (Double) -> Void)? = nil) {
+    public init(
+        items: [DownloadItem],
+        concurrentLimit: Int,
+        replaceMethod: ReplaceMethod,
+        progressHandler: (@MainActor (Double) -> Void)? = nil
+    ) {
         self.items = items
         self.concurrentLimit = concurrentLimit
         self.replaceMethod = replaceMethod
@@ -30,11 +32,11 @@ public class MultiFileDownloader {
             for item in self.items {
                 let path: String = item.destination.path
                 if FileManager.default.fileExists(atPath: path) {
-                    guard let sha1 = item.sha1 else { continue }
-                    if try FileUtils.sha1(of: item.destination) == sha1 {
+                    if try FileUtils.check(item) == true {
                         continue
+                    } else {
+                        try FileManager.default.removeItem(at: item.destination)
                     }
-                    try FileManager.default.removeItem(at: item.destination)
                 }
                 items.append(item)
             }

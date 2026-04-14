@@ -12,7 +12,7 @@ public enum SingleFileDownloader {
     public static let session: URLSession = .init(configuration: .default, delegate: DownloadDelegate.shared, delegateQueue: DownloadDelegate.queue)
     
     public static func download(_ item: DownloadItem, replaceMethod: ReplaceMethod, progressHandler: (@MainActor (Double) -> Void)? = nil) async throws {
-        try await download(url: item.url, destination: item.destination, sha1: item.sha1, executable: item.executable, replaceMethod: replaceMethod, progressHandler: progressHandler)
+        try await download(url: item.url, destination: item.destination, checksums: item.checksums, executable: item.executable, replaceMethod: replaceMethod, progressHandler: progressHandler)
     }
     
     public static func download(
@@ -23,9 +23,27 @@ public enum SingleFileDownloader {
         replaceMethod: ReplaceMethod,
         progressHandler: (@MainActor (Double) -> Void)? = nil
     ) async throws {
+        try await download(
+            url: url,
+            destination: destination,
+            checksums: sha1.map { ["sha1": $0] } ?? [:],
+            executable: executable,
+            replaceMethod: replaceMethod,
+            progressHandler: progressHandler
+        )
+    }
+    
+    public static func download(
+        url: URL,
+        destination: URL,
+        checksums: [String: String]?,
+        executable: Bool = false,
+        replaceMethod: ReplaceMethod,
+        progressHandler: (@MainActor (Double) -> Void)? = nil
+    ) async throws {
         // 文件已存在处理
         if FileManager.default.fileExists(atPath: destination.path) {
-            if let sha1, try FileUtils.sha1(of: destination) != sha1 {
+            if let checksums, try FileUtils.checkFile(at: destination, with: checksums) != true {
                 try FileManager.default.removeItem(at: destination)
             } else {
                 switch replaceMethod {
@@ -57,9 +75,9 @@ public enum SingleFileDownloader {
             task.cancel()
         }
         
-        // 验证 SHA-1
-        if let sha1 {
-            guard try FileUtils.sha1(of: destination) == sha1 else {
+        // 验证 checksums
+        if let checksums {
+            guard try FileUtils.checkFile(at: destination, with: checksums) == true else {
                 try FileManager.default.removeItem(at: destination)
                 throw DownloadError.checksumMismatch
             }
