@@ -12,13 +12,14 @@ public class YggdrasilAccount: Account {
     public private(set) var profile: PlayerProfile
     public let authServer: String
     public let authServerURL: URL
+    public private(set) var cachedMetadata: String?
     
     private lazy var service: YggdrasilService = .init(authServerURL: authServerURL)
     public private(set) var accessToken: String
     private var clientToken: String
     
     private enum CodingKeys: String, CodingKey {
-        case id, profile, authServer, authServerURL, accessToken, clientToken
+        case id, profile, authServer, authServerURL, cachedMetadata, accessToken, clientToken
     }
     
     public init(
@@ -47,5 +48,9 @@ public class YggdrasilAccount: Account {
     
     public func shouldRefresh() async throws -> Bool {
         return try await service.validateToken(accessToken, clientToken: clientToken)
+    }
+    
+    public func fetchMetadata() async throws -> String {
+        return try await service.fetchMetadata().encoded
     }
 }

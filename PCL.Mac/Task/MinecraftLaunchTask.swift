@@ -213,11 +213,24 @@ public enum MinecraftLaunchTask {
     }
     
     private static func checkAuthlibInjector(task: SubTask, model: Model) async throws {
-        guard model.account.type == .yggdrasil else {
+        guard let yggdrasilAccount = model.account as? YggdrasilAccount else {
             return
         }
         let authlibInjectorURL = URLConstants.authlibInjectorURL
         let authlibInjectorExists = FileManager.default.fileExists(atPath: authlibInjectorURL.path)
+        
+        model.options.authlibInjectorPath = authlibInjectorURL.path
+        model.options.authServerURL = yggdrasilAccount.authServerURL
+        do {
+            model.options.prefetchedMeta = try await yggdrasilAccount.fetchMetadata()
+        } catch {
+            err("获取验证服务器元数据失败：\(error.localizedDescription)")
+            guard let cachedMetadata = yggdrasilAccount.cachedMetadata else {
+                throw SimpleError("获取验证服务器元数据失败：\(error.localizedDescription)")
+            }
+            log("正在使用本地缓存")
+            model.options.prefetchedMeta = cachedMetadata
+        }
         
         do {
             log("正在获取 Authlib Injector 版本列表")
@@ -236,7 +249,7 @@ public enum MinecraftLaunchTask {
                 if (try? FileUtils.check(downloadItem)) != true {
                     try FileManager.default.removeItem(at: authlibInjectorURL)
                 } else {
-                    log("确认本地 Authlib Injector 有效")
+                    log("本地 Authlib Injector 有效")
                     return
                 }
             }
