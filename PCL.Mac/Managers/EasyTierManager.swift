@@ -151,6 +151,6 @@ class EasyTierManager {
     
     private func checkSingle(type: ComponentType) -> Bool {
         let item: DownloadItem = downloadItems[type]!
-        return FileUtils.isExecutable(at: item.destination) && (try? FileUtils.sha1(of: item.destination)) == item.sha1
+        return FileUtils.isExecutable(at: item.destination) && (try? FileUtils.check(item)) == true
     }
 }

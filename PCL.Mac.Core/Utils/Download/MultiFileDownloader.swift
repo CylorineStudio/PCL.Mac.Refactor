@@ -30,11 +30,9 @@ public class MultiFileDownloader {
             for item in self.items {
                 let path: String = item.destination.path
                 if FileManager.default.fileExists(atPath: path) {
-                    guard let sha1 = item.sha1 else { continue }
-                    if try FileUtils.sha1(of: item.destination) == sha1 {
-                        continue
+                    if try FileUtils.check(item) != true {
+                        try FileManager.default.removeItem(at: item.destination)
                     }
-                    try FileManager.default.removeItem(at: item.destination)
                 }
                 items.append(item)
             }

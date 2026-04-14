@@ -31,8 +31,9 @@ public enum MinecraftLaunchTask {
             .init(1, "刷新账号", refreshAccount(task:model:)),
             .init(2, "预检查", precheck(task:model:)),
             .init(3, "检查资源完整性", checkResources(task:model:)),
-            .init(4, "启动游戏", launch(task:model:)),
-            .init(5, "等待游戏窗口出现", display: false, waitForWindow(task:model:))
+            .init(4, "检查 Authlib Injector", checkAuthlibInjector(task:model:)),
+            .init(5, "启动游戏", launch(task:model:)),
+            .init(6, "等待游戏窗口出现", display: false, waitForWindow(task:model:))
         )
     }
     
@@ -209,6 +210,32 @@ public enum MinecraftLaunchTask {
             repository: model.repository,
             progressHandler: task.setProgress(_:)
         )
+    }
+    
+    private static func checkAuthlibInjector(task: SubTask, model: Model) async throws {
+        guard model.account.type == .yggdrasil else {
+            return
+        }
+        log("正在获取 Authlib Injector 版本列表")
+        let artifacts: AuthlibInjectorArtifacts = try await Requests.get("https://authlib-injector.yushi.moe/artifacts.json").decode(AuthlibInjectorArtifacts.self)
+        guard let buildNumber = artifacts.artifacts.first?.buildNumber else {
+            throw SimpleError("获取 Authlib Injector 最新版本失败：找不到任何有效版本。")
+        }
+        let latestArtifact: AuthlibInjectorArtifact = try await Requests.get("https://authlib-injector.yushi.moe/artifact/\(buildNumber).json").decode(AuthlibInjectorArtifact.self)
+        let authlibInjectorURL = URLConstants.authlibInjectorURL
+        let downloadItem: DownloadItem = .init(
+            url: latestArtifact.downloadURL,
+            destination: authlibInjectorURL,
+            checksums: latestArtifact.checksums,
+            executable: false
+        )
+        if FileManager.default.fileExists(atPath: authlibInjectorURL.path) {
+            if (try? FileUtils.check(downloadItem)) != true {
+                try FileManager.default.removeItem(at: authlibInjectorURL)
+            }
+        }
+        log("正在下载 Authlib Injector \(latestArtifact.version)")
+        try await SingleFileDownloader.download(downloadItem, replaceMethod: .skip, progressHandler: task.setProgress(_:))
     }
     
     private static func launch(task: SubTask, model: Model) async throws {
