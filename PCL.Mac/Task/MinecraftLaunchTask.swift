@@ -216,29 +216,41 @@ public enum MinecraftLaunchTask {
         guard model.account.type == .yggdrasil else {
             return
         }
-        log("正在获取 Authlib Injector 版本列表")
-        let artifacts: AuthlibInjectorArtifacts = try await Requests.get("https://authlib-injector.yushi.moe/artifacts.json").decode(AuthlibInjectorArtifacts.self)
-        guard let buildNumber = artifacts.artifacts.first?.buildNumber else {
-            throw SimpleError("获取 Authlib Injector 最新版本失败：找不到任何有效版本。")
-        }
-        let latestArtifact: AuthlibInjectorArtifact = try await Requests.get("https://authlib-injector.yushi.moe/artifact/\(buildNumber).json").decode(AuthlibInjectorArtifact.self)
         let authlibInjectorURL = URLConstants.authlibInjectorURL
-        let downloadItem: DownloadItem = .init(
-            url: latestArtifact.downloadURL,
-            destination: authlibInjectorURL,
-            checksums: latestArtifact.checksums,
-            executable: false
-        )
-        if FileManager.default.fileExists(atPath: authlibInjectorURL.path) {
-            if (try? FileUtils.check(downloadItem)) != true {
-                try FileManager.default.removeItem(at: authlibInjectorURL)
+        let authlibInjectorExists = FileManager.default.fileExists(atPath: authlibInjectorURL.path)
+        
+        do {
+            log("正在获取 Authlib Injector 版本列表")
+            let artifacts: AuthlibInjectorArtifacts = try await Requests.get("https://authlib-injector.yushi.moe/artifacts.json").decode(AuthlibInjectorArtifacts.self)
+            guard let buildNumber = artifacts.artifacts.first?.buildNumber else {
+                throw SimpleError("获取 Authlib Injector 最新版本失败：找不到任何有效版本。")
+            }
+            let latestArtifact: AuthlibInjectorArtifact = try await Requests.get("https://authlib-injector.yushi.moe/artifact/\(buildNumber).json").decode(AuthlibInjectorArtifact.self)
+            let downloadItem: DownloadItem = .init(
+                url: latestArtifact.downloadURL,
+                destination: authlibInjectorURL,
+                checksums: latestArtifact.checksums,
+                executable: false
+            )
+            if authlibInjectorExists {
+                if (try? FileUtils.check(downloadItem)) != true {
+                    try FileManager.default.removeItem(at: authlibInjectorURL)
+                } else {
+                    log("确认本地 Authlib Injector 有效")
+                    return
+                }
+            }
+            log("正在下载 Authlib Injector \(latestArtifact.version)")
+            try await SingleFileDownloader.download(downloadItem, replaceMethod: .skip, progressHandler: task.setProgress(_:))
+        } catch let error as URLError where error.code == .notConnectedToInternet {
+            log("似乎已断开与互联网的连接")
+            if authlibInjectorExists {
+                log("尝试使用本地缓存的 Authlib Injector")
             } else {
-                log("确认本地 Authlib Injector 有效")
-                return
+                err("本地缓存中没有 Authlib Injector")
+                throw error
             }
         }
-        log("正在下载 Authlib Injector \(latestArtifact.version)")
-        try await SingleFileDownloader.download(downloadItem, replaceMethod: .skip, progressHandler: task.setProgress(_:))
     }
     
     private static func launch(task: SubTask, model: Model) async throws {

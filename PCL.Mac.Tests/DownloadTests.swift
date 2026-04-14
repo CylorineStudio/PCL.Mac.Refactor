@@ -23,7 +23,7 @@ struct DownloadTests {
         try await SingleFileDownloader.download(
             url: item.url,
             destination: item.destination,
-            sha1: item.sha1,
+            checksums: item.checksums,
             replaceMethod: .replace
         )
         
@@ -31,7 +31,7 @@ struct DownloadTests {
             try await SingleFileDownloader.download(
                 url: item.url,
                 destination: item.destination,
-                sha1: item.sha1,
+                checksums: item.checksums,
                 replaceMethod: .throw
             )
         }
