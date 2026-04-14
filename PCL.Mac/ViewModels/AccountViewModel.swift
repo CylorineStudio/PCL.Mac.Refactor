@@ -28,7 +28,7 @@ class AccountViewModel: ObservableObject {
         return nil
     }
     
-    @Published public var addingYggdrasilAccount: Bool = false
+    @Published public var currentPanel: PanelType = .normal
     @Published public var yggdrasilServer: String = ""
     @Published public var yggdrasilUsername: String = ""
     @Published public var yggdrasilPassword: String = ""
@@ -36,6 +36,7 @@ class AccountViewModel: ObservableObject {
     public init() {
         self.accounts = LauncherConfig.shared.accounts
         self.currentAccountId = LauncherConfig.shared.currentAccountId
+        self.currentPanel = self.currentAccount == nil ? .accountList : .normal
     }
     
     /// 请求用户添加账号。
@@ -55,7 +56,7 @@ class AccountViewModel: ObservableObject {
             if idx == 0 {
                 await requestAddMicrosoftAccount()
             } else if idx == 1 {
-                addingYggdrasilAccount = true
+                currentPanel = .addYggdrasil
             } else {
                 await requestAddOfflineAccount()
             }
@@ -289,7 +290,7 @@ class AccountViewModel: ObservableObject {
             await MainActor.run {
                 addAccount(account)
                 hint("添加成功！", type: .finish)
-                addingYggdrasilAccount = false
+                currentPanel = .accountList
                 yggdrasilServer = ""
                 yggdrasilUsername = ""
                 yggdrasilPassword = ""
@@ -318,5 +319,9 @@ class AccountViewModel: ObservableObject {
     private func addAccount(_ account: Account) {
         accounts.append(account)
         switchAccount(to: account)
+    }
+    
+    enum PanelType {
+        case normal, accountList, addYggdrasil
     }
 }
