@@ -22,9 +22,14 @@ public class YggdrasilService {
     public func resolveALI() async throws -> URL {
         let response = try await request("HEAD", "/")
         if let apiLocation: String = response.headers["x-authlib-injector-api-location"],
-           let resolvedServerURL: URL = .init(string: apiLocation) {
-            self.authServerURL = resolvedServerURL
-            return resolvedServerURL
+           let resolvedURL = URL(string: apiLocation) {
+            if resolvedURL.scheme == "http" || resolvedURL.scheme == "https" {
+                self.authServerURL = resolvedURL
+                return resolvedURL
+            } else {
+                authServerURL = authServerURL.appending(path: apiLocation)
+                return authServerURL
+            }
         }
         return authServerURL
     }
