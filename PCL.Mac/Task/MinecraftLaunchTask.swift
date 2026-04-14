@@ -232,6 +232,9 @@ public enum MinecraftLaunchTask {
         if FileManager.default.fileExists(atPath: authlibInjectorURL.path) {
             if (try? FileUtils.check(downloadItem)) != true {
                 try FileManager.default.removeItem(at: authlibInjectorURL)
+            } else {
+                log("确认本地 Authlib Injector 有效")
+                return
             }
         }
         log("正在下载 Authlib Injector \(latestArtifact.version)")
