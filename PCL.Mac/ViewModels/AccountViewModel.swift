@@ -268,13 +268,15 @@ class AccountViewModel: ObservableObject {
             let profile: PlayerProfile
             if let selectedProfile = authResponse.selectedProfile {
                 profile = selectedProfile
+            } else if authResponse.availableProfiles.isEmpty {
+                hint("错误：这个账号中没有角色！", type: .critical)
+                return
             } else {
-                // TODO: 弹窗并让用户选择
-                guard let firstProfile = authResponse.availableProfiles.first else {
-                    hint("错误：这个账号中没有角色！", type: .critical)
-                    return
-                }
-                profile = firstProfile
+                guard let idx = await MessageBoxManager.shared.showListAsync(
+                    title: "选择角色",
+                    items: authResponse.availableProfiles.map { ListItem(name: $0.name, description: UUIDUtils.string(of: $0.id, withHyphens: true)) }
+                ) else { return }
+                profile = authResponse.availableProfiles[idx]
             }
             // 获取带有角色属性的 PlayerProfile
             let fullProfile: PlayerProfile = try await service.fullProfile(for: profile.id)
