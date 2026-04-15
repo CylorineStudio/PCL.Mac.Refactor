@@ -46,7 +46,7 @@ public class ForgeInstallService {
     private var values: [String: String]!
     
     private lazy var installerURL: URL = tempDirectory.appending(path: "installer")
-    private lazy var librariesURL: URL = repository.librariesURL
+    private lazy var librariesURL: URL = repository.librariesDirectory
     
     /// 下载安装器及其所需文件。
     /// - Parameter progressHandler: 进度回调。
@@ -112,7 +112,7 @@ public class ForgeInstallService {
         let json: JSON = try .init(data: data)
         if json["install"].exists() { // 旧版本安装器，只需拷贝一个文件即可完成安装
             let forgeURL: URL = installerURL.appending(path: json["install"]["filePath"].stringValue)
-            let forgeDestination: URL = repository.librariesURL.appending(path: MavenCoordinateUtils.path(of: json["install"]["path"].stringValue))
+            let forgeDestination: URL = repository.librariesDirectory.appending(path: MavenCoordinateUtils.path(of: json["install"]["path"].stringValue))
             if !FileManager.default.fileExists(atPath: forgeDestination.path) {
                 try FileManager.default.createDirectory(at: forgeDestination.deletingLastPathComponent(), withIntermediateDirectories: true)
                 try FileManager.default.copyItem(at: forgeURL, to: forgeDestination)
@@ -180,7 +180,7 @@ public class ForgeInstallService {
             let components: [String] = url.pathComponents
             guard components.starts(with: baseComponents) else { continue }
             let relativePath: String = components.dropFirst(baseComponents.count).joined(separator: "/")
-            let destination: URL = repository.librariesURL.appending(path: relativePath)
+            let destination: URL = repository.librariesDirectory.appending(path: relativePath)
             if FileManager.default.fileExists(atPath: destination.path) { continue }
             try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             try FileManager.default.moveItem(at: url, to: destination)

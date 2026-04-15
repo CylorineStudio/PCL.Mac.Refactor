@@ -103,7 +103,7 @@ public enum MinecraftInstallTask {
             },
             .init(8, "__completion", display: false) { _, _ in
                 let instance: MinecraftInstance = .init(
-                    runningDirectory: repository.versionsURL.appending(path: name),
+                    runningDirectory: repository.versionsDirectory.appending(path: name),
                     version: version,
                     manifest: model.manifest,
                     config: .init(),
@@ -170,7 +170,7 @@ public enum MinecraftInstallTask {
         }
         
         return .init(name: "\(name) 安装", model: model, subTasks) { _ in
-            try? FileManager.default.removeItem(at: repository.versionsURL.appending(path: name))
+            try? FileManager.default.removeItem(at: repository.versionsDirectory.appending(path: name))
         }
     }
     
@@ -250,7 +250,7 @@ public enum MinecraftInstallTask {
         repository: MinecraftRepository,
         progressHandler: @MainActor @escaping (Double) -> Void
     ) async throws -> AssetIndex {
-        let destination: URL = repository.assetsURL
+        let destination: URL = repository.assetsDirectory
             .appending(path: "indexes/\(assetIndex.id).json")
         try await SingleFileDownloader.download(
             url: assetIndex.url,
@@ -285,7 +285,7 @@ public enum MinecraftInstallTask {
         let items: [DownloadItem] = autoreleasepool {
             assetIndex.objects.map { .init(
                 url: root.appending(path: "\($0.hash.prefix(2))/\($0.hash)"),
-                destination: repository.assetsURL.appending(path: "objects/\($0.hash.prefix(2))/\($0.hash)"),
+                destination: repository.assetsDirectory.appending(path: "objects/\($0.hash.prefix(2))/\($0.hash)"),
                 sha1: $0.hash
             ) }
         }
@@ -299,7 +299,7 @@ public enum MinecraftInstallTask {
     ) async throws {
         let items: [DownloadItem] = (manifest.getLibraries() + manifest.getNatives())
             .compactMap(\.artifact)
-            .compactMap { $0.downloadItem(destinationDirectory: repository.librariesURL) }
+            .compactMap { $0.downloadItem(destinationDirectory: repository.librariesDirectory) }
         try await MultiFileDownloader(items: items, concurrentLimit: 64, replaceMethod: .skip, progressHandler: progressHandler).start()
     }
     
@@ -315,7 +315,7 @@ public enum MinecraftInstallTask {
                 err("本地库 \(native.name) 通过了 rules 检查，但 classifiers 中没有其对应的 artifact")
                 continue
             }
-            let url: URL = repository.librariesURL.appending(path: path)
+            let url: URL = repository.librariesDirectory.appending(path: path)
             guard FileManager.default.fileExists(atPath: url.path) else {
                 err("本地库 \(native.name) 似乎未被下载")
                 continue
@@ -355,7 +355,7 @@ public enum MinecraftInstallTask {
         public init(name: String, version: MinecraftVersion, repository: MinecraftRepository) {
             self.name = name
             self.version = version
-            self.runningDirectory = repository.versionsURL.appending(path: name)
+            self.runningDirectory = repository.versionsDirectory.appending(path: name)
             self.repository = repository
         }
     }

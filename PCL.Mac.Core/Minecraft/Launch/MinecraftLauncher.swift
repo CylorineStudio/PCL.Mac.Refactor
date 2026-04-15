@@ -19,7 +19,7 @@ public class MinecraftLauncher {
     public init(options: LaunchOptions) {
         self.manifest = options.manifest
         self.runningDirectory = options.runningDirectory
-        self.librariesURL = options.repository.librariesURL
+        self.librariesURL = options.repository.librariesDirectory
         self.options = options
         self.logURL = URLConstants.tempURL.appending(path: "game-log-\(UUID().uuidString.lowercased()).log")
         self.values = [

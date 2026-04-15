@@ -10,13 +10,22 @@ import Foundation
 /// Minecraft 仓库（`.minecraft`）。
 public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable {
     @Published public var name: String
-    @Published public var url: URL
+    @Published public var currentInstanceId: String?
+    public let url: URL
+    
     @Published public var instances: [MinecraftInstance]?
     @Published public var errorInstances: [ErrorInstance]?
+    public var currentInstance: MinecraftInstance? {
+        get {
+            guard let currentInstanceId else { return nil }
+            return instances?.first(where: { $0.name == currentInstanceId })
+        }
+        set { currentInstanceId = newValue?.name }
+    }
     
-    public private(set) lazy var assetsURL: URL = { url.appending(path: "assets") }()
-    public private(set) lazy var librariesURL: URL = { url.appending(path: "libraries") }()
-    public private(set) lazy var versionsURL: URL = { url.appending(path: "versions") }()
+    public private(set) lazy var assetsDirectory: URL = url.appending(path: "assets")
+    public private(set) lazy var librariesDirectory: URL = url.appending(path: "libraries")
+    public private(set) lazy var versionsDirectory: URL = url.appending(path: "versions")
     
     public init(name: String, url: URL, instances: [MinecraftInstance]? = nil) {
         self.name = name
@@ -28,9 +37,9 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     public func createDirectories() throws {
         let fileManager: FileManager = .default
         try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
-        try fileManager.createDirectory(at: assetsURL, withIntermediateDirectories: true)
-        try fileManager.createDirectory(at: librariesURL, withIntermediateDirectories: true)
-        try fileManager.createDirectory(at: versionsURL, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: assetsDirectory, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: librariesDirectory, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: versionsDirectory, withIntermediateDirectories: true)
     }
     
     /// 加载该仓库中的所有实例。
@@ -55,14 +64,14 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     /// - Parameter id: 实例的 ID。
     /// - Returns: 实例对象。
     public func instance(id: String, version: MinecraftVersion? = nil) throws -> MinecraftInstance {
-        return try .load(from: versionsURL.appending(path: id))
+        return try .load(from: versionsDirectory.appending(path: id))
     }
     
     /// 判断仓库中是否存在带有指定 id 的实例。
     /// - Parameter id: 指定 id。
     /// - Returns: 一个 `Bool`，表示是否存在。
     public func contains(_ id: String) -> Bool {
-        return FileManager.default.fileExists(atPath: versionsURL.appending(path: id).path)
+        return FileManager.default.fileExists(atPath: versionsDirectory.appending(path: id).path)
     }
     
     /// 检查实例名是否合法。
@@ -125,7 +134,7 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
         try createDirectories()
         var instances: [MinecraftInstance] = []
         var errorInstances: [ErrorInstance] = []
-        let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsURL, includingPropertiesForKeys: [.isDirectoryKey])
+        let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsDirectory, includingPropertiesForKeys: [.isDirectoryKey])
         for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {
             let instance: MinecraftInstance
             do {

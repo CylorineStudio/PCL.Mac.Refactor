@@ -77,7 +77,7 @@ class InstanceManager: ObservableObject {
     
     public func deleteInstance(_ instance: MinecraftInstance) throws {
         guard let currentRepository else { return }
-        try FileManager.default.removeItem(at: currentRepository.versionsURL.appending(path: instance.name))
+        try FileManager.default.removeItem(at: currentRepository.versionsDirectory.appending(path: instance.name))
         try? currentRepository.load()
         switchRepository(to: currentRepository)
     }
