@@ -105,7 +105,7 @@ struct InstanceListSidebar: Sidebar {
             switch result.index {
             case .modrinth(let index):
                 let task = try ModrinthModpackInstallTask.create(
-                    url: url,
+                    url: result.url,
                     index: index,
                     repository: repository,
                     name: name

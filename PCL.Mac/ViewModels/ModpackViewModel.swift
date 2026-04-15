@@ -19,7 +19,12 @@ class ModpackViewModel {
             throw Error.extractFailed(underlying: error)
         }
         
-        if let modrinthIndexEntry: Entry = archive["modrinth.index.json"] {
+        if let modpackEntry = archive["modpack.mrpack"] ?? archive["modpack.zip"] { // 包含启动器的整合包
+            let temp: URL = URLConstants.tempURL.appending(path: "modpack-import-\(UUID().uuidString.lowercased())")
+            _ = try archive.extract(modpackEntry, to: temp, allowUncontainedSymlinks: false)
+            return try loadModpack(at: temp)
+        }
+        if let modrinthIndexEntry = archive["modrinth.index.json"] {
             let index: ModrinthModpackIndex = try parseIndex(modrinthIndexEntry, in: archive)
             return .init(
                 name: index.name,
@@ -27,7 +32,8 @@ class ModpackViewModel {
                 summary: index.summary ?? "无",
                 format: "Modrinth",
                 dependencyInfo: index.dependencies.description,
-                index: .modrinth(index)
+                index: .modrinth(index),
+                url: url
             )
         }
         return nil
@@ -40,6 +46,7 @@ class ModpackViewModel {
         public let format: String
         public let dependencyInfo: String
         public let index: ModpackIndex
+        public let url: URL
     }
     
     public enum ModpackIndex {
