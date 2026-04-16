@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum VersionCache {
+public actor VersionCache {
     private static let cacheURL: URL = URLConstants.cacheURL.appending(path: "version_cache.json")
     private static var cache: Model?
     

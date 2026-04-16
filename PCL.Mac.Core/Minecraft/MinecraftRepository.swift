@@ -10,27 +10,26 @@ import Foundation
 /// Minecraft 仓库（`.minecraft`）。
 public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable {
     @Published public var name: String
-    @Published public var currentInstanceId: String?
+    @Published public var currentInstanceId: UUID?
     public let url: URL
     
-    @Published public var instances: [MinecraftInstance]?
+    @Published public var instances: [MinecraftInstance_]?
     @Published public var errorInstances: [ErrorInstance]?
-    public var currentInstance: MinecraftInstance? {
+    public var currentInstance: MinecraftInstance_? {
         get {
             guard let currentInstanceId else { return nil }
-            return instances?.first(where: { $0.name == currentInstanceId })
+            return instances?.first(where: { $0.id == currentInstanceId })
         }
-        set { currentInstanceId = newValue?.name }
+        set { currentInstanceId = newValue?.id }
     }
     
     public private(set) lazy var assetsDirectory: URL = url.appending(path: "assets")
     public private(set) lazy var librariesDirectory: URL = url.appending(path: "libraries")
     public private(set) lazy var versionsDirectory: URL = url.appending(path: "versions")
     
-    public init(name: String, url: URL, instances: [MinecraftInstance]? = nil) {
+    public init(name: String, url: URL) {
         self.name = name
         self.url = url
-        self.instances = instances
     }
     
     /// 创建必要目录。
@@ -44,19 +43,11 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     
     /// 加载该仓库中的所有实例。
     /// 只会在读取目录失败时抛出错误。
-    public func load() throws {
-        let (instances, errorInstances) = try getInstanceList()
-        self.instances = instances
-        self.errorInstances = errorInstances
-    }
-    
-    /// 异步加载该仓库中的所有实例。
-    /// 只会在读取目录失败时抛出错误。
-    public func loadAsync() async throws {
-        let (instances, errorInstances) = try getInstanceList()
+    public func load() async throws {
+        let result = try await loadInstances()
         await MainActor.run {
-            self.instances = instances
-            self.errorInstances = errorInstances
+            self.instances = result.instances
+            self.errorInstances = result.errorInstances
         }
     }
     
@@ -80,30 +71,131 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     ///   - trim: 是否删除首尾空白字符。
     /// - Returns: 经过 `trimmingCharacters(in: .whitespacesAndNewlines)` 处理后的实例名。
     /// - Throws: 如果非法，抛出 `NameCheckError`。
-    public func checkInstanceName(_ name: String, trim: Bool = true) throws -> String {
+    public func checkInstanceName(_ name: String, trim: Bool = true) throws(NameCheckError) -> String {
         let trimmed: String = name.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trim && name != trimmed {
-            throw NameCheckError.hasWhitespaceEdges
+            throw .hasWhitespaceEdges
         }
         if trimmed.isEmpty {
-            throw NameCheckError.empty
+            throw .empty
         }
         
         let invalidCharacters: [Character] = [
             ":", ";", "/", "\\"
         ]
         if invalidCharacters.contains(where: trimmed.contains(_:)) {
-            throw NameCheckError.containsInvalidCharacter
+            throw .containsInvalidCharacter
         }
         
         if trimmed.starts(with: ".") {
-            throw NameCheckError.startsWithDot
+            throw .startsWithDot
         }
         
         if self.contains(trimmed) {
-            throw NameCheckError.alreadyExists
+            throw .alreadyExists
         }
         return trimmed
+    }
+    
+    
+    private func loadInstances() async throws -> LoadResult {
+        guard FileManager.default.fileExists(atPath: versionsDirectory.path) else {
+            return .empty
+        }
+        
+        let instanceDirectories: [URL] = try FileManager.default.contentsOfDirectory(
+            at: versionsDirectory,
+            includingPropertiesForKeys: [.isDirectoryKey]
+        ).filter { url in
+            let resourceValues = try url.resourceValues(forKeys: [.isDirectoryKey])
+            return resourceValues.isDirectory == true
+        }
+        
+        return await withTaskGroup { group in
+            for instanceDirectory in instanceDirectories {
+                group.addTask {
+                    return self.loadInstance(at: instanceDirectory)
+                }
+            }
+            
+            var instances: [MinecraftInstance_] = []
+            var errorInstances: [ErrorInstance] = []
+            
+            for await result in group {
+                switch result {
+                case .success(let instance):
+                    instances.append(instance)
+                case .incomplete:
+                    break
+                case .failure(let errorInstance):
+                    errorInstances.append(errorInstance)
+                }
+            }
+            return .init(instances: instances, errorInstances: errorInstances)
+        }
+    }
+    
+    private func loadInstance(at url: URL) -> InstanceLoadResult {
+        let name = url.lastPathComponent
+        log("正在加载实例 \(name)")
+        do {
+            let instance = try MinecraftInstanceLoader.load(from: url)
+            return .success(instance)
+        } catch .incomplete {
+            log("实例未完成安装，正在尝试自动删除")
+            do {
+                try FileManager.default.removeItem(at: url)
+            } catch {
+                err("删除失败：\(error.localizedDescription)")
+                return .failure(name, message: "该实例未完成安装，且自动删除失败。")
+            }
+            return .incomplete
+        } catch {
+            err("加载实例失败：\(error.localizedDescription)")
+            return .failure(name, message: error.localizedDescription)
+        }
+    }
+    
+    public required init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.url = try container.decode(URL.self, forKey: .url)
+        self.currentInstanceId = try container.decodeIfPresent(UUID.self, forKey: .currentInstanceId)
+    }
+    
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(url, forKey: .url)
+        try container.encode(currentInstanceId, forKey: .currentInstanceId)
+    }
+    
+    public static func == (lhs: MinecraftRepository, rhs: MinecraftRepository) -> Bool {
+        return lhs.url == rhs.url
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(url)
+        hasher.combine(name)
+    }
+    
+    public enum CodingKeys: String, CodingKey { case name, url, currentInstanceId }
+    
+    public struct LoadResult {
+        public let instances: [MinecraftInstance_]
+        public let errorInstances: [ErrorInstance]
+        
+        public static let empty: LoadResult = .init(instances: [], errorInstances: [])
+    }
+    
+    private enum InstanceLoadResult {
+        case success(MinecraftInstance_)
+        case incomplete
+        case failure(ErrorInstance)
+        
+        static func failure(_ name: String, message: String) -> InstanceLoadResult {
+            return .failure(.init(name: name, message: message))
+        }
     }
     
     public enum NameCheckError: LocalizedError {
@@ -128,62 +220,9 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
             }
         }
     }
-    
-    
-    private func getInstanceList() throws -> ([MinecraftInstance], [ErrorInstance]) {
-        try createDirectories()
-        var instances: [MinecraftInstance] = []
-        var errorInstances: [ErrorInstance] = []
-        let contents: [URL] = try FileManager.default.contentsOfDirectory(at: versionsDirectory, includingPropertiesForKeys: [.isDirectoryKey])
-        for content in contents where try content.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? false {
-            let instance: MinecraftInstance
-            do {
-                log("正在加载实例 \(content.lastPathComponent)")
-                instance = try MinecraftInstance.load(from: content)
-            } catch MinecraftError.incomplete {
-                log("实例未完成安装，正在尝试自动删除")
-                do {
-                    try FileManager.default.removeItem(at: content)
-                } catch {
-                    err("删除失败：\(error.localizedDescription)")
-                    errorInstances.append(.init(name: content.lastPathComponent, message: "该实例未完成安装，且自动删除失败。"))
-                }
-                continue
-            } catch {
-                err("加载实例失败：\(error.localizedDescription)")
-                errorInstances.append(.init(name: content.lastPathComponent, message: error.localizedDescription))
-                continue
-            }
-            instances.append(instance)
-        }
-        return (instances, errorInstances)
-    }
-    
-    public static func == (lhs: MinecraftRepository, rhs: MinecraftRepository) -> Bool {
-        return lhs.url == rhs.url
-    }
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(url)
-        hasher.combine(name)
-    }
-    
-    public enum CodingKeys: String, CodingKey { case name, url, instances }
-    
-    public required init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.name = try container.decode(String.self, forKey: .name)
-        self.url = try container.decode(URL.self, forKey: .url)
-    }
-    
-    public func encode(to encoder: any Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(self.name, forKey: .name)
-        try container.encode(self.url, forKey: .url)
-    }
-    
-    public struct ErrorInstance {
-        public let name: String
-        public let message: String
-    }
+}
+
+public struct ErrorInstance {
+    public let name: String
+    public let message: String
 }

@@ -11,9 +11,12 @@ public struct MinecraftInstance_: Hashable, Identifiable, Equatable {
     public let id: UUID
     public let url: URL
     public let version: MinecraftVersion
+    public let modLoader: ModLoader?
     public let manifest: ClientManifest
     
     public var config: Config
+    
+    public var name: String { url.lastPathComponent }
     
     public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
@@ -26,5 +29,7 @@ public struct MinecraftInstance_: Hashable, Identifiable, Equatable {
     public struct Config: Codable {
         public var jvmHeapSize: UInt64
         public var javaURL: URL?
+        
+        public static let `default`: Config = .init(jvmHeapSize: 4096, javaURL: nil)
     }
 }
