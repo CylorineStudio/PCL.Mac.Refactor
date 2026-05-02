@@ -10,10 +10,12 @@ import Core
 
 struct ResourceInstallPage: View {
     @StateObject private var viewModel: ResourceInstallViewModel
+    @StateObject private var instanceVM: InstanceViewModel
     @State private var currentPage: Int = 0
     
-    init(project: ProjectListItemModel) {
-        self._viewModel = StateObject(wrappedValue: .init(project: project))
+    init(instanceManager: InstanceManager, project: ProjectListItemModel) {
+        self._viewModel = .init(wrappedValue: .init(project: project))
+        self._instanceVM = .init(wrappedValue: InstanceViewModel(instanceManager: instanceManager))
     }
     
     var body: some View {
@@ -35,7 +37,7 @@ struct ResourceInstallPage: View {
         }
         .task(id: viewModel.project) {
             do {
-                try await viewModel.load(selectedInstance: InstanceManager.shared.currentInstance)
+                try await viewModel.load(selectedInstance: instanceVM.currentInstance)
             } catch is CancellationError {
             } catch {
                 err("加载\(viewModel.project.type) \(viewModel.project.title) 版本列表失败：\(error)")
@@ -45,7 +47,7 @@ struct ResourceInstallPage: View {
     }
     
     private func onVersionTap(_ version: ProjectVersionModel) async throws {
-        guard let instance: MinecraftInstance = InstanceManager.shared.currentInstance else {
+        guard let instance: MinecraftInstance = instanceVM.currentInstance else {
             hint("请先安装并选择一个实例！", type: .critical)
             return
         }
@@ -91,11 +93,7 @@ struct ResourceInstallPage: View {
     }
     
     private func onModpackTap(_ version: ProjectVersionModel) async throws {
-        guard let repository: MinecraftRepository = InstanceManager.shared.currentRepository else {
-            hint("请先选择一个游戏目录！", type: .critical)
-            return
-        }
-        
+        let repository = instanceVM.currentRepository
         guard await MessageBoxManager.shared.showTextAsync(
             title: "确认",
             content: "确定要安装整合包 \(viewModel.project.title) \(version.version) 吗？",
@@ -153,7 +151,7 @@ struct ResourceInstallPage: View {
                 repository: repository,
                 name: name
             ) { instance in
-                InstanceManager.shared.switchInstance(to: instance, repository)
+                instanceVM.switchInstance(to: instance, in: repository)
             }
         } catch {
             err("创建安装任务失败：\(error.localizedDescription)")

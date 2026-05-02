@@ -9,10 +9,14 @@ import SwiftUI
 import Core
 
 struct LaunchSidebar: Sidebar {
-    @EnvironmentObject private var instanceViewModel: InstanceManager
-    @ObservedObject private var launchManager: MinecraftLaunchManager = .shared
-    @StateObject private var accountViewModel: AccountViewModel = .init()
+    @StateObject private var instanceVM: InstanceViewModel
+    @StateObject private var accountVM: AccountViewModel = .init()
+    @StateObject private var launchVM: LaunchViewModel = .init()
     @State private var addingYggdrasilAccount: Bool = false
+    
+    init(instanceManager: InstanceManager) {
+        self._instanceVM = StateObject(wrappedValue: InstanceViewModel(instanceManager: instanceManager))
+    }
     
     let width: CGFloat = 285
     
@@ -27,7 +31,7 @@ struct LaunchSidebar: Sidebar {
         )
     
     var body: some View {
-        if launchManager.isLaunching {
+        if launchVM.isLaunching {
             launchingBody
         } else {
             normalBody
@@ -38,12 +42,12 @@ struct LaunchSidebar: Sidebar {
         VStack {
             Spacer()
             Group {
-                switch accountViewModel.currentPanel {
+                switch accountVM.currentPanel {
                 case .normal:
-                    if let account = accountViewModel.currentAccount {
+                    if let account = accountVM.currentAccount {
                         normalPanel(account)
                             .onTapGesture {
-                                accountViewModel.currentPanel = .accountList
+                                accountVM.currentPanel = .accountList
                             }
                     }
                 case .accountList:
@@ -57,15 +61,14 @@ struct LaunchSidebar: Sidebar {
             Spacer()
             VStack(spacing: 11) {
                 Group {
-                    if let instance = instanceViewModel.currentInstance,
-                       let repository = instanceViewModel.currentRepository {
+                    if let instance = instanceVM.currentInstance {
                         MyButton("启动游戏", subLabel: instance.name, type: .highlight) {
-                            guard !launchManager.isRunning && !launchManager.isLaunching else {
+                            guard !launchVM.isRunning && !launchVM.isLaunching else {
                                 hint("已有一个游戏实例正在运行！", type: .critical)
                                 return
                             }
-                            if let account: Account = accountViewModel.currentAccount {
-                                instanceViewModel.launch(instance, account, in: repository)
+                            if let account = accountVM.currentAccount {
+                                launchVM.launch(instance, in: instanceVM.currentRepository, using: account)
                             } else {
                                 hint("请先添加一个账号！", type: .critical)
                             }
@@ -79,13 +82,9 @@ struct LaunchSidebar: Sidebar {
                 .frame(height: 50)
                 HStack(spacing: 11) {
                     MyButton("实例选择") {
-                        if let repository: MinecraftRepository = instanceViewModel.currentRepository {
-                            AppRouter.shared.append(.instanceList(repository))
-                        } else {
-                            AppRouter.shared.append(.noInstanceRepository)
-                        }
+                        AppRouter.shared.append(.instanceList(repositoryId: instanceVM.currentRepository.id))
                     }
-                    if let instance = instanceViewModel.currentInstance {
+                    if let instance = instanceVM.currentInstance {
                         MyButton("实例设置") {
                             AppRouter.shared.append(.instanceSettings(id: instance.name))
                         }
@@ -94,6 +93,11 @@ struct LaunchSidebar: Sidebar {
                 .frame(height: 32)
             }
             .padding(21)
+        }
+        .onAppear {
+            if instanceVM.currentRepository.instances == nil {
+                instanceVM.reload(repository: instanceVM.currentRepository)
+            }
         }
     }
     
@@ -117,13 +121,13 @@ struct LaunchSidebar: Sidebar {
                 .padding(.horizontal, 8)
             HStack {
                 MyButton("添加账号") {
-                    accountViewModel.requestAddAccount()
+                    accountVM.requestAddAccount()
                 }
                 .frame(width: 80)
                 
-                if accountViewModel.currentAccount != nil {
+                if accountVM.currentAccount != nil {
                     MyButton("返回") {
-                        accountViewModel.currentPanel = .normal
+                        accountVM.currentPanel = .normal
                     }
                     .frame(width: 50)
                 }
@@ -134,10 +138,10 @@ struct LaunchSidebar: Sidebar {
     
     private var accountList: some View {
         VStack(spacing: 0) {
-            ForEach(accountViewModel.accounts, id: \.id) { account in
+            ForEach(accountVM.accounts, id: \.id) { account in
                 MyListItem { hovered in
                     HStack {
-                        if account.id == accountViewModel.currentAccount?.id {
+                        if account.id == accountVM.currentAccount?.id {
                             RightRoundedRectangle(cornerRadius: 4)
                                 .fill(Color.color3)
                                 .frame(width: 4, height: 20)
@@ -161,41 +165,41 @@ struct LaunchSidebar: Sidebar {
                                 .padding(.trailing, 8)
                                 .contentShape(.rect)
                                 .onTapGesture {
-                                    accountViewModel.remove(account: account)
+                                    accountVM.remove(account: account)
                                     hint("移除成功！", type: .finish)
                                 }
                         }
                     }
                 }
                 .onTapGesture {
-                    accountViewModel.switchAccount(to: account)
+                    accountVM.switchAccount(to: account)
                 }
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: accountViewModel.currentAccount?.id)
+        .animation(.easeInOut(duration: 0.2), value: accountVM.currentAccount?.id)
     }
     
     private var addYggdrasilAccountPanel: some View {
         VStack {
             fieldLine("服务器") {
-                MyTextField(text: $accountViewModel.yggdrasilServer)
+                MyTextField(text: $accountVM.yggdrasilServer)
             }
             fieldLine("用户名") {
-                MyTextField(text: $accountViewModel.yggdrasilUsername)
+                MyTextField(text: $accountVM.yggdrasilUsername)
             }
             fieldLine("密码") {
-                MyTextField(text: $accountViewModel.yggdrasilPassword, secure: true)
+                MyTextField(text: $accountVM.yggdrasilPassword, secure: true)
             }
             HStack {
                 MyButton("返回") {
-                    accountViewModel.currentPanel = .accountList
+                    accountVM.currentPanel = .accountList
                 }
                 .frame(width: 50)
                 MyButton("登录", type: .highlight) {
                     guard !addingYggdrasilAccount else { return }
                     addingYggdrasilAccount = true
                     Task {
-                        await accountViewModel.addYggdrasilAccount()
+                        await accountVM.addYggdrasilAccount()
                         await MainActor.run {
                             addingYggdrasilAccount = false
                         }
@@ -211,8 +215,8 @@ struct LaunchSidebar: Sidebar {
     private var launchingBody: some View {
         VStack(spacing: 0) {
             Spacer()
-            MyLoading(viewModel: launchManager.loadingModel, showCard: false)
-            if let instanceName = launchManager.instanceName {
+            MyLoading(viewModel: launchVM.loadingViewModel, showCard: false)
+            if let instanceName = launchVM.instanceName {
                 MyText(instanceName, size: 13.5, color: .color3)
                     .padding(.top, 5)
             }
@@ -224,7 +228,7 @@ struct LaunchSidebar: Sidebar {
                             .init(color: Color.color3, location: 0.6)
                         ], startPoint: .topLeading, endPoint: .topTrailing)
                     )
-                    .frame(width: 225 * launchManager.progress)
+                    .frame(width: 225 * launchVM.progress)
                 Rectangle()
                     .fill(Color.color6)
                     .opacity(0.6)
@@ -235,11 +239,11 @@ struct LaunchSidebar: Sidebar {
             
             // PanLaunchingInfo
             VStack(alignment: .leading) {
-                if let currentStage: String = launchManager.currentStage {
+                if let currentStage: String = launchVM.currentStage {
                     launchingInfo(name: "当前步骤", value: currentStage)
                 }
                 launchingInfo(name: "启动进度") {
-                    AnimatablePercentText(progress: launchManager.progress)
+                    AnimatablePercentText(progress: launchVM.progress)
                 }
             }
             
@@ -258,18 +262,18 @@ struct LaunchSidebar: Sidebar {
                 MyText("这是一段测试用的小提示文本，它应该足够长以让它有两行。", size: 12.5)
                     .padding(11)
             }
-            .frame(width: 260, height: launchManager.isRunning ? nil : 0)
-            .opacity(launchManager.isRunning ? 1 : 0)
+            .frame(width: 260, height: launchVM.isRunning ? nil : 0)
+            .opacity(launchVM.isRunning ? 1 : 0)
             .padding(.top, 26)
             .fixedSize(horizontal: false, vertical: true)
             
             Spacer()
-            MyButton("取消", launchManager.cancel)
+            MyButton("取消", launchVM.cancel)
                 .frame(height: 32)
                 .padding(21)
         }
-        .animation(.easeOut(duration: 0.2), value: launchManager.progress)
-        .animation(.easeOut(duration: 0.1), value: launchManager.isRunning)
+        .animation(.easeOut(duration: 0.2), value: launchVM.progress)
+        .animation(.easeOut(duration: 0.1), value: launchVM.isRunning)
     }
     
     @ViewBuilder

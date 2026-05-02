@@ -18,9 +18,9 @@ class MinecraftLaunchManager: ObservableObject {
     @Published public var progress: Double = 0
     @Published public var currentStage: String? = nil
     @Published public var instanceName: String?
-    @Published private var gameProcess: Process?
+    @Published public var gameProcess: Process?
     public var isRunning: Bool { gameProcess != nil }
-    public let loadingModel: MyLoadingViewModel = .init(text: "正在启动游戏")
+    public let loadingViewModel: MyLoadingViewModel = .init(text: "正在启动游戏")
     
     private var task: MyTask<MinecraftLaunchTask.Model>? {
         didSet {
@@ -35,15 +35,14 @@ class MinecraftLaunchManager: ObservableObject {
     ///   - instance: 目标游戏实例。
     ///   - account: 使用的账号。
     ///   - repository: 实例所在的游戏仓库。
-    /// - Returns: 一个布尔值，表示是否成功添加任务。
     @MainActor
     public func launch(
         _ instance: MinecraftInstance,
         using account: Account,
         in repository: MinecraftRepository
-    ) -> Bool {
-        if isLaunching { return false }
-        self.loadingModel.text = "正在启动游戏"
+    ) {
+        if isLaunching { return }
+        self.loadingViewModel.text = "正在启动游戏"
         let task: MyTask<MinecraftLaunchTask.Model> = MinecraftLaunchTask.create(for: instance, using: account, in: repository) { launcher, process in
             self.gameProcess = process
             process.terminationHandler = { [weak self] process in
@@ -59,7 +58,7 @@ class MinecraftLaunchManager: ObservableObject {
                     self?.gameProcess = nil
                 }
             }
-            self.loadingModel.text = "已启动游戏"
+            self.loadingViewModel.text = "已启动游戏"
         }
         TaskManager.shared.execute(task: task, display: false) { _ in
             self.task = nil
@@ -69,7 +68,6 @@ class MinecraftLaunchManager: ObservableObject {
         }
         self.instanceName = instance.name
         self.task = task
-        return true
     }
     
     /// 取消当前启动任务。
@@ -138,7 +136,7 @@ class MinecraftLaunchManager: ObservableObject {
             try FileManager.default.moveItem(at: logURL, to: reportURL.appending(path: "game-log.log"))
         }
         
-        let crashReportDirectory: URL = instance.runningDirectory.appending(path: "crash-reports")
+        let crashReportDirectory: URL = instance.url.appending(path: "crash-reports")
         if FileManager.default.fileExists(atPath: crashReportDirectory.path) {
             let crashReports: [URL] = try FileManager.default.contentsOfDirectory(at: crashReportDirectory, includingPropertiesForKeys: [.contentModificationDateKey])
             if let latestCrashReport: URL = crashReports

@@ -27,10 +27,6 @@ public enum LaunchPrecheck {
             log("当前 Java 版本（\(actualVersion)）低于最低 Java 版本（\(minVersion)）")
             entries.append(.javaVersionTooLow(min: minVersion))
         }
-        if Architecture.systemArchitecture() == .arm64 && currentJava.architecture == .arm64 && instance.version <= .init("1.7.2") {
-            log("不支持当前 Java 架构")
-            entries.append(.armNotSupported)
-        }
         return entries
     }
     
@@ -44,7 +40,6 @@ public enum LaunchPrecheck {
     
     public enum Entry {
         case javaVersionTooLow(min: Int)
-        case armNotSupported
         case noMicrosoftAccount
     }
 }

@@ -9,66 +9,53 @@ import SwiftUI
 import Core
 
 struct InstanceConfigPage: View {
-    @EnvironmentObject private var instanceVM: InstanceManager
     @StateObject private var viewModel: InstanceConfigViewModel
+    @StateObject private var instanceVM: InstanceViewModel
     @StateObject private var loadingVM: MyLoadingViewModel = .init(text: "加载中")
     
-    init(id: String) {
-        self._viewModel = .init(wrappedValue: .init(id: id))
+    init(instanceManager: InstanceManager, id: String) {
+        self._viewModel = .init(wrappedValue: .init(instanceManager: instanceManager, id: id))
+        self._instanceVM = .init(wrappedValue: InstanceViewModel(instanceManager: instanceManager))
     }
     
     var body: some View {
         CardContainer {
-            if viewModel.loaded {
-                MyCard("", titled: false, padding: 10) {
-                    MyListItem(.init(image: viewModel.icon, name: viewModel.id, description: viewModel.description))
-                }
-                if let instance = viewModel.instance {
-                    MyCard("", titled: false) {
-                        HStack {
-                            MyButton("打开实例目录") {
-                                NSWorkspace.shared.open(instance.runningDirectory)
-                            }
-                            .frame(width: 120)
-                            MyButton("删除实例", type: .red) {
-                                MessageBoxManager.shared.showText(
-                                    title: "确认",
-                                    content: "你确定要删除这个实例（\(instance.name)）吗？\n这个实例的所有存档、模组 、资源包等将会永久消失！（真的很久！）",
-                                    level: .error,
-                                    .no(),
-                                    .yes(type: .red)
-                                ) { result in
-                                    if result == 1 {
-                                        do {
-                                            try instanceVM.deleteInstance(instance)
-                                            AppRouter.shared.removeLast()
-                                        } catch {
-                                            hint("删除实例失败：\(error.localizedDescription)", type: .critical)
-                                        }
-                                    }
+            MyCard("", titled: false, padding: 10) {
+                MyListItem(.init(image: viewModel.icon, name: viewModel.instance.name, description: viewModel.description))
+            }
+            MyCard("", titled: false) {
+                HStack {
+                    MyButton("打开实例目录") {
+                        NSWorkspace.shared.open(viewModel.instance.url)
+                    }
+                    .frame(width: 120)
+                    MyButton("删除实例", type: .red) {
+                        MessageBoxManager.shared.showText(
+                            title: "确认",
+                            content: "你确定要删除这个实例（\(viewModel.instance.name)）吗？\n这个实例的所有存档、模组、资源包等将会永久消失！（真的很久！）",
+                            level: .error,
+                            .no(),
+                            .yes(type: .red)
+                        ) { result in
+                            if result == 1 {
+                                do {
+                                    try instanceVM.deleteInstance(viewModel.instance)
+                                    hint("删除成功！", type: .finish)
+                                    AppRouter.shared.removeLast()
+                                } catch {
+                                    hint("删除实例失败：\(error.localizedDescription)", type: .critical)
                                 }
                             }
-                            .frame(width: 120)
-                            Spacer()
                         }
-                        .frame(height: 35)
                     }
-                    .cardIndex(1)
+                    .frame(width: 120)
+                    Spacer()
                 }
-                jvmCard
-                    .cardIndex(2)
-            } else {
-                MyLoading(viewModel: loadingVM)
+                .frame(height: 35)
             }
-        }
-        .task(id: viewModel.id) {
-            do {
-                try await viewModel.load()
-            } catch {
-                await MainActor.run {
-                    loadingVM.fail(with: "加载失败：\(error.localizedDescription)")
-                }
-            }
+            .cardIndex(1)
+            jvmCard
+                .cardIndex(2)
         }
     }
     
