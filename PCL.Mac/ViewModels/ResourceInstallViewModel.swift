@@ -117,7 +117,7 @@ class ResourceInstallViewModel: ObservableObject {
         case .resourcepack: "resourcepacks"
         case .shader: "shaderpacks"
         }
-        let saveDirectoryURL: URL = instance.runningDirectory.appending(path: saveDirectoryName)
+        let saveDirectoryURL: URL = instance.url.appending(path: saveDirectoryName)
         
         return .init(
             name: "资源下载 - \(project.title) \(version.version)",

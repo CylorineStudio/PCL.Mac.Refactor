@@ -9,11 +9,15 @@ import Foundation
 import AppKit
 import Core
 import SwiftScaffolding
+import Combine
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: AppWindow!
     private lazy var isUnderTesting: Bool = ProcessInfo.processInfo.environment["PCL_MAC_TESTING"] != nil
     private var keyMonitor: Any?
+    
+    private var instanceManager: InstanceManager!
+    private var cancellables: Set<AnyCancellable> = []
     
     private func executeTask(_ name: String, silent: Bool = false, _ start: @escaping () throws -> Void) {
         do {
@@ -76,16 +80,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, &error)
                 if let error = error?.takeUnretainedValue() { throw error }
             }
-            executeTask("加载版本缓存") {
-                try VersionCache.load()
-            }
         }
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         if isUnderTesting { return }
         log("App 启动完成")
-        self.window = AppWindow()
+        let instanceManager = InstanceManager(
+            repositories: LauncherConfig.shared.minecraftRepositories.reduce(into: [:], { $0[$1.id] = $1 }),
+            currentRepositoryId: LauncherConfig.shared.currentRepositoryId
+        )
+        self.instanceManager = instanceManager
+        instanceManager.$currentRepositoryId
+            .receive(on: DispatchQueue.main)
+            .sink { value in
+                LauncherConfig.shared.currentRepositoryId = value
+            }
+            .store(in: &cancellables)
+        instanceManager.$repositories
+            .receive(on: DispatchQueue.main)
+            .sink { value in
+                LauncherConfig.shared.minecraftRepositories = Array(value.values)
+            }
+            .store(in: &cancellables)
+        
+        self.window = AppWindow(instanceManager: instanceManager)
         self.window.makeKeyAndOrderFront(nil)
         log("成功创建窗口")
         addEscapeMonitor()
@@ -114,8 +133,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationWillTerminate(_ notification: Notification) {
-        executeTask("保存版本缓存") {
-            try VersionCache.save()
+        executeTask("保存当前仓库") {
+            try self.instanceManager.currentRepository.saveAllInstances()
         }
         executeTask("保存启动器配置") {
             try LauncherConfig.save()

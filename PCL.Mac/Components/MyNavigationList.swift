@@ -26,7 +26,7 @@ struct MyNavigationList: View {
             ForEach(routes, id: \.route) { route in
                 RouteView(route: route, refresh: performRefresh)
                     .onTapGesture {
-                        if router.getLast() != route.route {
+                        if router.last != route.route {
                             router.removeLast()
                             router.append(route.route)
                         }
@@ -63,7 +63,7 @@ private struct RouteView: View {
         self.image = route.image
         self.label = route.text
         self.refresh = refresh
-        self._selected = State(initialValue: AppRouter.shared.getLast() == route.route)
+        self._selected = State(initialValue: AppRouter.shared.last == route.route)
     }
     
     var body: some View {
@@ -103,7 +103,7 @@ private struct RouteView: View {
         .onHover { hovered = $0 }
         .animation(.easeInOut(duration: 0.2), value: hovered)
         .animation(.spring(response: 0.2), value: selected)
-        .onChange(of: router.getLast()) { newValue in
+        .onChange(of: router.last) { newValue in
             selected = newValue == route
         }
     }

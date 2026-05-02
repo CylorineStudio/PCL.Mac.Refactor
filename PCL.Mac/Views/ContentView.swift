@@ -12,45 +12,14 @@ struct ContentView: View {
     @ObservedObject private var router: AppRouter = .shared
     @ObservedObject private var easterEggManager: EasterEggManager = .shared
     
-    @State private var sidebarWidth: CGFloat = AppRouter.shared.sidebar.width
-    @State private var sidebarContentAnimationProgress: Double = 0.0
-    
     var body: some View {
         VStack(spacing: 0) {
             TitleBarView()
                 .zIndex(10)
             HStack(spacing: 0) {
-                Rectangle()
-                    .fill(.white)
-                    .frame(width: sidebarWidth)
-                    .shadow(radius: 2)
-                    .onChange(of: router.sidebar.width) { newValue in
-                        withAnimation(.spring(response: 0.16, dampingFraction: 1.0)) {
-                            sidebarWidth = newValue
-                        }
-                        switch router.getLast() {
-                        case .launch, .tasks:
-                            sidebarContentAnimationProgress = 0.0
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
-                                sidebarContentAnimationProgress = 1.0
-                            }
-                        default:
-                            break
-                        }
-                    }
-                    .zIndex(10)
-                
-                router.content
+                AppSidebarView()
+                AppRouterView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .overlay {
-                HStack {
-                    AnyView(router.sidebar)
-                        .frame(width: router.sidebar.width)
-                        .opacity(sidebarContentAnimationProgress)
-                        .scaleEffect(sidebarContentAnimationProgress * 0.04 + 0.96)
-                    Spacer()
-                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -70,12 +39,6 @@ struct ContentView: View {
         .background(Color(0xC0DEF5))
         .rotation3DEffect(easterEggManager.rotationAngle, axis: easterEggManager.rotationAxis)
         .contrast(easterEggManager.modifyColor ? -1 : 1)
-        .onAppear {
-            // 当前一定是启动页面，直接开始动画
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
-                sidebarContentAnimationProgress = 1.0
-            }
-        }
     }
 }
 
@@ -195,7 +158,7 @@ private struct ExtraButtonsOverlay: View {
     }
     
     private var showTasksButton: Bool {
-        !taskManager.tasks.filter(\.display).isEmpty && router.getLast() != .tasks
+        !taskManager.tasks.filter(\.display).isEmpty && router.last != .tasks
     }
     
     private struct ExtraButton: View {

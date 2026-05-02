@@ -10,10 +10,11 @@ import Core
 
 struct MinecraftInstallOptionsPage: View {
     @StateObject private var viewModel: MinecraftInstallOptionsViewModel
-    @EnvironmentObject private var instanceVM: InstanceManager
+    @StateObject private var instanceVM: InstanceViewModel
     
-    init(version: VersionManifest.Version) {
-        self._viewModel = .init(wrappedValue: .init(version: version))
+    init(instanceManager: InstanceManager, version: VersionManifest.Version) {
+        self._viewModel = .init(wrappedValue: .init(instanceManager: instanceManager, version: version))
+        self._instanceVM = .init(wrappedValue: .init(instanceManager: instanceManager))
     }
     
     var body: some View {
@@ -57,17 +58,13 @@ struct MinecraftInstallOptionsPage: View {
                     hint(errorMessage, type: .critical)
                     return
                 }
-                guard let repository = instanceVM.currentRepository else {
-                    warn("试图安装 \(viewModel.version)，但没有设置游戏仓库")
-                    hint("请先添加一个游戏目录！", type: .critical)
-                    return
-                }
+                let repository = instanceVM.currentRepository
                 let version: MinecraftVersion = .init(viewModel.version.id)
                 TaskManager.shared.execute(task: MinecraftInstallTask.create(name: viewModel.name, version: version, repository: repository, modLoader: viewModel.loader) { instance in
-                    instanceVM.switchInstance(to: instance, repository)
-                    if AppRouter.shared.getLast() == .tasks {
+                    instanceVM.switchInstance(to: instance, in: repository)
+                    if AppRouter.shared.last == .tasks {
                         AppRouter.shared.removeLast()
-                        if case .minecraftInstallOptions = AppRouter.shared.getLast() {
+                        if case .minecraftInstallOptions = AppRouter.shared.last {
                             AppRouter.shared.removeLast()
                         }
                     }
