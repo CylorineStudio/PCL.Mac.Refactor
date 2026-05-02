@@ -89,9 +89,16 @@ public class MinecraftRepository: ObservableObject, Codable, Identifiable, Hasha
     /// 删除带有指定名称的实例。
     @MainActor
     public func removeInstance(named name: String) throws {
-        guard self.contains(named: name) else { return }
+        guard var instances, self.contains(named: name) else { return }
+        let removedInstanceId = instances.first(where: { $0.value.name == name })?.key
         try FileManager.default.removeItem(at: versionsDirectory.appending(path: name))
-        instances = instances?.filter { $1.name != name }
+        instances = instances.filter { $1.name != name }
+        if currentInstanceId == removedInstanceId {
+            currentInstanceId = instances.keys.first
+        } else if let currentInstanceId, !(instances.keys.contains(currentInstanceId)) {
+            self.currentInstanceId = instances.keys.first
+        }
+        self.instances = instances
     }
     
     @MainActor

@@ -32,7 +32,7 @@ struct InstanceConfigPage: View {
                     MyButton("删除实例", type: .red) {
                         MessageBoxManager.shared.showText(
                             title: "确认",
-                            content: "你确定要删除这个实例（\(viewModel.instance.name)）吗？\n这个实例的所有存档、模组 、资源包等将会永久消失！（真的很久！）",
+                            content: "你确定要删除这个实例（\(viewModel.instance.name)）吗？\n这个实例的所有存档、模组、资源包等将会永久消失！（真的很久！）",
                             level: .error,
                             .no(),
                             .yes(type: .red)

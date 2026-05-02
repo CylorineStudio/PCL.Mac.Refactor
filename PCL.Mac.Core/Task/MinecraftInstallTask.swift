@@ -147,7 +147,7 @@ public enum MinecraftInstallTask {
                 subTasks.insert(
                     .init(4, "执行 Forge 安装器") { task, model in
                         try await model.forgeInstallService!.executeProcessors(progressHandler: task.setProgress(_:))
-                        model.manifest = try .load(at: model.runningDirectory.appending(path: "\(model.name).json")).0
+                        model.manifest = try MinecraftInstanceLoader.loadManifest(at: model.runningDirectory.appending(path: "\(model.name).json"))
                     },
                     at: 5
                 )
@@ -163,7 +163,7 @@ public enum MinecraftInstallTask {
                 subTasks.insert(
                     .init(4, "执行 NeoForge 安装器") { task, model in
                         try await model.forgeInstallService!.executeProcessors(progressHandler: task.setProgress(_:))
-                        model.manifest = try .load(at: model.runningDirectory.appending(path: "\(model.name).json")).0
+                        model.manifest = try MinecraftInstanceLoader.loadManifest(at: model.runningDirectory.appending(path: "\(model.name).json"))
                     },
                     at: 5
                 )

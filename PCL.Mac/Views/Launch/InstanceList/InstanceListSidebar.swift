@@ -51,6 +51,12 @@ struct InstanceListSidebar: Sidebar {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         if panel.runModal() == .OK, let url = panel.url {
+            if let repository = instanceVM.repositories.first(where: { $0.url == url }) {
+                instanceVM.switchRepository(to: repository)
+                AppRouter.shared.setRoot(.launch)
+                AppRouter.shared.append(.instanceList(repositoryId: repository.id))
+                return
+            }
             MessageBoxManager.shared.showInput(
                 title: "输入目录名",
                 initialContent: url.lastPathComponent

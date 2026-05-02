@@ -89,7 +89,7 @@ public enum MinecraftInstanceLoader {
     /// - Parameter url: 清单文件的 `URL`。
     /// - Returns: `ClientManifest`
     /// - Throws: `ManifestLoadError`
-    private static func loadManifest(at url: URL, recursionDepth: Int = 0) throws(ManifestLoadError) -> ClientManifest {
+    public static func loadManifest(at url: URL, recursionDepth: Int = 0) throws(ManifestLoadError) -> ClientManifest {
         guard recursionDepth < maxManifestInheritanceDepth else { throw ManifestLoadError.tooManyRecursions }
         
         let data: Data

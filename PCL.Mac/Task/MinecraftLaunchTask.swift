@@ -142,6 +142,9 @@ public enum MinecraftLaunchTask {
             }
         }
         
+        // 保险起见，始终 markDirty
+        model.instance.markDirty()
+        
         model.options.javaRuntime = javaRuntime
         model.manifest = NativesMapper.map(model.manifest, to: javaRuntime.architecture)
     }

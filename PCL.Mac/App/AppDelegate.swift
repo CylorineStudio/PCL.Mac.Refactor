@@ -97,6 +97,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 LauncherConfig.shared.currentRepositoryId = value
             }
             .store(in: &cancellables)
+        instanceManager.$repositories
+            .receive(on: DispatchQueue.main)
+            .sink { value in
+                LauncherConfig.shared.minecraftRepositories = Array(value.values)
+            }
+            .store(in: &cancellables)
+        
         self.window = AppWindow(instanceManager: instanceManager)
         self.window.makeKeyAndOrderFront(nil)
         log("成功创建窗口")

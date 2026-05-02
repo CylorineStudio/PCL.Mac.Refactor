@@ -35,9 +35,7 @@ struct InstanceListPage: View {
                             guard let name, !name.isEmpty else { return }
                             viewModel.rename(to: name)
                             AppRouter.shared.setRoot(.launch)
-                            DispatchQueue.main.async {
-                                AppRouter.shared.append(.instanceList(repositoryId: viewModel.repository.id))
-                            }
+                            AppRouter.shared.append(.instanceList(repositoryId: viewModel.repository.id))
                             hint("已将目录名称更改为 \(name)！", type: .finish)
                         }
                     }
@@ -92,9 +90,6 @@ struct InstanceListPage: View {
         }
         .onAppear {
             instanceVM.switchRepository(to: viewModel.repository)
-            if viewModel.vanillaInstances == nil {
-                viewModel.reload()
-            }
         }
     }
     
