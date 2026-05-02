@@ -10,13 +10,14 @@ import Core
 
 struct InstanceListSidebar: Sidebar {
     @StateObject private var instanceVM: InstanceViewModel
+    @StateObject private var modpackViewModel: ModpackViewModel
     
     init(instanceManager: InstanceManager) {
         self._instanceVM = .init(wrappedValue: InstanceViewModel(instanceManager: instanceManager))
+        self._modpackViewModel = .init(wrappedValue: ModpackViewModel(instanceManager: instanceManager))
     }
     
     let width: CGFloat = 300
-    private let modpackViewModel: ModpackViewModel = .init()
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -83,61 +84,8 @@ struct InstanceListSidebar: Sidebar {
         if panel.runModal() == .OK {
             guard let url = panel.url else { return }
             Task.detached {
-                await importModpack(url, repository: repository)
+                await modpackViewModel.importModpack(at: url, repository: repository)
             }
-        }
-    }
-    
-    private func importModpack(_ url: URL, repository: MinecraftRepository) async {
-        do {
-            guard let result: ModpackViewModel.ModpackLoadResult = try modpackViewModel.loadModpack(at: url) else {
-                _ = await MessageBoxManager.shared.showTextAsync(
-                    title: "不支持的整合包格式",
-                    content: "很抱歉，PCL.Mac 目前只支持导入 Modrinth 格式的整合包，不支持这个整合包使用的格式……",
-                    level: .error
-                )
-                return
-            }
-            guard await MessageBoxManager.shared.showTextAsync(
-                title: "整合包信息",
-                content: "格式：\(result.format)\n名称：\(result.name)\n版本：\(result.version)\n描述：\(result.summary)\n依赖：\(result.dependencyInfo)\n\n是否继续安装？",
-                level: .info,
-                .no(),
-                .yes(label: "继续")
-            ) == 1 else { return }
-            
-            guard var name: String = await MessageBoxManager.shared.showInputAsync(
-                title: "导入整合包 - 输入实例名",
-                initialContent: result.name
-            ) else { return }
-            
-            do {
-                name = try repository.checkInstanceName(name)
-            } catch {
-                hint("该名称不可用：\(error.localizedDescription)", type: .critical)
-                return
-            }
-            
-            switch result.index {
-            case .modrinth(let index):
-                let task = try ModrinthModpackInstallTask.create(
-                    url: result.url,
-                    index: index,
-                    repository: repository,
-                    name: name
-                ) { instance in
-                    instanceVM.switchInstance(to: instance, in: repository)
-                    if AppRouter.shared.last == .tasks {
-                        AppRouter.shared.removeLast()
-                    }
-                }
-                
-                TaskManager.shared.execute(task: task)
-                AppRouter.shared.append(.tasks)
-            }
-        } catch {
-            err("导入整合包失败：\(error)")
-            hint("导入整合包失败：\(error.localizedDescription)", type: .critical)
         }
     }
 }
