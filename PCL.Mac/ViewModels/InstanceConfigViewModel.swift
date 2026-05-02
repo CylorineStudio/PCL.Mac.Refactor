@@ -10,7 +10,7 @@ import Core
 
 @MainActor
 class InstanceConfigViewModel: ObservableObject {
-    @Published public var instance: MinecraftInstance_
+    @Published public var instance: MinecraftInstance
     @Published public var jvmHeapSize: String = ""
     @Published public var javaDescription: String = "无"
     

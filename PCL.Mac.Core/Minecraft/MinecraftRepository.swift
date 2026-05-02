@@ -15,9 +15,9 @@ public class MinecraftRepository: ObservableObject, Codable, Identifiable, Hasha
     @Published public var name: String
     @Published public var currentInstanceId: UUID?
     
-    @Published public var instances: [UUID: MinecraftInstance_]?
+    @Published public var instances: [UUID: MinecraftInstance]?
     @Published public var errorInstances: [ErrorInstance]?
-    public var currentInstance: MinecraftInstance_? {
+    public var currentInstance: MinecraftInstance? {
         get {
             guard let currentInstanceId else { return nil }
             return instances?[currentInstanceId]
@@ -60,13 +60,13 @@ public class MinecraftRepository: ObservableObject, Codable, Identifiable, Hasha
     
     /// 从仓库中获取实例。
     /// - Parameter id: 实例的 `UUID`。
-    public func instance(id: UUID) -> MinecraftInstance_? {
+    public func instance(id: UUID) -> MinecraftInstance? {
         return instances?[id]
     }
     
     /// 从仓库中获取实例。
     /// - Parameter name: 实例名称。
-    public func instance(named name: String) -> MinecraftInstance_? {
+    public func instance(named name: String) -> MinecraftInstance? {
         return instances?.values.first(where: { $0.name == name })
     }
     
@@ -82,7 +82,7 @@ public class MinecraftRepository: ObservableObject, Codable, Identifiable, Hasha
     }
     
     @MainActor
-    public func addInstance(_ instance: MinecraftInstance_) {
+    public func addInstance(_ instance: MinecraftInstance) {
         instances?[instance.id] = instance
     }
     
@@ -95,7 +95,7 @@ public class MinecraftRepository: ObservableObject, Codable, Identifiable, Hasha
     }
     
     @MainActor
-    public func removeInstance(_ instance: MinecraftInstance_) throws {
+    public func removeInstance(_ instance: MinecraftInstance) throws {
         try self.removeInstance(named: instance.name)
     }
     
@@ -161,7 +161,7 @@ public class MinecraftRepository: ObservableObject, Codable, Identifiable, Hasha
                 }
             }
             
-            var instances: [MinecraftInstance_] = []
+            var instances: [MinecraftInstance] = []
             var errorInstances: [ErrorInstance] = []
             
             for await result in group {
@@ -229,14 +229,14 @@ public class MinecraftRepository: ObservableObject, Codable, Identifiable, Hasha
     public enum CodingKeys: String, CodingKey { case id, name, url, dateCreated, currentInstanceId }
     
     public struct LoadResult {
-        public let instances: [MinecraftInstance_]
+        public let instances: [MinecraftInstance]
         public let errorInstances: [ErrorInstance]
         
         public static let empty: LoadResult = .init(instances: [], errorInstances: [])
     }
     
     private enum InstanceLoadResult {
-        case success(MinecraftInstance_)
+        case success(MinecraftInstance)
         case incomplete
         case failure(ErrorInstance)
         

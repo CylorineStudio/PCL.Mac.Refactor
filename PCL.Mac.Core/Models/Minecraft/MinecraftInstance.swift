@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class MinecraftInstance_: Hashable, Identifiable, Equatable {
+public class MinecraftInstance: Hashable, Identifiable, Equatable {
     public let id: UUID
     public let url: URL
     public let version: MinecraftVersion
@@ -38,7 +38,7 @@ public class MinecraftInstance_: Hashable, Identifiable, Equatable {
         hasher.combine(id)
     }
     
-    public static func == (lhs: MinecraftInstance_, rhs: MinecraftInstance_) -> Bool {
+    public static func == (lhs: MinecraftInstance, rhs: MinecraftInstance) -> Bool {
         return lhs.id == rhs.id
     }
     
@@ -51,7 +51,7 @@ public class MinecraftInstance_: Hashable, Identifiable, Equatable {
 }
 
 public extension JavaSearcher {
-    static func pick(for instance: MinecraftInstance_) -> JavaRuntime? {
+    static func pick(for instance: MinecraftInstance) -> JavaRuntime? {
         let systemArch: Architecture = .systemArchitecture()
         
         func score(of javaRuntime: JavaRuntime) -> Int {

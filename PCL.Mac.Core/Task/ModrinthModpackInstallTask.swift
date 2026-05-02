@@ -14,7 +14,7 @@ public enum ModrinthModpackInstallTask {
         index: ModrinthModpackIndex,
         repository: MinecraftRepository,
         name: String,
-        completion: ((MinecraftInstance_) -> Void)? = nil
+        completion: ((MinecraftInstance) -> Void)? = nil
     ) throws -> MyTask<Model> {
         let minecraftVersion: MinecraftVersion = .init(index.dependencies.minecraft)
         let loader: MinecraftInstallTask.Loader?

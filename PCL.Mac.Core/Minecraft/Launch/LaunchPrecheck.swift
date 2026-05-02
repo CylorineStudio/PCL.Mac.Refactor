@@ -9,7 +9,7 @@ import Foundation
 
 public enum LaunchPrecheck {
     public static func check(
-        for instance: MinecraftInstance_,
+        for instance: MinecraftInstance,
         with options: LaunchOptions,
         hasMicrosoftAccount: Bool
     ) -> [Entry] {
@@ -19,7 +19,7 @@ public enum LaunchPrecheck {
         return entries
     }
     
-    private static func checkJava(instance: MinecraftInstance_, currentJava: JavaRuntime) -> [Entry] {
+    private static func checkJava(instance: MinecraftInstance, currentJava: JavaRuntime) -> [Entry] {
         var entries: [Entry] = []
         let minVersion: Int = instance.manifest.javaVersion.majorVersion
         let actualVersion: Int = currentJava.majorVersion

@@ -15,9 +15,9 @@ public enum MinecraftInstanceLoader {
     
     /// 从磁盘加载实例。
     /// - Parameter runningDirectory: 实例运行目录。
-    /// - Returns: `MinecraftInstance_` 结构体。
+    /// - Returns: `MinecraftInstance` 结构体。
     /// - Throws: `MinecraftInstanceLoader.LoadError`
-    public static func load(from runningDirectory: URL) throws(LoadError) -> MinecraftInstance_ {
+    public static func load(from runningDirectory: URL) throws(LoadError) -> MinecraftInstance {
         if FileManager.default.fileExists(atPath: runningDirectory.appending(path: ".incomplete").path) {
             throw .incomplete
         }
@@ -60,7 +60,7 @@ public enum MinecraftInstanceLoader {
             warn("获取实例版本失败")
         }
         
-        let config: MinecraftInstance_.Config
+        let config: MinecraftInstance.Config
         do {
             config = try loadConfig(runningDirectory: runningDirectory)
         } catch {
@@ -130,16 +130,16 @@ public enum MinecraftInstanceLoader {
     
     /// 加载实例配置。
     /// - Parameter runningDirectory: 实例运行目录。
-    /// - Returns: `MinecraftInstance_.Config`
+    /// - Returns: `MinecraftInstance.Config`
     /// - Throws: `ConfigLoadError`
-    private static func loadConfig(runningDirectory: URL) throws(ConfigLoadError) -> MinecraftInstance_.Config {
+    private static func loadConfig(runningDirectory: URL) throws(ConfigLoadError) -> MinecraftInstance.Config {
         let configURL = runningDirectory.appending(path: configFileName)
         guard FileManager.default.fileExists(atPath: configURL.path) else {
             throw .fileDoesNotExist
         }
         do {
             let data = try Data(contentsOf: configURL)
-            return try JSONDecoder.shared.decode(MinecraftInstance_.Config.self, from: data)
+            return try JSONDecoder.shared.decode(MinecraftInstance.Config.self, from: data)
         } catch {
             throw .failedToDecodeConfig(underlying: error)
         }
@@ -261,7 +261,7 @@ public extension MinecraftInstanceLoader {
     /// 将实例保存到磁盘。
     /// - Parameter instance: 待保存的实例。
     /// - Throws: `MinecraftInstanceLoader.SaveError`
-    static func save(_ instance: MinecraftInstance_) throws(SaveError) {
+    static func save(_ instance: MinecraftInstance) throws(SaveError) {
         let configData: Data
         do {
             configData = try JSONEncoder.shared.encode(instance.config)

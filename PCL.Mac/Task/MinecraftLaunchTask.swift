@@ -19,7 +19,7 @@ public enum MinecraftLaunchTask {
     ///   - account: 启动时使用的账号。
     ///   - repository: 实例所在的游戏仓库。
     public static func create(
-        for instance: MinecraftInstance_,
+        for instance: MinecraftInstance,
         using account: Account,
         in repository: MinecraftRepository,
         onProcessStarted: @escaping (MinecraftLauncher, Process) -> Void
@@ -379,7 +379,7 @@ public enum MinecraftLaunchTask {
     }
     
     public class Model: TaskModel {
-        public let instance: MinecraftInstance_
+        public let instance: MinecraftInstance
         public let account: Account
         public let repository: MinecraftRepository
         public let onProcessStarted: (MinecraftLauncher, Process) -> Void
@@ -388,7 +388,7 @@ public enum MinecraftLaunchTask {
         public var options: LaunchOptions
         public var process: Process?
         
-        init(instance: MinecraftInstance_, account: Account, repository: MinecraftRepository, onProcessStarted: @escaping (MinecraftLauncher, Process) -> Void) {
+        init(instance: MinecraftInstance, account: Account, repository: MinecraftRepository, onProcessStarted: @escaping (MinecraftLauncher, Process) -> Void) {
             self.instance = instance
             self.account = account
             self.repository = repository

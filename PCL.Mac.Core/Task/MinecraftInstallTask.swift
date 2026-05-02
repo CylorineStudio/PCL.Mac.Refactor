@@ -26,7 +26,7 @@ public enum MinecraftInstallTask {
         version: MinecraftVersion,
         repository: MinecraftRepository,
         modLoader: Loader?,
-        completion: ((MinecraftInstance_) -> Void)? = nil
+        completion: ((MinecraftInstance) -> Void)? = nil
     ) -> MyTask<Model> {
         let model: Model = .init(
             name: name,
@@ -102,7 +102,7 @@ public enum MinecraftInstallTask {
                 )
             },
             .init(8, "__completion", display: false) { _, _ in
-                let instance = MinecraftInstance_(
+                let instance = MinecraftInstance(
                     id: .init(),
                     url: repository.versionsDirectory.appending(path: name),
                     version: version,

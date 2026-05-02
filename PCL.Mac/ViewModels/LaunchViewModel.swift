@@ -54,7 +54,7 @@ class LaunchViewModel: ObservableObject {
     }
     
     @MainActor
-    public func launch(_ instance: MinecraftInstance_, in repository: MinecraftRepository, using account: Account) {
+    public func launch(_ instance: MinecraftInstance, in repository: MinecraftRepository, using account: Account) {
         launchManager.launch(instance, using: account, in: repository)
     }
     

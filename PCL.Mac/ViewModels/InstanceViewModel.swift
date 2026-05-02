@@ -13,7 +13,7 @@ import Combine
 class InstanceViewModel: ObservableObject {
     @Published public private(set) var repositories: [MinecraftRepository]
     @Published public private(set) var currentRepositoryId: UUID
-    public var currentInstance: MinecraftInstance_? { instanceManager.currentInstance }
+    public var currentInstance: MinecraftInstance? { instanceManager.currentInstance }
     public var currentRepository: MinecraftRepository { instanceManager.currentRepository }
     
     private let instanceManager: InstanceManager
@@ -41,11 +41,11 @@ class InstanceViewModel: ObservableObject {
         observeCurrentRepository()
     }
     
-    public func switchInstance(to instance: MinecraftInstance_, in repository: MinecraftRepository) {
+    public func switchInstance(to instance: MinecraftInstance, in repository: MinecraftRepository) {
         instanceManager.switchInstance(to: instance, in: repository)
     }
     
-    public func deleteInstance(_ instance: MinecraftInstance_, in repository: MinecraftRepository? = nil) throws {
+    public func deleteInstance(_ instance: MinecraftInstance, in repository: MinecraftRepository? = nil) throws {
         let repository = repository ?? currentRepository
         try repository.removeInstance(instance)
     }

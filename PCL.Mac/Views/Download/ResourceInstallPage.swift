@@ -47,7 +47,7 @@ struct ResourceInstallPage: View {
     }
     
     private func onVersionTap(_ version: ProjectVersionModel) async throws {
-        guard let instance: MinecraftInstance_ = instanceVM.currentInstance else {
+        guard let instance: MinecraftInstance = instanceVM.currentInstance else {
             hint("请先安装并选择一个实例！", type: .critical)
             return
         }

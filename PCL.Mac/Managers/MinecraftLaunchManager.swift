@@ -37,7 +37,7 @@ class MinecraftLaunchManager: ObservableObject {
     ///   - repository: 实例所在的游戏仓库。
     @MainActor
     public func launch(
-        _ instance: MinecraftInstance_,
+        _ instance: MinecraftInstance,
         using account: Account,
         in repository: MinecraftRepository
     ) {
@@ -84,7 +84,7 @@ class MinecraftLaunchManager: ObservableObject {
         }
     }
     
-    private func onGameCrash(instance: MinecraftInstance_, options: LaunchOptions, logURL: URL) {
+    private func onGameCrash(instance: MinecraftInstance, options: LaunchOptions, logURL: URL) {
         hint("检测到 Minecraft 发生崩溃，崩溃分析已开始……", type: .critical)
         MessageBoxManager.shared.showText(
             title: "Minecraft 发生崩溃",
@@ -116,7 +116,7 @@ class MinecraftLaunchManager: ObservableObject {
         }
     }
     
-    private func exportCrashReport(for instance: MinecraftInstance_, to destination: URL, with fileName: String, options: LaunchOptions, logURL: URL) throws {
+    private func exportCrashReport(for instance: MinecraftInstance, to destination: URL, with fileName: String, options: LaunchOptions, logURL: URL) throws {
         let reportURL: URL = URLConstants.tempURL.appending(path: fileName)
         try FileManager.default.createDirectory(at: reportURL, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: reportURL) }

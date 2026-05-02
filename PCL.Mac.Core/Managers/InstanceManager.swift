@@ -13,7 +13,7 @@ public class InstanceManager: ObservableObject {
     @Published public private(set) var currentRepositoryId: UUID
     
     public var currentRepository: MinecraftRepository { repositories[currentRepositoryId]! }
-    public var currentInstance: MinecraftInstance_? { currentRepository.currentInstance }
+    public var currentInstance: MinecraftInstance? { currentRepository.currentInstance }
     
     @Published public var lastLoadError: Error?
     private var loadTask: Task<Void, Never>?
@@ -52,7 +52,7 @@ public class InstanceManager: ObservableObject {
         switchRepository(to: repository)
     }
     
-    public func switchInstance(to instance: MinecraftInstance_, in repository: MinecraftRepository? = nil) {
+    public func switchInstance(to instance: MinecraftInstance, in repository: MinecraftRepository? = nil) {
         switchInstance(to: instance.id, in: repository)
     }
     

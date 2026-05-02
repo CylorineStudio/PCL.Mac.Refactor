@@ -99,7 +99,7 @@ struct InstanceListPage: View {
     }
     
     @ViewBuilder
-    private func instanceList(_ instances: [MinecraftInstance_]) -> some View {
+    private func instanceList(_ instances: [MinecraftInstance]) -> some View {
         VStack(spacing: 0) {
             ForEach(instances, id: \.name) { instance in
                 InstanceView(instance: instance)
@@ -132,7 +132,7 @@ private struct InstanceView: View {
     private let version: MinecraftVersion
     private let icon: ImageResource
     
-    init(instance: MinecraftInstance_) {
+    init(instance: MinecraftInstance) {
         self.name = instance.name
         self.version = instance.version
         if let modLoader = instance.modLoader {

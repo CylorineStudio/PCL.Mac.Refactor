@@ -11,8 +11,8 @@ import Combine
 
 @MainActor
 class InstanceListViewModel: ObservableObject {
-    @Published public private(set) var vanillaInstances: [MinecraftInstance_]? = nil
-    @Published public private(set) var moddedInstances: [MinecraftInstance_]? = nil
+    @Published public private(set) var vanillaInstances: [MinecraftInstance]? = nil
+    @Published public private(set) var moddedInstances: [MinecraftInstance]? = nil
     @Published public private(set) var errorInstances: [ErrorInstance]? = nil
     @Published public private(set) var loading: Bool = false
     
@@ -73,11 +73,11 @@ class InstanceListViewModel: ObservableObject {
         instanceManager.removeRepository(repository)
     }
     
-    private static func compareInstance(lhs: MinecraftInstance_, rhs: MinecraftInstance_) -> Bool {
+    private static func compareInstance(lhs: MinecraftInstance, rhs: MinecraftInstance) -> Bool {
         lhs.version > rhs.version
     }
     
-    private static func processInstanceList(_ instances: [MinecraftInstance_], modded: Bool) -> [MinecraftInstance_] {
+    private static func processInstanceList(_ instances: [MinecraftInstance], modded: Bool) -> [MinecraftInstance] {
         Array(instances)
             .filter { modded ? $0.modLoader != nil : $0.modLoader == nil }
             .sorted(by: Self.compareInstance(lhs:rhs:))
