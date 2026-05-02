@@ -8,17 +8,19 @@
 import Foundation
 
 /// Minecraft 仓库（`.minecraft`）。
-public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable {
+public class MinecraftRepository: ObservableObject, Codable, Identifiable, Hashable, Equatable {
+    public let id: UUID
+    public let url: URL
+    public let dateCreated: Date
     @Published public var name: String
     @Published public var currentInstanceId: UUID?
-    public let url: URL
     
-    @Published public var instances: [MinecraftInstance_]?
+    @Published public var instances: [UUID: MinecraftInstance_]?
     @Published public var errorInstances: [ErrorInstance]?
     public var currentInstance: MinecraftInstance_? {
         get {
             guard let currentInstanceId else { return nil }
-            return instances?.first(where: { $0.id == currentInstanceId })
+            return instances?[currentInstanceId]
         }
         set { currentInstanceId = newValue?.id }
     }
@@ -28,8 +30,10 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     public private(set) lazy var versionsDirectory: URL = url.appending(path: "versions")
     
     public init(name: String, url: URL) {
+        self.id = .init()
         self.name = name
         self.url = url
+        self.dateCreated = .now
     }
     
     /// 创建必要目录。
@@ -46,23 +50,62 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     public func load() async throws {
         let result = try await loadInstances()
         await MainActor.run {
-            self.instances = result.instances
+            self.instances = result.instances.reduce(into: [:], { $0[$1.id] = $1 })
             self.errorInstances = result.errorInstances
+            if currentInstanceId == nil || !instances!.keys.contains(currentInstanceId!) {
+                currentInstanceId = instances!.keys.first
+            }
         }
     }
     
-    /// 从仓库中加载实例。
-    /// - Parameter id: 实例的 ID。
-    /// - Returns: 实例对象。
-    public func instance(id: String, version: MinecraftVersion? = nil) throws -> MinecraftInstance {
-        return try .load(from: versionsDirectory.appending(path: id))
+    /// 从仓库中获取实例。
+    /// - Parameter id: 实例的 `UUID`。
+    public func instance(id: UUID) -> MinecraftInstance_? {
+        return instances?[id]
+    }
+    
+    /// 从仓库中获取实例。
+    /// - Parameter name: 实例名称。
+    public func instance(named name: String) -> MinecraftInstance_? {
+        return instances?.values.first(where: { $0.name == name })
+    }
+    
+    /// 判断仓库中是否存在带有指定名称的实例。
+    public func contains(named name: String) -> Bool {
+        return FileManager.default.fileExists(atPath: versionsDirectory.appending(path: name).path)
     }
     
     /// 判断仓库中是否存在带有指定 id 的实例。
-    /// - Parameter id: 指定 id。
-    /// - Returns: 一个 `Bool`，表示是否存在。
-    public func contains(_ id: String) -> Bool {
-        return FileManager.default.fileExists(atPath: versionsDirectory.appending(path: id).path)
+    public func contains(id: UUID) -> Bool {
+        guard let instances else { return false }
+        return instances.keys.contains(id)
+    }
+    
+    @MainActor
+    public func addInstance(_ instance: MinecraftInstance_) {
+        instances?[instance.id] = instance
+    }
+    
+    /// 删除带有指定名称的实例。
+    @MainActor
+    public func removeInstance(named name: String) throws {
+        guard self.contains(named: name) else { return }
+        try FileManager.default.removeItem(at: versionsDirectory.appending(path: name))
+        instances = instances?.filter { $1.name != name }
+    }
+    
+    @MainActor
+    public func removeInstance(_ instance: MinecraftInstance_) throws {
+        try self.removeInstance(named: instance.name)
+    }
+    
+    @MainActor
+    public func saveAllInstances() throws {
+        guard let instances else { return }
+        for instance in instances.values where instance.dirty {
+            try MinecraftInstanceLoader.save(instance)
+            instance.dirty = false
+        }
     }
     
     /// 检查实例名是否合法。
@@ -91,7 +134,7 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
             throw .startsWithDot
         }
         
-        if self.contains(trimmed) {
+        if self.contains(named: trimmed) {
             throw .alreadyExists
         }
         return trimmed
@@ -158,28 +201,32 @@ public class MinecraftRepository: ObservableObject, Codable, Hashable, Equatable
     
     public required init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? .init()
         self.name = try container.decode(String.self, forKey: .name)
         self.url = try container.decode(URL.self, forKey: .url)
         self.currentInstanceId = try container.decodeIfPresent(UUID.self, forKey: .currentInstanceId)
+        self.dateCreated = try container.decodeIfPresent(Date.self, forKey: .dateCreated) ?? .distantPast.addingTimeInterval(.random(in: 0...100))
     }
     
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
         try container.encode(name, forKey: .name)
         try container.encode(url, forKey: .url)
+        try container.encode(dateCreated, forKey: .dateCreated)
         try container.encode(currentInstanceId, forKey: .currentInstanceId)
     }
     
     public static func == (lhs: MinecraftRepository, rhs: MinecraftRepository) -> Bool {
-        return lhs.url == rhs.url
+        return lhs.id == rhs.id && lhs.url == rhs.url
     }
     
     public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
         hasher.combine(url)
-        hasher.combine(name)
     }
     
-    public enum CodingKeys: String, CodingKey { case name, url, currentInstanceId }
+    public enum CodingKeys: String, CodingKey { case id, name, url, dateCreated, currentInstanceId }
     
     public struct LoadResult {
         public let instances: [MinecraftInstance_]

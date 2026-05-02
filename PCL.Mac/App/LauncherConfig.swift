@@ -31,7 +31,7 @@ class LauncherConfig: Codable {
     }()
     
     public var minecraftRepositories: [MinecraftRepository] = []
-    public var currentRepository: Int?
+    public var currentRepositoryId: UUID?
     public var currentInstance: String?
     public var accounts: [Account] = []
     public var currentAccountId: UUID?
@@ -46,12 +46,7 @@ class LauncherConfig: Codable {
     public required init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.minecraftRepositories = try container.decodeIfPresent([MinecraftRepository].self, forKey: .minecraftRepositories) ?? []
-        
-        if let currentRepository = try container.decodeIfPresent(Int.self, forKey: .currentRepository) {
-            self.currentRepository = minecraftRepositories.count > currentRepository ? currentRepository : nil
-        } else {
-            self.currentRepository = minecraftRepositories.isEmpty ? nil : 0
-        }
+        self.currentRepositoryId = try container.decodeIfPresent(UUID.self, forKey: .currentRepositoryId)
         
         self.currentInstance = try container.decodeIfPresent(String.self, forKey: .currentInstance)
         self.accounts = (try container.decodeIfPresent([AccountWrapper].self, forKey: .accounts) ?? []).map(\.account)
@@ -73,7 +68,7 @@ class LauncherConfig: Codable {
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(minecraftRepositories, forKey: .minecraftRepositories)
-        try container.encode(currentRepository, forKey: .currentRepository)
+        try container.encode(currentRepositoryId, forKey: .currentRepositoryId)
         try container.encode(currentInstance, forKey: .currentInstance)
         try container.encode(accounts.map(AccountWrapper.init(_:)), forKey: .accounts)
         try container.encode(currentAccountId, forKey: .currentAccountId)
@@ -91,7 +86,7 @@ class LauncherConfig: Codable {
     
     private enum CodingKeys: String, CodingKey {
         case minecraftRepositories
-        case currentRepository
+        case currentRepositoryId
         case currentInstance
         case accounts
         case currentAccountId

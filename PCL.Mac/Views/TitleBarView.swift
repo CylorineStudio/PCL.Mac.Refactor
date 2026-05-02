@@ -52,7 +52,7 @@ struct TitleBarView: View {
 private struct PageButton: View {
     @ObservedObject private var router: AppRouter = .shared
     @State private var hovered: Bool = false
-    private var isRoot: Bool { router.getRoot() == route }
+    private var isRoot: Bool { router.root == route }
     private let label: String
     private let icon: ImageResource
     private let route: AppRoute
@@ -84,7 +84,7 @@ private struct PageButton: View {
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
-                    if router.getRoot() != route {
+                    if router.root != route {
                         router.setRoot(route)
                     }
                 }

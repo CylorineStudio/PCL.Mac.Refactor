@@ -19,7 +19,7 @@ public enum MinecraftLaunchTask {
     ///   - account: 启动时使用的账号。
     ///   - repository: 实例所在的游戏仓库。
     public static func create(
-        for instance: MinecraftInstance,
+        for instance: MinecraftInstance_,
         using account: Account,
         in repository: MinecraftRepository,
         onProcessStarted: @escaping (MinecraftLauncher, Process) -> Void
@@ -38,43 +38,112 @@ public enum MinecraftLaunchTask {
     }
     
     private static func checkJava(task: SubTask, model: Model) async throws {
-        var runtime: JavaRuntime?
+        var javaRuntime: JavaRuntime! = model.instance.config.javaURL.flatMap { try? JavaSearcher.load(from: $0) }
+        let minMajorVersion = model.instance.manifest.javaVersion.majorVersion
         
-        if let javaRuntime = model.instance.javaRuntime() {
-            runtime = javaRuntime
-        } else {
-            if let javaRuntime: JavaRuntime = model.instance.searchJava() {
-                if await MessageBoxManager.shared.showTextAsync(
-                    title: "未设置 Java",
-                    content: "你还没有设置这个实例使用的 Java！\nPCL.Mac 找到了一个可用的 Java：\(javaRuntime.version)，是否切换并继续启动？",
+        guard let recommendedRuntime = JavaSearcher.pick(for: model.instance) else {
+            if await MessageBoxManager.shared.showTextAsync(
+                title: "没有可用的 Java",
+                content: "这个实例需要\(Architecture.systemArchitecture() == .x64 ? " x86_64 " : "任意")架构的 Java \(minMajorVersion) 才能启动，但你的电脑上没有安装！\n\n点击下方按钮可以跳转到安装页面。",
+                level: .error,
+                .no(),
+                .yes(label: "安装")
+            ) == 1 {
+                await AppRouter.shared.setRoot(.settings)
+                await AppRouter.shared.append(.javaSettings)
+            }
+            try task.cancel()
+            return
+        }
+        
+        if javaRuntime == nil {
+            javaRuntime = recommendedRuntime
+            model.instance.config.javaURL = recommendedRuntime.executableURL
+        } else if javaRuntime.majorVersion < model.instance.manifest.javaVersion.majorVersion {
+            guard await MessageBoxManager.shared.showTextAsync(
+                title: "当前 Java 版本不满足要求",
+                content: "这个实例需要 Java \(minMajorVersion) 才能启动，但你当前选择的是 Java \(javaRuntime.majorVersion)！\n\nPCL.Mac 找到了一个可用的 Java：\(recommendedRuntime)，是否切换并继续启动？",
+                level: .info,
+                .no(),
+                .yes(label: "切换")
+            ) == 1 else {
+                try task.cancel()
+                return
+            }
+            javaRuntime = recommendedRuntime
+            model.instance.config.javaURL = recommendedRuntime.executableURL
+        }
+        if javaRuntime.architecture != .systemArchitecture() {
+            if Architecture.systemArchitecture() == .arm64 && model.instance.version >= .init("1.7.2") {
+                let foundArm64 = recommendedRuntime.architecture == .arm64
+                let hint = foundArm64 ? "PCL.Mac 找到了一个 ARM64 架构的 Java：\(recommendedRuntime)，是否切换并继续启动？" : "PCL.Mac 没有找到任何 ARM64 架构的 Java，但你可以安装一个。"
+                let result = await MessageBoxManager.shared.showTextAsync(
+                    title: "当前 Java 需要通过转译运行",
+                    content: "你正在 ARM64 平台上使用 x86_64 架构的 Java，由于指令集不一致，需要通过 Rosetta 2 转译运行，而会导致性能下降，并大幅降低游戏体验。\n\n\(hint)",
                     level: .info,
                     .no(),
-                    .yes(label: "切换", type: .highlight)
-                ) == 1 {
-                    model.instance.setJava(url: javaRuntime.executableURL)
-                    runtime = javaRuntime
-                } else {
-                    try task.cancel()
+                    .yes(label: "继续启动"),
+                    .init(id: 2, label: foundArm64 ? "切换" : "去安装", type: foundArm64 ? .highlight : .normal)
+                )
+                if result == 0 { try task.cancel() }
+                if result == 2 {
+                    if foundArm64 {
+                        javaRuntime = recommendedRuntime
+                        model.instance.config.javaURL = recommendedRuntime.executableURL
+                    } else {
+                        await AppRouter.shared.setRoot(.settings)
+                        await AppRouter.shared.append(.javaSettings)
+                        try task.cancel()
+                    }
                 }
             } else {
-                if await MessageBoxManager.shared.showTextAsync(
-                    title: "没有可用的 Java",
-                    content: "这个实例需要 Java \(model.instance.manifest.javaVersion.majorVersion) 才能启动，但你的电脑上没有安装。\n点击下方按钮可以跳转到安装页面！",
+                let foundX64 = recommendedRuntime.architecture == .x64
+                let hint = foundX64 ? "PCL.Mac 找到了一个可用的 Java：\(recommendedRuntime)，是否切换并继续启动？" : "PCL.Mac 没有找到任何 x86_64 架构的 Java，但你可以安装一个。"
+                guard await MessageBoxManager.shared.showTextAsync(
+                    title: "不支持的 Java 架构",
+                    content: "你正在 x86_64 平台上使用 ARM64 架构的 Java，由于指令集不一致，游戏无法运行。\n\n\(hint)",
                     level: .error,
                     .no(),
-                    .yes(label: "去安装")
-                ) == 1 {
+                    .yes(label: foundX64 ? "切换" : "去安装", type: foundX64 ? .highlight : .normal)
+                ) == 1 else {
+                    try task.cancel()
+                    return
+                }
+                if foundX64 {
+                    javaRuntime = recommendedRuntime
+                    model.instance.config.javaURL = recommendedRuntime.executableURL
+                } else {
                     await AppRouter.shared.setRoot(.settings)
                     await AppRouter.shared.append(.javaSettings)
+                    try task.cancel()
                 }
+            }
+        }
+        if Architecture.systemArchitecture() == .arm64 && javaRuntime.architecture == .arm64 && model.instance.version < .init("1.7.2") {
+            let foundX64 = recommendedRuntime.architecture == .x64
+            let hint = foundX64 ? "PCL.Mac 找到了一个可用的 Java：\(recommendedRuntime)，是否切换并继续启动？" : "PCL.Mac 没有找到任何 x86_64 架构的 Java，但你可以安装一个。"
+            guard await MessageBoxManager.shared.showTextAsync(
+                title: "不支持的 Java 架构",
+                content: "很抱歉，PCL.Mac 不支持使用 ARM64 架构的 Java 启动当前版本（\(model.instance.version)）……\n\n\(hint)",
+                level: .error,
+                .no(),
+                .yes(label: foundX64 ? "切换" : "去安装", type: foundX64 ? .highlight : .normal)
+            ) == 1 else {
+                try task.cancel()
+                return
+            }
+            if foundX64 {
+                javaRuntime = recommendedRuntime
+                model.instance.config.javaURL = recommendedRuntime.executableURL
+            } else {
+                await AppRouter.shared.setRoot(.settings)
+                await AppRouter.shared.append(.javaSettings)
                 try task.cancel()
             }
         }
         
-        if let runtime {
-            model.options.javaRuntime = runtime
-            model.manifest = NativesMapper.map(model.manifest, to: runtime.architecture)
-        }
+        model.options.javaRuntime = javaRuntime
+        model.manifest = NativesMapper.map(model.manifest, to: javaRuntime.architecture)
     }
     
     private static func refreshAccount(task: SubTask, model: Model) async throws {
@@ -173,31 +242,16 @@ public enum MinecraftLaunchTask {
                         break
                     }
                 }
-            case .armNotSupported:
-                if let runtime: JavaRuntime = model.instance.searchJava(arch: .x64) {
-                    if await MessageBoxManager.shared.showTextAsync(
-                        title: "不支持的 Java 架构",
-                        content: "你正在启动的版本（\(model.instance.version)）不支持使用 ARM64 架构的 Java！\nPCL.Mac 找到了一个可用的 Java，是否切换并继续启动？",
-                        level: .error,
-                        .no(),
-                        .yes(label: "切换并继续", type: .highlight)
-                    ) == 0 {
-                        try task.cancel()
-                    }
-                    model.instance.setJava(url: runtime.executableURL)
-                    model.options.javaRuntime = runtime
-                    model.manifest = model.instance.manifest
-                }
             }
         }
     }
     
     private static func checkResources(task: SubTask, model: Model) async throws {
         // 防止本地库架构与 Java 架构不同，先清除本地库
-        let nativesURL: URL = model.instance.runningDirectory.appending(path: "natives")
-        if FileManager.default.fileExists(atPath: nativesURL.path) {
+        let nativesDirectory: URL = model.instance.url.appending(path: "natives")
+        if FileManager.default.fileExists(atPath: nativesDirectory.path) {
             do {
-                try FileManager.default.removeItem(at: nativesURL)
+                try FileManager.default.removeItem(at: nativesDirectory)
                 log("删除本地库目录成功")
             } catch {
                 err("删除本地库目录失败：\(error.localizedDescription)")
@@ -205,7 +259,7 @@ public enum MinecraftLaunchTask {
         }
         
         try await MinecraftInstallTask.completeResources(
-            runningDirectory: model.instance.runningDirectory,
+            runningDirectory: model.instance.url,
             manifest: model.manifest,
             repository: model.repository,
             progressHandler: task.setProgress(_:)
@@ -325,7 +379,7 @@ public enum MinecraftLaunchTask {
     }
     
     public class Model: TaskModel {
-        public let instance: MinecraftInstance
+        public let instance: MinecraftInstance_
         public let account: Account
         public let repository: MinecraftRepository
         public let onProcessStarted: (MinecraftLauncher, Process) -> Void
@@ -334,7 +388,7 @@ public enum MinecraftLaunchTask {
         public var options: LaunchOptions
         public var process: Process?
         
-        init(instance: MinecraftInstance, account: Account, repository: MinecraftRepository, onProcessStarted: @escaping (MinecraftLauncher, Process) -> Void) {
+        init(instance: MinecraftInstance_, account: Account, repository: MinecraftRepository, onProcessStarted: @escaping (MinecraftLauncher, Process) -> Void) {
             self.instance = instance
             self.account = account
             self.repository = repository
@@ -343,7 +397,7 @@ public enum MinecraftLaunchTask {
             self.options = .init()
             
             self.options.profile = account.profile
-            self.options.runningDirectory = instance.runningDirectory
+            self.options.runningDirectory = instance.url
             self.options.repository = repository
             self.options.memory = instance.config.jvmHeapSize
         }

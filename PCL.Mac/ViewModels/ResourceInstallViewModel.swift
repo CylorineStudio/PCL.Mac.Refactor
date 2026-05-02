@@ -24,7 +24,7 @@ class ResourceInstallViewModel: ObservableObject {
         self.project = project
     }
     
-    public func load(selectedInstance: MinecraftInstance? = nil) async throws {
+    public func load(selectedInstance: MinecraftInstance_? = nil) async throws {
         let selectedInstanceKey: VersionMapKey? = selectedInstance.map { .init(loader: $0.modLoader, version: $0.version) }
         var selectedVersionGroup: VersionGroup? = selectedInstanceKey.map { ($0, []) }
         
@@ -92,7 +92,7 @@ class ResourceInstallViewModel: ObservableObject {
     ///   - instance: 当前实例。
     ///   - version: 选择的版本。
     /// - Throws: 如果不能安装，抛出 `InstanceCheckError`。
-    public func checkInstance(_ instance: MinecraftInstance, withVersion version: ProjectVersionModel) throws {
+    public func checkInstance(_ instance: MinecraftInstance_, withVersion version: ProjectVersionModel) throws {
         if project.type == .mod, let requiredLoader: ModLoader = version.loader {
             guard let loader: ModLoader = instance.modLoader else {
                 throw InstanceCheckError.modLoaderMissing(name: requiredLoader)
@@ -106,7 +106,7 @@ class ResourceInstallViewModel: ObservableObject {
         }
     }
     
-    public func createInstallTask(forVersion version: ProjectVersionModel, to instance: MinecraftInstance) async throws -> MyTask<EmptyModel> {
+    public func createInstallTask(forVersion version: ProjectVersionModel, to instance: MinecraftInstance_) async throws -> MyTask<EmptyModel> {
         guard let primaryFile = version.primaryFile else {
             throw SimpleError("这个版本中没有主要文件！")
         }
@@ -117,7 +117,7 @@ class ResourceInstallViewModel: ObservableObject {
         case .resourcepack: "resourcepacks"
         case .shader: "shaderpacks"
         }
-        let saveDirectoryURL: URL = instance.runningDirectory.appending(path: saveDirectoryName)
+        let saveDirectoryURL: URL = instance.url.appending(path: saveDirectoryName)
         
         return .init(
             name: "资源下载 - \(project.title) \(version.version)",

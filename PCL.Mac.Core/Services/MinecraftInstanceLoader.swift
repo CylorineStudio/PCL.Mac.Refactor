@@ -10,19 +10,22 @@ import SwiftyJSON
 
 public enum MinecraftInstanceLoader {
     private static let maxManifestInheritanceDepth: Int = 5
+    private static let configFileName: String = ".clconfig.json"
+    private static let metadataFileName: String = ".clmetadata.json"
     
     /// 从磁盘加载实例。
     /// - Parameter runningDirectory: 实例运行目录。
     /// - Returns: `MinecraftInstance_` 结构体。
-    /// - Throws: `MinecraftInstanceLoader.Error`
+    /// - Throws: `MinecraftInstanceLoader.LoadError`
     public static func load(from runningDirectory: URL) throws(LoadError) -> MinecraftInstance_ {
         if FileManager.default.fileExists(atPath: runningDirectory.appending(path: ".incomplete").path) {
             throw .incomplete
         }
         
         let id: String = runningDirectory.lastPathComponent
+        var dirty = false
         
-        let metadataURL = runningDirectory.appending(path: ".clmetadata.json")
+        let metadataURL = runningDirectory.appending(path: metadataFileName)
         let metadata: InstanceMetadata?
         if FileManager.default.fileExists(atPath: metadataURL.path) {
             do {
@@ -30,12 +33,16 @@ public enum MinecraftInstanceLoader {
                 metadata = try JSONDecoder.shared.decode(InstanceMetadata.self, from: data)
             } catch {
                 err("加载元数据文件失败：\(error.localizedDescription)")
+                dirty = true
                 metadata = nil
             }
         } else {
             log("元数据文件不存在")
+            dirty = true
             metadata = nil
         }
+        
+        let uuid = metadata?.uuid ?? UUID()
         
         let manifestURL = runningDirectory.appending(path: "\(id).json")
         guard FileManager.default.fileExists(atPath: manifestURL.path) else {
@@ -49,9 +56,7 @@ public enum MinecraftInstanceLoader {
         }
         
         let version: MinecraftVersion? = metadata?.version ?? detectVersion(runningDirectory: runningDirectory, manifest: manifest)
-        if let version {
-            VersionCache.add(version: version.id, for: manifestURL)
-        } else {
+        if version == nil {
             warn("获取实例版本失败")
         }
         
@@ -59,17 +64,24 @@ public enum MinecraftInstanceLoader {
         do {
             config = try loadConfig(runningDirectory: runningDirectory)
         } catch {
-            err("加载配置文件失败：\(error.localizedDescription)，正在使用默认配置")
+            err("加载配置文件失败：“\(error.localizedDescription)”，正在使用默认配置")
+            dirty = true
             config = .default
         }
         
+        if metadata == nil {
+            try? JSONEncoder.shared.encode(InstanceMetadata(uuid: uuid, version: version))
+                .write(to: metadataURL)
+        }
+        
         return .init(
-            id: metadata?.uuid ?? .init(),
+            id: uuid,
             url: runningDirectory,
             version: version ?? .init(id),
             modLoader: detectModLoader(runningDirectory: runningDirectory),
             manifest: manifest,
-            config: config
+            config: config,
+            dirty: dirty
         )
     }
     
@@ -121,7 +133,7 @@ public enum MinecraftInstanceLoader {
     /// - Returns: `MinecraftInstance_.Config`
     /// - Throws: `ConfigLoadError`
     private static func loadConfig(runningDirectory: URL) throws(ConfigLoadError) -> MinecraftInstance_.Config {
-        let configURL = runningDirectory.appending(path: ".clconfig.json")
+        let configURL = runningDirectory.appending(path: configFileName)
         guard FileManager.default.fileExists(atPath: configURL.path) else {
             throw .fileDoesNotExist
         }
@@ -139,9 +151,6 @@ public enum MinecraftInstanceLoader {
         }
         
         let id = runningDirectory.lastPathComponent
-        if let cachedVersion = VersionCache.version(of: runningDirectory.appending(path: "\(id).json")) {
-            return cachedVersion
-        }
         do {
             let jarURL = runningDirectory.appending(path: "\(id).jar")
             guard FileManager.default.fileExists(atPath: jarURL.path),
@@ -172,7 +181,7 @@ public enum MinecraftInstanceLoader {
     
     private struct InstanceMetadata: Codable {
         public let uuid: UUID
-        public let version: MinecraftVersion
+        public let version: MinecraftVersion?
     }
     
     public enum LoadError: LocalizedError {
@@ -243,6 +252,63 @@ public enum MinecraftInstanceLoader {
                 "配置文件不存在。"
             case .failedToDecodeConfig(let underlying):
                 "解析配置文件失败：\(underlying.localizedDescription)"
+            }
+        }
+    }
+}
+
+public extension MinecraftInstanceLoader {
+    /// 将实例保存到磁盘。
+    /// - Parameter instance: 待保存的实例。
+    /// - Throws: `MinecraftInstanceLoader.SaveError`
+    static func save(_ instance: MinecraftInstance_) throws(SaveError) {
+        let configData: Data
+        do {
+            configData = try JSONEncoder.shared.encode(instance.config)
+        } catch {
+            throw .failedToEncodeConfig(underlying: error)
+        }
+        do {
+            try configData.write(to: instance.url.appending(path: configFileName))
+        } catch {
+            throw .failedToWriteFile(underlying: error)
+        }
+        
+        let metadataData: Data
+        let metadata = InstanceMetadata(uuid: instance.id, version: instance.version)
+        do {
+            metadataData = try JSONEncoder.shared.encode(metadata)
+        } catch {
+            throw .failedToEncodeMetadata(underlying: error)
+        }
+        do {
+            try metadataData.write(to: instance.url.appending(path: metadataFileName))
+        } catch {
+            throw .failedToWriteFile(underlying: error)
+        }
+    }
+    
+    enum SaveError: LocalizedError {
+        /// 配置文件序列化失败。
+        /// - Parameter underlying: 序列化时抛出的 `EncodingError`。
+        case failedToEncodeConfig(underlying: Error)
+        
+        /// 元数据序列化失败。
+        /// - Parameter underlying: 序列化时抛出的 `EncodingError`。
+        case failedToEncodeMetadata(underlying: Error)
+        
+        /// 写入文件失败。
+        /// - Parameter underlying: 写入时抛出的实际错误。
+        case failedToWriteFile(underlying: Error)
+        
+        public var errorDescription: String? {
+            switch self {
+            case .failedToEncodeConfig(let underlying):
+                "配置文件序列化失败：\(underlying.localizedDescription)"
+            case .failedToEncodeMetadata(let underlying):
+                "元数据序列化失败：\(underlying.localizedDescription)"
+            case .failedToWriteFile(let underlying):
+                "写入文件失败：\(underlying.localizedDescription)"
             }
         }
     }

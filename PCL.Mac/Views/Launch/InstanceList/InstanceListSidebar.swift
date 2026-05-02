@@ -9,51 +9,61 @@ import SwiftUI
 import Core
 
 struct InstanceListSidebar: Sidebar {
-    @EnvironmentObject private var instanceViewModel: InstanceManager
-    @EnvironmentObject private var viewModel: InstanceListViewModel
+    @StateObject private var instanceVM: InstanceViewModel
+    
+    init(instanceManager: InstanceManager) {
+        self._instanceVM = .init(wrappedValue: InstanceViewModel(instanceManager: instanceManager))
+    }
     
     let width: CGFloat = 300
     private let modpackViewModel: ModpackViewModel = .init()
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if !instanceViewModel.repositories.isEmpty {
+            if !instanceVM.repositories.isEmpty {
                 MyText("目录列表", size: 12, color: .colorGray3)
                     .padding(.leading, 13)
                     .padding(.top, 18)
                 MyNavigationList(
-                    routeList: instanceViewModel.repositories.map({ .init(AppRoute.instanceList($0), nil, $0.name) })
+                    routeList: instanceVM.repositories.map { .init(AppRoute.instanceList(repositoryId: $0.id), nil, $0.name) }
                 ) { route in
-                    if case .instanceList(let repository) = route {
-                        viewModel.reloadAsync(repository)
-                    }
+                    guard case .instanceList(let repositoryId) = route,
+                          case .instanceList(let currentRepositoryId) = AppRouter.shared.last,
+                          repositoryId == currentRepositoryId else { return }
+                    instanceVM.reload(repository: instanceVM.currentRepository)
                 }
             }
             MyText("添加或导入", size: 12, color: .colorGray3)
                 .padding(.leading, 13)
                 .padding(.top, 18)
             VStack(spacing: 0) {
-                ImportButton(.iconAdd, "添加已有目录") {
-                    try instanceViewModel.requestAddRepository()
-                }
+                ImportButton(.iconAdd, "添加已有目录", perform: requestAddRepository)
                 ImportButton(.iconImportModpack, "导入整合包", perform: onImportModpackClicked)
             }
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .onChange(of: instanceViewModel.repositories) { newValue in
-            if let repository = newValue.first, AppRouter.shared.getLast() == .noInstanceRepository {
-                AppRouter.shared.removeLast()
-                AppRouter.shared.append(.instanceList(repository))
+    }
+    
+    private func requestAddRepository() {
+        let panel: NSOpenPanel = .init()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        if panel.runModal() == .OK, let url = panel.url {
+            MessageBoxManager.shared.showInput(
+                title: "输入目录名",
+                initialContent: url.lastPathComponent
+            ) { name in
+                if let name {
+                    instanceVM.addRepository(name: name, url: url)
+                }
             }
         }
     }
     
     private func onImportModpackClicked() {
-        guard let repository: MinecraftRepository = instanceViewModel.currentRepository else {
-            hint("请先选择一个游戏目录！", type: .critical)
-            return
-        }
+        let repository = instanceVM.currentRepository
         
         let panel: NSOpenPanel = .init()
         panel.allowsMultipleSelection = false
@@ -110,12 +120,9 @@ struct InstanceListSidebar: Sidebar {
                     repository: repository,
                     name: name
                 ) { instance in
-                    instanceViewModel.switchInstance(to: instance, repository)
-                    if AppRouter.shared.getLast() == .tasks {
+                    instanceVM.switchInstance(to: instance, in: repository)
+                    if AppRouter.shared.last == .tasks {
                         AppRouter.shared.removeLast()
-                        if case .minecraftInstallOptions = AppRouter.shared.getLast() {
-                            AppRouter.shared.removeLast()
-                        }
                     }
                 }
                 

@@ -93,11 +93,6 @@ private struct VersionView: View {
     var body: some View {
         MyListItem(.init(image: version.type.icon, name: version.id, description: description))
         .onTapGesture {
-            guard viewModel.currentRepository != nil else {
-                warn("试图安装 \(version.id)，但没有设置游戏仓库")
-                hint("请先添加一个游戏目录！", type: .critical)
-                return
-            }
             AppRouter.shared.append(.minecraftInstallOptions(version: version))
         }
     }

@@ -8,6 +8,7 @@
 import Foundation
 import Core
 
+@MainActor
 class MinecraftInstallOptionsViewModel: ObservableObject {
     @Published public var name: String { didSet { checkName() } }
     @Published public var loader: MinecraftInstallTask.Loader? {
@@ -34,9 +35,11 @@ class MinecraftInstallOptionsViewModel: ObservableObject {
     }
     @Published public var errorMessage: String?
     public let version: VersionManifest.Version
+    private let instanceManager: InstanceManager
     private var lastLoader: ModLoader?
     
-    init(version: VersionManifest.Version) {
+    init(instanceManager: InstanceManager, version: VersionManifest.Version) {
+        self.instanceManager = instanceManager
         self.version = version
         self.name = version.id
         checkName()
@@ -44,10 +47,7 @@ class MinecraftInstallOptionsViewModel: ObservableObject {
     
     private func checkName() {
         do {
-            guard let repository: MinecraftRepository = InstanceManager.shared.currentRepository else {
-                throw SimpleError("检查实例名失败：请先添加并选择一个游戏目录！")
-            }
-            _ = try repository.checkInstanceName(name, trim: false)
+            _ = try instanceManager.currentRepository.checkInstanceName(name, trim: false)
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription

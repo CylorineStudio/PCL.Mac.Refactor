@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Core
 
 fileprivate let isMacOS26: Bool = ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 26
 fileprivate let isMacOS14OrLater: Bool = ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 14
@@ -14,7 +15,7 @@ class AppWindow: NSWindow {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
     
-    init() {
+    init(instanceManager: InstanceManager) {
         super.init(
             contentRect: .init(x: 0, y: 0, width: 1000, height: 550),
             styleMask: [.titled, .closable, .resizable, .miniaturizable, .fullSizeContentView],
@@ -23,15 +24,7 @@ class AppWindow: NSWindow {
         self.titleVisibility = .hidden
         self.titlebarAppearsTransparent = true
         
-        self.contentView = NSHostingView(
-            rootView: ContentView()
-                .ignoresSafeArea(.container, edges: .top)
-                .frame(minWidth: 1000, minHeight: 550)
-                .environmentObject(InstanceManager.shared)
-                .environmentObject(MinecraftDownloadPageViewModel())
-                .environmentObject(InstanceListViewModel())
-                .environmentObject(MultiplayerViewModel())
-        )
+        self.contentView = NSHostingView(rootView: RootView(instanceManager: instanceManager))
         
         self.setFrameAutosaveName("AppWindow")
         self.center()

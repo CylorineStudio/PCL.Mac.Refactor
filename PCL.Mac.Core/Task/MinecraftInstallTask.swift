@@ -26,7 +26,7 @@ public enum MinecraftInstallTask {
         version: MinecraftVersion,
         repository: MinecraftRepository,
         modLoader: Loader?,
-        completion: ((MinecraftInstance) -> Void)? = nil
+        completion: ((MinecraftInstance_) -> Void)? = nil
     ) -> MyTask<Model> {
         let model: Model = .init(
             name: name,
@@ -102,14 +102,15 @@ public enum MinecraftInstallTask {
                 )
             },
             .init(8, "__completion", display: false) { _, _ in
-                let instance: MinecraftInstance = .init(
-                    runningDirectory: repository.versionsDirectory.appending(path: name),
+                let instance = MinecraftInstance_(
+                    id: .init(),
+                    url: repository.versionsDirectory.appending(path: name),
                     version: version,
+                    modLoader: modLoader?.type,
                     manifest: model.manifest,
-                    config: .init(),
-                    modLoader: modLoader?.type
+                    config: .default
                 )
-                repository.instances?.append(instance)
+                await repository.addInstance(instance)
                 try? FileManager.default.removeItem(at: model.runningDirectory.appending(path: ".incomplete"))
                 await MainActor.run {
                     completion?(instance)

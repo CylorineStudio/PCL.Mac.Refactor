@@ -9,107 +9,102 @@ import SwiftUI
 import Core
 
 struct InstanceListPage: View {
-    @EnvironmentObject private var instanceViewModel: InstanceManager
-    @EnvironmentObject private var viewModel: InstanceListViewModel
-    @ObservedObject private var repository: MinecraftRepository
+    @StateObject private var viewModel: InstanceListViewModel
+    @StateObject private var instanceVM: InstanceViewModel
+    private let repositoryId: UUID
     
-    init(repository: MinecraftRepository) {
-        self.repository = repository
+    init(instanceManager: InstanceManager, repositoryId: UUID) {
+        self._viewModel = .init(wrappedValue: .init(instanceManager: instanceManager, repositoryId: repositoryId))
+        self._instanceVM = .init(wrappedValue: .init(instanceManager: instanceManager))
+        self.repositoryId = repositoryId
     }
     
     var body: some View {
-        VStack {
-            if let instances = repository.instances {
-                CardContainer {
-                    MyCard("当前目录：\(repository.name)", foldable: false) {
-                        infoLine(label: "路径") { MyText(repository.url.path).textSelection(.enabled) }
-                            .padding(.top, 6)
-                        infoLine(label: "实例数") { MyText(instances.count.description) }
-                        HStack(spacing: 15) {
-                            MyButton("打开文件夹") {
-                                NSWorkspace.shared.open(repository.url)
-                            }
-                            .frame(width: 150)
-                            MyButton("更改显示名称") {
-                                MessageBoxManager.shared.showInput(title: "输入新名称") { name in
-                                    guard let name, !name.isEmpty else { return }
-                                    repository.name = name
-                                    AppRouter.shared.setRoot(.launch)
-                                    DispatchQueue.main.async {
-                                        AppRouter.shared.append(.instanceList(repository))
-                                    }
-                                    hint("已将目录名称更改为 \(name)！", type: .finish)
-                                }
-                            }
-                            .frame(width: 150)
-                            MyButton("移除目录", type: .red) {
-                                MessageBoxManager.shared.showText(
-                                    title: "确认",
-                                    content: "你确定要移除这个目录（\(repository.url.path)）吗？\n这只会把它从启动器的目录列表中移除，而不会删除任何文件。",
-                                    level: .info,
-                                    .no(), .yes()
-                                ) { button in
-                                    guard button == 1 else { return }
-                                    instanceViewModel.removeRepository(repository)
-                                    AppRouter.shared.removeLast()
-                                    hint("移除成功！", type: .finish)
-                                }
-                            }
-                            .frame(width: 150)
-                            Spacer()
-                        }
-                        .frame(height: 35)
-                        .padding(.top, 6)
+        CardContainer {
+            MyCard("当前目录：\(viewModel.repository.name)", foldable: false) {
+                infoLine(label: "路径") { MyText(viewModel.repository.url.path).textSelection(.enabled) }
+                    .padding(.top, 6)
+                infoLine(label: "实例数") { MyText(viewModel.instanceCount?.description ?? "-") }
+                HStack(spacing: 15) {
+                    MyButton("打开文件夹") {
+                        NSWorkspace.shared.open(viewModel.repository.url)
                     }
-                    if let errorInstances = repository.errorInstances, !errorInstances.isEmpty {
-                        MyCard("错误的实例") {
-                            VStack(spacing: 0) {
-                                ForEach(errorInstances, id: \.name) { instance in
-                                    MyListItem(.init(image: .iconRedstoneBlock, name: instance.name, description: instance.message))
-                                }
+                    .frame(width: 150)
+                    MyButton("更改显示名称") {
+                        MessageBoxManager.shared.showInput(title: "输入新名称") { name in
+                            guard let name, !name.isEmpty else { return }
+                            viewModel.rename(to: name)
+                            AppRouter.shared.setRoot(.launch)
+                            DispatchQueue.main.async {
+                                AppRouter.shared.append(.instanceList(repositoryId: viewModel.repository.id))
                             }
+                            hint("已将目录名称更改为 \(name)！", type: .finish)
                         }
                     }
-                    let moddedInstances: [MinecraftInstance] = instances.filter { $0.modLoader != nil }
-                    if !moddedInstances.isEmpty {
-                        MyCard("可安装 Mod") {
-                            instanceList(moddedInstances)
+                    .frame(width: 150)
+                    MyButton("移除目录", type: .red) {
+                        MessageBoxManager.shared.showText(
+                            title: "确认",
+                            content: "你确定要移除这个目录（\(viewModel.repository.url.path)）吗？\n这只会把它从启动器的目录列表中移除，而不会删除任何文件。",
+                            level: .info,
+                            .no(), .yes()
+                        ) { button in
+                            guard button == 1 else { return }
+                            viewModel.removeRepository()
+                            AppRouter.shared.removeLast()
+                            hint("移除成功！", type: .finish)
                         }
-                        .cardIndex(1)
                     }
-                    let vanillaInstances: [MinecraftInstance] = instances.filter { !moddedInstances.contains($0) }
-                    if !vanillaInstances.isEmpty {
-                        MyCard("常规实例") {
-                            instanceList(vanillaInstances)
+                    .frame(width: 150)
+                    Spacer()
+                }
+                .frame(height: 35)
+                .padding(.top, 6)
+            }
+            
+            if viewModel.loading {
+                MyLoading(viewModel: viewModel.loadingViewModel)
+            }
+            
+            if let errorInstances = viewModel.errorInstances, !errorInstances.isEmpty {
+                MyCard("错误的实例") {
+                    VStack(spacing: 0) {
+                        ForEach(errorInstances, id: \.name) { instance in
+                            MyListItem(.init(image: .iconRedstoneBlock, name: instance.name, description: instance.message))
                         }
-                        .cardIndex(moddedInstances.isEmpty ? 1 : 2)
                     }
                 }
-            } else {
-                MyLoading(viewModel: viewModel.loadingViewModel)
+            }
+            
+            if let moddedInstances = viewModel.moddedInstances, !moddedInstances.isEmpty {
+                MyCard("可安装 Mod") {
+                    instanceList(moddedInstances)
+                }
+                .cardIndex(1)
+            }
+            
+            if let vanillaInstances = viewModel.vanillaInstances, !vanillaInstances.isEmpty {
+                MyCard("常规实例") {
+                    instanceList(vanillaInstances)
+                }
+                .cardIndex(2)
             }
         }
         .onAppear {
-            if repository.instances != nil { return }
-            viewModel.reloadAsync(repository)
+            instanceVM.switchRepository(to: viewModel.repository)
+            if viewModel.vanillaInstances == nil {
+                viewModel.reload()
+            }
         }
-        .id(repository.url)
-    }
-    
-    private func compareInstance(lhs: MinecraftInstance, rhs: MinecraftInstance) -> Bool {
-        if lhs.modLoader == rhs.modLoader {
-            return lhs.version > rhs.version
-        }
-        return (lhs.modLoader?.index ?? -1) > (rhs.modLoader?.index ?? -1)
     }
     
     @ViewBuilder
-    private func instanceList(_ instances: [MinecraftInstance]) -> some View {
+    private func instanceList(_ instances: [MinecraftInstance_]) -> some View {
         VStack(spacing: 0) {
-            ForEach(instances.sorted(by: compareInstance(lhs:rhs:)), id: \.name) { instance in
+            ForEach(instances, id: \.name) { instance in
                 InstanceView(instance: instance)
                     .onTapGesture {
-                        instanceViewModel.switchInstance(to: instance, repository)
+                        instanceVM.switchInstance(to: instance, in: viewModel.repository)
                         AppRouter.shared.removeLast()
                     }
             }
@@ -137,7 +132,7 @@ private struct InstanceView: View {
     private let version: MinecraftVersion
     private let icon: ImageResource
     
-    init(instance: MinecraftInstance) {
+    init(instance: MinecraftInstance_) {
         self.name = instance.name
         self.version = instance.version
         if let modLoader = instance.modLoader {
