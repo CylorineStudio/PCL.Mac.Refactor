@@ -90,8 +90,9 @@ jobs:
             --timestamp \
             PCL.Mac-artifact/PCL.Mac.app
 
-      - name: Set artifact name
+      - name: Prepare app artifact
         run: |
+          tar -czf PCL.Mac-artifact.tar.gz -C ./PCL.Mac-artifact .
           if [ "${{ inputs.artifact_name }}" = "PCL.Mac-artifact" ]; then
             echo "ARTIFACT_NAME=${{ inputs.artifact_name }}-${BUILD_NUMBER}" >> $GITHUB_ENV
           else
@@ -103,4 +104,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: ./PCL.Mac-artifact
+          path: ./PCL.Mac-artifact.tar.gz
+          archive: false

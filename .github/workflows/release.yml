@@ -35,10 +35,11 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: artifact
-          path: ./artifact
+          path: ./artifact.tar.gz
       
       - name: Process artifact
         run: |
+          tar -xzf ./artifact.tar.gz -C ./artifact
           ditto -c -k --keepParent ./artifact/PCL.Mac.app "./PCL.Mac-${{ env.TAG_NAME }}.zip"
           ditto -c -k --keepParent ./artifact/build.xcarchive ./build.xcarchive.zip
       
