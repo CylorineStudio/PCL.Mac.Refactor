@@ -2,14 +2,42 @@ name: Build App
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/**'
-      - 'Configs/**'
-      - 'PCL.Mac/**'
-      - 'PCL.Mac.Core/**'
-      - 'PCL.Mac.xcodeproj/**'
-      - 'Resources/**'
+    inputs:
+      build_configuration:
+        required: false
+        type: string
+        default: Release
+      artifact_name:
+        required: false
+        type: string
+        default: PCL.Mac-artifact
+      upload_artifact:
+        required: false
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      build_configuration:
+        required: false
+        type: string
+        default: Release
+      artifact_name:
+        required: false
+        type: string
+        default: PCL.Mac-artifact
+      upload_artifact:
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      CURSE_FORGE_API_KEY:
+        required: false
+      MACOS_CERTIFICATE:
+        required: false
+      MACOS_CERTIFICATE_PASSWORD:
+        required: false
+      MACOS_SIGNING_IDENTITY:
+        required: false
 
 jobs:
   build:
@@ -19,32 +47,60 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      
+
       - name: Set version
         run: echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> $GITHUB_ENV
-      
+
       - name: Generate Secrets.properties
         run: |
           cat <<EOF > ./Resources/Secrets.properties
           CURSE_FORGE_API_KEY=${{ secrets.CURSE_FORGE_API_KEY }}
           EOF
 
+      - name: Import codesign cert
+        if: ${{ inputs.build_configuration == 'Release' }}
+        uses: apple-actions/import-codesign-certs@v7
+        with:
+          p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
+          p12-password: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+
       - name: Build app
         run: |
           echo "Build number: $BUILD_NUMBER"
           xcodebuild archive \
-            -project PCL.Mac.xcodeproj -scheme PCL.Mac -configuration Debug \
+            -project PCL.Mac.xcodeproj \
+            -scheme PCL.Mac \
+            -configuration "${{ inputs.build_configuration }}" \
             CURRENT_PROJECT_VERSION=$BUILD_NUMBER \
             -archivePath build
 
       - name: Prepare app artifact directory
         run: |
           mkdir "PCL.Mac-artifact"
-          cp -r ./build.xcarchive/Products/Applications/PCL.Mac.app ./PCL.Mac-artifact/PCL.Mac.app
-          cp -r ./build.xcarchive ./PCL.Mac-artifact/build.xcarchive
+          ditto ./build.xcarchive/Products/Applications/PCL.Mac.app ./PCL.Mac-artifact/PCL.Mac.app
+          ditto ./build.xcarchive ./PCL.Mac-artifact/build.xcarchive
+
+      - name: Sign app
+        if: ${{ inputs.build_configuration == 'Release' }}
+        run: |
+          codesign --force \
+            --sign "${{ secrets.MACOS_SIGNING_IDENTITY }}" \
+            --options runtime \
+            --entitlements "PCL.Mac/PCL_Mac.entitlements" \
+            --timestamp \
+            PCL.Mac-artifact/PCL.Mac.app
+
+      - name: Set artifact name
+        run: |
+          if [ "${{ inputs.artifact_name }}" = "PCL.Mac-artifact" ]; then
+            echo "ARTIFACT_NAME=${{ inputs.artifact_name }}-${BUILD_NUMBER}" >> $GITHUB_ENV
+          else
+            echo "ARTIFACT_NAME=${{ inputs.artifact_name }}" >> $GITHUB_ENV
+          fi
 
       - name: Upload app artifact
+        if: ${{ inputs.upload_artifact }}
         uses: actions/upload-artifact@v7
         with:
-          name: PCL.Mac.Refactor-${{ env.BUILD_NUMBER }}
+          name: ${{ env.ARTIFACT_NAME }}
           path: ./PCL.Mac-artifact
