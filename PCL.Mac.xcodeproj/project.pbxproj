@@ -74,13 +74,6 @@
 			);
 			target = ECC26BC22EBEDD67002B7E3E /* PCL.Mac */;
 		};
-		ECBEDAF42FA87D8B0064FCC2 /* Exceptions for "Resources" folder in "PCL.Mac" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Secrets.properties,
-			);
-			target = ECC26BC22EBEDD67002B7E3E /* PCL.Mac */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -91,9 +84,6 @@
 		};
 		EC9969932EBEE6A20094E524 /* Resources */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				ECBEDAF42FA87D8B0064FCC2 /* Exceptions for "Resources" folder in "PCL.Mac" target */,
-			);
 			path = Resources;
 			sourceTree = "<group>";
 		};

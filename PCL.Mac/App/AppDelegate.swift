@@ -47,6 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         URLConstants.createDirectories()
         LogManager.shared.enableLogging()
         log("正在启动 PCL.Mac.Refactor \(Metadata.appVersion)")
+        _ = Secrets.shared
         executeTask("开启 SwiftScaffolding 日志", silent: true) {
             try SwiftScaffolding.Logger.enableLogging(url: URLConstants.logsDirectoryURL.appending(path: "swift-scaffolding.log"))
         }
