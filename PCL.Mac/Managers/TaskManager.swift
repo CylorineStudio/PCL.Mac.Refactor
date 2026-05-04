@@ -37,14 +37,18 @@ public class TaskManager: ObservableObject {
                 e = error
             }
             let error = e
-            await MainActor.run {
-                if display {
-                    if let error {
-                        hint("任务 \(task.name) 执行失败：\(error.localizedDescription)", type: .critical)
-                    } else {
-                        hint("任务 \(task.name) 执行完成", type: .finish)
-                    }
+            if display {
+                if let error {
+                    _ = await MessageBoxManager.shared.showTextAsync(
+                        title: "任务执行失败",
+                        content: "任务 \(task.name) 执行失败：\(error.localizedDescription)\n\n若要寻求帮助，请将完整日志发送给他人，而不是发送关于此页面的图片。",
+                        level: .error
+                    )
+                } else {
+                    hint("任务 \(task.name) 执行完成", type: .finish)
                 }
+            }
+            await MainActor.run {
                 completion?(error)
                 self.clean(for: id)
             }
