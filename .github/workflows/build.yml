@@ -31,13 +31,13 @@ on:
         default: true
     secrets:
       CURSE_FORGE_API_KEY:
-        required: true
+        required: false
       MACOS_CERTIFICATE:
-        required: true
+        required: false
       MACOS_CERTIFICATE_PASSWORD:
-        required: true
+        required: false
       MACOS_SIGNING_IDENTITY:
-        required: true
+        required: false
 
 jobs:
   build:
