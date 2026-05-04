@@ -22,6 +22,12 @@ jobs:
       
       - name: Set version
         run: echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> $GITHUB_ENV
+      
+      - name: Generate Secrets.properties
+        run: |
+          cat <<EOF > ./Resources/Secrets.properties
+          CURSE_FORGE_API_KEY=${{ secrets.CURSE_FORGE_API_KEY }}
+          EOF
 
       - name: Build app
         run: |
