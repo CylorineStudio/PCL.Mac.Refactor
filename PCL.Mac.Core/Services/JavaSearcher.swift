@@ -48,11 +48,12 @@ public enum JavaSearcher {
         }
         let homeDirectory: URL = url
         // 解析 release 文件
-        guard let releaseData: Data = FileManager.default.contents(atPath: homeDirectory.appending(path: "release").path),
-              let releaseContent: String = .init(data: releaseData, encoding: .utf8) else {
+        let release: [String: String]
+        do {
+            release = try PropertiesLoader.load(at: homeDirectory.appending(path: "release"))
+        } catch {
             throw JavaError.failedToParseReleaseFile
         }
-        let release: [String: String] = parseProperties(releaseContent)
         guard let javaVersion = release["JAVA_VERSION"] else {
             throw JavaError.failedToParseReleaseFile
         }
@@ -94,20 +95,6 @@ public enum JavaSearcher {
             implementor: implementor,
             executableURL: executableURL
         )
-    }
-    
-    private static func parseProperties(_ fileContent: String) -> [String: String] {
-        var result: [String: String] = [:]
-        for rawLine in fileContent.split(separator: "\n") {
-            let line: String = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !line.isEmpty, !line.hasPrefix("#") else { continue }
-            let parts: [String] = line.components(separatedBy: "=")
-            guard parts.count >= 2 else { continue }
-            let key: String = parts[0].trimmingCharacters(in: .whitespaces)
-            let value: String = parts[1...].joined(separator: "=").trimmingCharacters(in: .whitespaces.union(["\""]))
-            result[key] = value
-        }
-        return result
     }
     
     private static func parseVersionNumber(_ version: String) -> Int? {
