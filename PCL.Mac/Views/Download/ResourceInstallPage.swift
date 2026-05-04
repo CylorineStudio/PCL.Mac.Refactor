@@ -122,43 +122,23 @@ struct ResourceInstallPage: View {
             return
         }
         
-        let index: ModrinthModpackIndex
-        do {
-            index = try viewModel.loadIndex(destination)
-        } catch {
-            err("加载整合包索引失败：\(error.localizedDescription)")
-            hint("加载整合包索引失败：\(error.localizedDescription)", type: .critical)
-            return
-        }
-        
-        guard var name: String = await MessageBoxManager.shared.showInputAsync(
-            title: "安装整合包 - 输入实例名",
-            initialContent: index.name
-        ) else { return }
+        let service = ModpackImportService(modpackURL: destination)
         
         do {
-            name = try repository.checkInstanceName(name)
-        } catch {
-            hint("该名称不可用：\(error.localizedDescription)", type: .critical)
-            return
-        }
-        
-        let installTask: MyTask<ModrinthModpackInstallTask.Model>
-        do {
-            installTask = try ModrinthModpackInstallTask.create(
-                url: destination,
-                index: index,
-                repository: repository,
-                name: name
-            ) { instance in
+            let index = try service.load()
+            guard let name = await MessageBoxManager.shared.showInputAsync(
+                title: "安装整合包 - 输入实例名",
+                initialContent: index.name
+            ) else { return }
+            
+            let task = try service.createImportTask(name: name, repository: repository) { instance in
                 instanceVM.switchInstance(to: instance, in: repository)
             }
+            TaskManager.shared.execute(task: task)
         } catch {
-            err("创建安装任务失败：\(error.localizedDescription)")
-            hint("创建安装任务失败：\(error.localizedDescription)", type: .critical)
-            return
+            err("安装整合包失败：\(error.localizedDescription)")
+            hint("安装整合包失败：\(error.localizedDescription)", type: .critical)
         }
-        TaskManager.shared.execute(task: installTask)
     }
     
     @ViewBuilder

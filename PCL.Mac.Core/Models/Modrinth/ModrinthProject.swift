@@ -11,10 +11,6 @@ public enum ModrinthCompatibility: String, Codable {
     case required, optional, unsupported, unknown
 }
 
-public enum ModrinthProjectType: String, Codable {
-    case mod, modpack, resourcepack, shader
-}
-
 public struct ModrinthProject: Decodable, Identifiable, Hashable, Equatable {
     private enum CodingKeys: String, CodingKey {
         case projectId = "project_id", type = "project_type"
@@ -28,7 +24,7 @@ public struct ModrinthProject: Decodable, Identifiable, Hashable, Equatable {
     
     public let id: String
     public let slug: String
-    public let type: ModrinthProjectType
+    public let type: ProjectType
     public let title: String
     public let description: String
     public let iconURL: URL?
@@ -44,7 +40,7 @@ public struct ModrinthProject: Decodable, Identifiable, Hashable, Equatable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decodeIfPresent(String.self, forKey: .id) ?? container.decode(String.self, forKey: .projectId)
         self.slug = try container.decode(String.self, forKey: .slug)
-        self.type = try container.decode(ModrinthProjectType.self, forKey: .type)
+        self.type = try container.decode(ProjectType.self, forKey: .type)
         self.title = try container.decode(String.self, forKey: .title)
         self.description = try container.decode(String.self, forKey: .description)
         self.iconURL = try container.decodeIfPresent(String.self, forKey: .iconURL).flatMap(URL.init(string:))

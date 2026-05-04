@@ -12,14 +12,14 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
     public let id: String
     public let title: String
     public let description: String
-    public let type: ModrinthProjectType
+    public let type: ProjectType
     public let iconURL: URL?
     public let tags: [String]
     public let supportDescription: String
     public let downloads: String
     public let lastUpdate: String
     
-    public init(id: String, title: String, description: String, type: ModrinthProjectType, iconURL: URL?, tags: [String], supportDescription: String, downloads: String, lastUpdate: String) {
+    public init(id: String, title: String, description: String, type: ProjectType, iconURL: URL?, tags: [String], supportDescription: String, downloads: String, lastUpdate: String) {
         self.id = id
         self.title = title
         self.description = description

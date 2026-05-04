@@ -26,7 +26,7 @@ public enum MinecraftInstallTask {
         version: MinecraftVersion,
         repository: MinecraftRepository,
         modLoader: Loader?,
-        completion: ((MinecraftInstance) -> Void)? = nil
+        completion: (@MainActor (MinecraftInstance) -> Void)? = nil
     ) -> MyTask<Model> {
         let model: Model = .init(
             name: name,
