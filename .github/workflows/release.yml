@@ -8,7 +8,16 @@ permissions:
 
 jobs:
   build:
+    uses: ./.github/workflows/build.yml
+    with:
+      build_configuration: Release
+      upload_artifact: true
+      artifact_name: artifact
+    secrets: inherit
+  
+  release:
     runs-on: macos-26
+    needs: build
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -21,23 +30,17 @@ jobs:
           VERSION_NUMBER=$(grep '^MARKETING_VERSION' Configs/Base.xcconfig | cut -d '=' -f2 | xargs)
           echo "VERSION_NUMBER=$VERSION_NUMBER" >> $GITHUB_ENV
           echo "TAG_NAME=v$VERSION_NUMBER" >> $GITHUB_ENV
-          
-          echo "版本号：\t$VERSION_NUMBER"
-          echo "构建号：\t$BUILD_NUMBER"
-          echo "标签名：\t$TAG_NAME"
-
-      - name: Build app
+      
+      - name: Download artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: artifact
+          path: ./artifact
+      
+      - name: Process artifact
         run: |
-          xcodebuild archive \
-            -project PCL.Mac.xcodeproj -scheme PCL.Mac -configuration Release \
-            CURRENT_PROJECT_VERSION=$BUILD_NUMBER \
-            -archivePath build
-
-      - name: Prepare release assets
-        run: |
-          cp -r build.xcarchive/Products/Applications/PCL.Mac.app ./PCL.Mac.app
-          zip -r "PCL.Mac-${{ env.TAG_NAME }}.zip" ./PCL.Mac.app/*
-          zip -r build.xcarchive.zip ./build.xcarchive
+          ditto -c -k --keepParent ./artifact/PCL.Mac.app "./PCL.Mac-${{ env.TAG_NAME }}.zip"
+          ditto -c -k --keepParent ./artifact/build.xcarchive ./build.xcarchive.zip
       
       - name: Create release
         run: |
