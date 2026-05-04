@@ -152,6 +152,7 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
                 throw error
             } catch {
                 err("子任务 \(name) 执行失败：\(error.localizedDescription)")
+                debug(error)
                 await setState(.failed)
                 throw error
             }

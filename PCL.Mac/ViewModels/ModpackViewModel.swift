@@ -17,7 +17,12 @@ class ModpackViewModel: ObservableObject {
     
     @MainActor
     public func importModpack(at url: URL, repository: MinecraftRepository) async {
-        let service = ModpackImportService(modpackURL: url)
+        guard let curseforgeApiKey = Secrets.shared.curseforgeApiKey else {
+            hint("缺少 CurseForge API Key，无法开始整合包导入，请尝试从官方渠道重新下载 PCL.Mac！", type: .critical)
+            return
+        }
+        
+        let service = ModpackImportService(curseforgeClient: .init(apiKey: curseforgeApiKey), modpackURL: url)
         
         let handleUnknownError: (Error) -> Void = { (error: Error) in
             MessageBoxManager.shared.showText(
@@ -49,6 +54,8 @@ class ModpackViewModel: ObservableObject {
             AppRouter.shared.append(.tasks)
         } catch let error as ModpackImportService.LoadError {
             switch error {
+            case .missingCurseforgeClient:
+                handleUnknownError(error)
             case .failedToCreateDirectory(_):
                 handleUnknownError(error)
             case .extractFailed(_):

@@ -25,7 +25,7 @@ public class ModrinthAPIClient {
     ///   - limit: 返回结果数量上限。
     /// - Returns: 包含搜索结果和分页信息的 `SearchResponse`。
     public func search(
-        type: ModrinthProjectType,
+        type: ProjectType,
         _ query: String?,
         forVersion gameVersion: String?,
         pageIndex: Int = 0,

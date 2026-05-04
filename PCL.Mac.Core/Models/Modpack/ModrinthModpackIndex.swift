@@ -62,7 +62,7 @@ public struct ModrinthModpackIndex: Codable {
             return description
         }
         
-        public func modLoader() -> (id: String, version: String)? {
+        public func modLoader() -> (String, String)? {
             if let forge { return (ModLoader.forge.rawValue, forge) }
             if let neoforge { return (ModLoader.neoforge.rawValue, neoforge) }
             if let fabricLoader { return (ModLoader.fabric.rawValue, fabricLoader) }

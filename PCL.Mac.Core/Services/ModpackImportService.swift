@@ -9,18 +9,16 @@ import Foundation
 import ZIPFoundation
 
 public class ModpackImportService {
+    private let curseforgeClient: CurseForgeAPIClient?
     private var modpackURL: URL
     private var index: ModpackIndex?
     private var tempDirectory: URL
     
-    public init(modpackURL: URL, index: ModpackIndex? = nil) {
+    public init(curseforgeClient: CurseForgeAPIClient? = nil, modpackURL: URL, index: ModpackIndex? = nil) {
+        self.curseforgeClient = curseforgeClient
         self.modpackURL = modpackURL
         self.index = index
-        self.tempDirectory = URLConstants.tempURL.appending(path: "modpack-import-\(UUID().uuidString.lowercased())")
-    }
-    
-    deinit {
-        try? FileManager.default.removeItem(at: tempDirectory)
+        self.tempDirectory = URLConstants.tempURL.appending(path: "modpack-import-\(modpackURL.lastPathComponent.sha1)")
     }
     
     @discardableResult
@@ -92,19 +90,10 @@ public class ModpackImportService {
     private func loadIndex(from archive: Archive) throws(LoadError) -> ModpackIndex {
         if let modrinthIndexEntry = archive["modrinth.index.json"] {
             let index: ModrinthModpackIndex = try decodeIndex(from: modrinthIndexEntry, in: archive)
-            
-            let modLoader: (ModLoader, String)?
-            if let loader = index.dependencies.modLoader() {
-                guard let modLoaderType = ModLoader(rawValue: loader.id) else {
-                    throw .unsupportedModLoader(name: loader.id.capitalized)
-                }
-                modLoader = (modLoaderType, loader.version)
-            } else {
-                modLoader = nil
-            }
+            let modLoader: (ModLoader, String)? = try index.dependencies.modLoader().map(parseModLoader(_:))
             
             return .init(
-                format: "Modrinth",
+                format: .modrinth,
                 name: index.name,
                 version: index.versionId,
                 author: nil,
@@ -113,16 +102,40 @@ public class ModpackImportService {
                 modLoader: modLoader,
                 files: index.files.compactMap { file in
                     guard file.env?[.client] != .unsupported, let url = file.downloads.first else { return nil }
-                    return .init(url: url, path: file.path, checksums: file.hashes)
+                    return ModpackIndex.RegularFile(url: url, path: file.path, checksums: file.hashes)
                 },
                 overridesDirectories: ["overrides", "client-overrides"]
+            )
+        } else if let curseforgeIndexEntry = archive["manifest.json"] {
+            guard let curseforgeClient else { throw .missingCurseforgeClient }
+            
+            let index: CurseForgeModpackIndex = try decodeIndex(from: curseforgeIndexEntry, in: archive)
+            let modLoader: (ModLoader, String)? = try index.modLoader.map(parseModLoader(_:))
+            
+            return .init(
+                format: archive["mcbbs.metadata"] != nil ? .mcbbs : .curseforge,
+                name: index.name,
+                version: index.version,
+                author: index.author,
+                description: nil,
+                minecraftVersion: .init(index.minecraftVersion),
+                modLoader: modLoader,
+                files: index.files.map { ModpackIndex.CurseForgeFile(client: curseforgeClient, file: $0) },
+                overridesDirectories: index.overridesDirectory.map { [$0] } ?? []
             )
         }
         
         throw .unknownFormat
     }
     
-    private func decodeIndex<T: Codable>(from entry: Entry, in archive: Archive) throws(LoadError) -> T {
+    private func parseModLoader(_ loader: (String, String)) throws(LoadError) -> (ModLoader, String) {
+        guard let modLoader = ModLoader(rawValue: loader.0) else {
+            throw .unsupportedModLoader(name: loader.0.capitalized)
+        }
+        return (modLoader, loader.1)
+    }
+    
+    private func decodeIndex<T: Decodable>(from entry: Entry, in archive: Archive) throws(LoadError) -> T {
         var data = Data()
         do {
             _ = try archive.extract(entry, consumer: { data += $0 })
@@ -139,6 +152,8 @@ public class ModpackImportService {
     }
     
     public enum LoadError: LocalizedError {
+        case missingCurseforgeClient
+        
         case failedToCreateDirectory(underlying: Error)
         
         case extractFailed(underlying: Error)
@@ -151,6 +166,8 @@ public class ModpackImportService {
         
         public var errorDescription: String? {
             switch self {
+            case .missingCurseforgeClient:
+                "内部错误：正在加载 CurseForge 整合包，但没有传入 CurseForgeAPIClient"
             case .failedToCreateDirectory(let underlying):
                 "创建临时目录失败：\(underlying.localizedDescription)"
             case .extractFailed(let underlying):

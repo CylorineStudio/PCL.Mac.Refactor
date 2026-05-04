@@ -28,13 +28,38 @@ public enum ModpackImportTask {
         subTasks.insert(
             contentsOf: [
                 .init(6, "下载整合包所需文件") { task, model in
-                    let downloadItems: [DownloadItem] = index.files
-                        .map { .init(url: $0.url, destination: model.runningDirectory.appending(path: $0.path), checksums: $0.checksums) }
-                    try await MultiFileDownloader(items: downloadItems, concurrentLimit: 64, replaceMethod: .skip, progressHandler: task.setProgress(_:)).start()
+                    let progressHandler = ConcurrentProgressHandler(totalHandler: task.setProgress(_:))
+                    
+                    let fetchProgressHandler = await progressHandler.handler(withMultiplier: 0.2)
+                    let total = Double(index.files.count)
+                    var completed = 0.0
+                    var downloadItems: [DownloadItem] = []
+                    
+                    progressHandler.startCalculate()
+                    
+                    try await withThrowingTaskGroup(of: DownloadItem?.self) { group in
+                        for file in index.files {
+                            group.addTask {
+                                try await file.fetchInfo()
+                                guard let url = file.url, let path = file.path else { return nil }
+                                return .init(url: url, destination: model.runningDirectory.appending(path: path), checksums: file.checksums ?? [:])
+                            }
+                        }
+                        for try await item in group {
+                            if let item {
+                                downloadItems.append(item)
+                            }
+                            completed += 1
+                            await fetchProgressHandler(completed / total)
+                        }
+                    }
+                    
+                    let downloadProgressHandler = await progressHandler.handler(withMultiplier: 0.8)
+                    try await MultiFileDownloader(items: downloadItems, concurrentLimit: 64, replaceMethod: .skip, progressHandler: downloadProgressHandler).start()
                 },
                 .init(7, "应用整合包修改") { task, model in
                     for dirName in index.overridesDirectories {
-                        let overridesDirectory: URL = modpackDirectory.appending(path: "modpack/\(dirName)")
+                        let overridesDirectory: URL = modpackDirectory.appending(path: dirName)
                         if FileManager.default.fileExists(atPath: overridesDirectory.path) {
                             do {
                                 try apply(overridesDirectory, to: model.runningDirectory)

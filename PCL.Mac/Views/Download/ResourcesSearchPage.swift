@@ -12,7 +12,7 @@ struct ResourcesSearchPage: View {
     @StateObject private var viewModel: ResourcesSearchViewModel
     @State private var currentPage: Int = 0
     
-    init(type: ModrinthProjectType) {
+    init(type: ProjectType) {
         self._viewModel = StateObject(wrappedValue: .init(type: type))
     }
     

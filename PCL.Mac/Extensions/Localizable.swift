@@ -74,7 +74,7 @@ extension Account {
     }
 }
 
-extension ModrinthProjectType: Localizable {
+extension ProjectType: Localizable {
     var localizedName: String {
         switch self {
         case .mod: "模组"
