@@ -31,16 +31,19 @@ public enum PropertiesLoader {
         
         for line in lines {
             let parts = line.split(separator: "=", maxSplits: 1)
+                .map { String.init($0)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .trimmingCharacters(in: .init(charactersIn: "\"")) }
             guard parts.count == 2 else {
                 throw .invalidLine(line: line)
             }
             
-            let (key, value) = (String(parts[0]), String(parts[1]))
+            let (key, value) = (parts[0], parts[1])
             
-            guard !result.keys.contains(key) else {
-                throw .duplicateKey(key: value)
+            guard result[key] == nil else {
+                throw .duplicateKey(key: key)
             }
-            result[key] = value.trimmingCharacters(in: .init(charactersIn: "\""))
+            result[key] = value
         }
         
         return result
@@ -51,5 +54,18 @@ public enum PropertiesLoader {
         case failedToDecodeContent
         case invalidLine(line: String)
         case duplicateKey(key: String)
+        
+        public var errorDescription: String? {
+            switch self {
+            case .failedToReadFile(let underlying):
+                "读取文件失败：\(underlying.localizedDescription)"
+            case .failedToDecodeContent:
+                "解码文件内容失败。"
+            case .invalidLine(let line):
+                "无效的行：\"\(line)\""
+            case .duplicateKey(let key):
+                "包含重复键：\"\(key)\""
+            }
+        }
     }
 }
