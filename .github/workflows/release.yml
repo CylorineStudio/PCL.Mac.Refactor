@@ -34,7 +34,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v8
         with:
-          name: artifact
+          name: PCL.Mac-artifact.tar.gz
           path: ./artifact.tar.gz
       
       - name: Process artifact
