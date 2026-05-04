@@ -63,19 +63,9 @@ public class ModpackImportService {
         completion: (@MainActor (MinecraftInstance) -> Void)? = nil
     ) throws(ImportError) -> MyTask<ModpackImportTask.Model> {
         guard let index else { throw .notLoaded }
-        let instanceName: String
-        do {
-            instanceName = try repository.checkInstanceName(name, trim: true)
-        } catch {
-            throw .invalidName(underlying: error)
-        }
+        guard index.format != .simple && index.minecraftVersion != nil else { throw .incorrectTaskType }
         
-        let modpackDirectory = tempDirectory.appending(path: "modpack")
-        do {
-            try FileManager.default.unzipItem(at: self.modpackURL, to: modpackDirectory)
-        } catch {
-            throw .extractFailed(underlying: error)
-        }
+        let (instanceName, modpackDirectory) = try prepareTask(name: name, repository: repository)
         
         return ModpackImportTask.create(
             modpackDirectory: modpackDirectory,
@@ -83,6 +73,24 @@ public class ModpackImportService {
             repository: repository,
             name: instanceName,
             completion: completion
+        )
+    }
+    
+    public func createSimpleImportTask(
+        name: String,
+        repository: MinecraftRepository,
+        completion: (@MainActor (MinecraftInstance) -> Void)? = nil
+    ) throws(ImportError) -> MyTask<SimpleModpackImportTask.Model> {
+        guard let index else { throw .notLoaded }
+        guard index.format == .simple else { throw .incorrectTaskType }
+        
+        let (instanceName, modpackDirectory) = try prepareTask(name: name, repository: repository)
+        
+        return SimpleModpackImportTask.create(
+            modpackDirectory: modpackDirectory,
+            index: index,
+            repository: repository,
+            name: instanceName
         )
     }
     
@@ -125,6 +133,27 @@ public class ModpackImportService {
             )
         }
         
+        for entry in archive where entry.path.hasSuffix("/") {
+            guard let range = entry.path.range(of: ".minecraft/versions/") else { continue }
+            let remaining = entry.path[range.upperBound...]
+            let parts = remaining.split(separator: "/")
+            guard !parts.isEmpty else { continue }
+            
+            let instanceName = String(parts[0])
+            let instancePath = String(entry.path[..<range.upperBound]) + instanceName
+            return .init(
+                format: .simple,
+                name: instanceName,
+                version: "未知",
+                author: nil,
+                description: "这只是一个包含 .minecraft 的压缩包，所以 PCL.Mac 无法获取它的信息，但依然可以导入它。",
+                minecraftVersion: nil,
+                modLoader: nil,
+                files: [],
+                overridesDirectories: [instancePath]
+            )
+        }
+        
         throw .unknownFormat
     }
     
@@ -151,17 +180,29 @@ public class ModpackImportService {
         }
     }
     
+    private func prepareTask(name: String, repository: MinecraftRepository) throws(ImportError) -> (String, URL) {
+        let instanceName: String
+        do {
+            instanceName = try repository.checkInstanceName(name, trim: true)
+        } catch {
+            throw .invalidName(underlying: error)
+        }
+        
+        let modpackDirectory = tempDirectory.appending(path: "modpack")
+        do {
+            try FileManager.default.unzipItem(at: self.modpackURL, to: modpackDirectory)
+        } catch {
+            throw .extractFailed(underlying: error)
+        }
+        return (instanceName, modpackDirectory)
+    }
+    
     public enum LoadError: LocalizedError {
         case missingCurseforgeClient
-        
         case failedToCreateDirectory(underlying: Error)
-        
         case extractFailed(underlying: Error)
-        
         case failedToDecodeIndex(underlying: Error)
-        
         case unsupportedModLoader(name: String)
-        
         case unknownFormat
         
         public var errorDescription: String? {
@@ -184,15 +225,16 @@ public class ModpackImportService {
     
     public enum ImportError: LocalizedError {
         case notLoaded
-        
+        case incorrectTaskType
         case invalidName(underlying: MinecraftRepository.NameCheckError)
-        
         case extractFailed(underlying: Error)
         
         public var errorDescription: String? {
             switch self {
             case .notLoaded:
                 "内部错误：尝试创建整合包导入任务，但没有加载它。"
+            case .incorrectTaskType:
+                "内部错误：错误的任务类型"
             case .invalidName(let underlying):
                 "无效的实例名：\(underlying.localizedDescription)"
             case .extractFailed(let underlying):

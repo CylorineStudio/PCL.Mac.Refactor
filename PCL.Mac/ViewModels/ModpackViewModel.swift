@@ -47,25 +47,28 @@ class ModpackViewModel: ObservableObject {
                 initialContent: index.name
             ) else { return }
             
-            let task = try service.createImportTask(name: name, repository: repository) { instance in
+            
+            let completion: @MainActor (MinecraftInstance) -> Void = { instance in
                 self.instanceManager.switchInstance(to: instance, in: repository)
             }
-            TaskManager.shared.execute(task: task)
+            
+            if index.format == .simple {
+                let task = try service.createSimpleImportTask(name: name, repository: repository, completion: completion)
+                TaskManager.shared.execute(task: task)
+            } else {
+                let task = try service.createImportTask(name: name, repository: repository, completion: completion)
+                TaskManager.shared.execute(task: task)
+            }
+            
             AppRouter.shared.append(.tasks)
         } catch let error as ModpackImportService.LoadError {
             switch error {
-            case .missingCurseforgeClient:
-                handleUnknownError(error)
-            case .failedToCreateDirectory(_):
-                handleUnknownError(error)
             case .extractFailed(_):
                 MessageBoxManager.shared.showText(
                     title: "解压整合包失败",
                     content: "\(error.localizedDescription)",
                     level: .error
                 )
-            case .failedToDecodeIndex(_):
-                handleUnknownError(error)
             case .unsupportedModLoader(let name):
                 MessageBoxManager.shared.showText(
                     title: "不支持的模组加载器",
@@ -78,11 +81,11 @@ class ModpackViewModel: ObservableObject {
                     content: "很抱歉，PCL.Mac 目前只支持导入 Modrinth 格式的整合包，不支持这个整合包使用的格式……",
                     level: .error
                 )
+            default:
+                handleUnknownError(error)
             }
         } catch let error as ModpackImportService.ImportError {
             switch error {
-            case .notLoaded:
-                handleUnknownError(error)
             case .invalidName(let underlying):
                 hint("该名称无效：\(underlying.localizedDescription)", type: .critical)
             case .extractFailed(_):
@@ -91,6 +94,8 @@ class ModpackViewModel: ObservableObject {
                     content: "\(error.localizedDescription)",
                     level: .error
                 )
+            default:
+                handleUnknownError(error)
             }
         } catch {} // 不知道为什么必须加个 catch 兜底，上面的两个 catch 明明已经覆盖到所有声明了
     }

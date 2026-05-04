@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol TaskModel {}
+public protocol TaskModel: AnyObject {}
 
 public class EmptyModel: TaskModel {
     public init() {}

@@ -17,13 +17,14 @@ public struct ModpackIndex {
     }
     
     public enum Format: CustomStringConvertible {
-        case modrinth, curseforge, mcbbs
+        case modrinth, curseforge, mcbbs, simple
         
         public var description: String {
             switch self {
             case .modrinth: "Modrinth"
             case .curseforge: "CurseForge"
             case .mcbbs: "MCBBS"
+            case .simple: "包含 .minecraft 目录的压缩包"
             }
         }
     }
@@ -35,12 +36,15 @@ public struct ModpackIndex {
     public let author: String?
     public let description: String?
     
-    public let minecraftVersion: MinecraftVersion
+    public let minecraftVersion: MinecraftVersion!
     public let modLoader: (ModLoader, String)?
     public let files: [File]
     public let overridesDirectories: [String]
     
     public var dependencyInfo: String {
+        guard let minecraftVersion else {
+            return "未知"
+        }
         var info = "Minecraft \(minecraftVersion)"
         if let modLoader {
             info += ", \(modLoader.0.description) \(modLoader.1)"

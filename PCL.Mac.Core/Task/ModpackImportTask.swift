@@ -74,7 +74,7 @@ public enum ModpackImportTask {
         )
         
         return .init(
-            name: "整合包安装：\(name)",
+            name: "整合包安装：\(index.name)",
             model: minecraftInstallTask.model,
             subTasks
         )
@@ -96,7 +96,7 @@ public enum ModpackImportTask {
         }
     }
     
-    private static func apply(_ source: URL, to destination: URL) throws {
+    fileprivate static func apply(_ source: URL, to destination: URL) throws {
         guard let enumerator = FileManager.default.enumerator(
             at: source,
             includingPropertiesForKeys: [.isDirectoryKey]
@@ -116,4 +116,49 @@ public enum ModpackImportTask {
             }
         }
     }
+}
+
+public enum SimpleModpackImportTask {
+    public static func create(
+        modpackDirectory: URL,
+        index: ModpackIndex,
+        repository: MinecraftRepository,
+        name: String,
+        completion: (@MainActor (MinecraftInstance) -> Void)? = nil
+    ) -> MyTask<Model> {
+        let runningDirectory = repository.versionsDirectory.appending(path: name)
+        
+        return .init(
+            name: "整合包安装：\(index.name)",
+            .init(0, "拷贝整合包文件") { task, model in
+                try FileManager.default.createDirectory(at: runningDirectory, withIntermediateDirectories: true)
+                
+                for dirName in index.overridesDirectories {
+                    let overridesDirectory = modpackDirectory.appending(path: dirName)
+                    if FileManager.default.fileExists(atPath: overridesDirectory.path) {
+                        do {
+                            try ModpackImportTask.apply(overridesDirectory, to: runningDirectory)
+                        } catch {
+                            throw ModpackImportTask.Error.failedToApplyOverrides(underlying: error)
+                        }
+                    }
+                }
+            },
+            .init(1, "__completion", display: false) { task, model in
+                try? FileManager.default.removeItem(at: runningDirectory.appending(path: ".incomplete"))
+                try await repository.load()
+                guard let instance = repository.instance(named: name) else {
+                    try? FileManager.default.removeItem(at: runningDirectory)
+                    throw SimpleError("该实例无法被加载。")
+                }
+                await MainActor.run {
+                    completion?(instance)
+                }
+            }
+        ) { _ in
+            try? FileManager.default.removeItem(at: runningDirectory)
+        }
+    }
+    
+    public typealias Model = EmptyModel
 }
