@@ -23,7 +23,7 @@ struct ToolboxPage: View {
                             level: lucky <= 30 ? .error : .info
                         )
                     }
-                    .frame(width: 100)
+                    .frame(width: 120)
                     
                     MyButton("千万别点", type: .red) {
                         MessageBoxManager.shared.showText(
@@ -37,7 +37,7 @@ struct ToolboxPage: View {
                             viewModel.executeEasterEgg()
                         }
                     }
-                    .frame(width: 100)
+                    .frame(width: 120)
                     Spacer()
                 }
                 .frame(height: 40)
