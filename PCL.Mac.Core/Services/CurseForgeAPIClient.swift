@@ -9,6 +9,7 @@ import Foundation
 import SwiftyJSON
 
 public class CurseForgeAPIClient {
+    private let semaphore: AsyncSemaphore = .init(value: 8)
     private let apiRoot: URL
     private let apiKey: String
     
@@ -35,6 +36,7 @@ public class CurseForgeAPIClient {
         headers: [String: String?] = [:],
         body: [String: Any]? = nil
     ) async throws -> Requests.Response {
+        await semaphore.wait()
         var headers: [String: String?] = headers
         headers["x-api-key"] = apiKey
         
@@ -46,6 +48,7 @@ public class CurseForgeAPIClient {
             using: .json,
             revalidate: true
         )
+        await semaphore.signal()
         return response
     }
     

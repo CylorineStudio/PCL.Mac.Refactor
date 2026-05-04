@@ -27,7 +27,7 @@ class ModpackViewModel: ObservableObject {
         let handleUnknownError: (Error) -> Void = { (error: Error) in
             MessageBoxManager.shared.showText(
                 title: "发生未知错误",
-                content: "\(error.localizedDescription)\n\n若要寻求帮助，若要寻求帮助，请将完整日志报告发送给他人，而不是发送关于此页面的图片。",
+                content: "\(error.localizedDescription)\n\n若要寻求帮助，请将完整日志报告发送给他人，而不是发送关于此页面的图片。",
                 level: .error
             )
         }
@@ -78,7 +78,7 @@ class ModpackViewModel: ObservableObject {
             case .unknownFormat:
                 MessageBoxManager.shared.showText(
                     title: "不支持的整合包格式",
-                    content: "很抱歉，PCL.Mac 目前只支持导入 Modrinth 格式的整合包，不支持这个整合包使用的格式……",
+                    content: "很抱歉，PCL.Mac 目前只支持导入 Modrinth、CurseForge、MCBBS 和普通压缩包格式的整合包，不支持这个整合包使用的格式……",
                     level: .error
                 )
             default:

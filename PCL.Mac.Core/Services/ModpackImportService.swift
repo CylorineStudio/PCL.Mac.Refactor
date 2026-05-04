@@ -90,7 +90,8 @@ public class ModpackImportService {
             modpackDirectory: modpackDirectory,
             index: index,
             repository: repository,
-            name: instanceName
+            name: instanceName,
+            completion: completion
         )
     }
     
@@ -189,10 +190,12 @@ public class ModpackImportService {
         }
         
         let modpackDirectory = tempDirectory.appending(path: "modpack")
-        do {
-            try FileManager.default.unzipItem(at: self.modpackURL, to: modpackDirectory)
-        } catch {
-            throw .extractFailed(underlying: error)
+        if !FileManager.default.fileExists(atPath: modpackDirectory.path) {
+            do {
+                try FileManager.default.unzipItem(at: self.modpackURL, to: modpackDirectory)
+            } catch {
+                throw .extractFailed(underlying: error)
+            }
         }
         return (instanceName, modpackDirectory)
     }

@@ -59,8 +59,9 @@ public struct CurseForgeModpackIndex: Decodable {
         self.minecraftVersion = try minecraftContainer.decode(String.self, forKey: .version)
         self.modLoader = try minecraftContainer.decodeIfPresent([ModLoader].self, forKey: .modLoaders)?
             .first(where: { $0.primary })
-            .map { loader in
-                let parts = loader.id.split(separator: "-", maxSplits: 2).map(String.init)
+            .flatMap { loader in
+                let parts = loader.id.split(separator: "-", maxSplits: 1).map(String.init)
+                guard parts.count == 2 else { return nil }
                 return (parts[0], parts[1])
             }
     }
