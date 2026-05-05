@@ -76,7 +76,8 @@ jobs:
               "${COMMON_ARGS[@]}" \
               CODE_SIGN_STYLE=Manual \
               CODE_SIGN_IDENTITY="${{ secrets.MACOS_SIGNING_IDENTITY }}" \
-              DEVELOPMENT_TEAM="${{ secrets.MACOS_SIGNING_TEAM }}"
+              DEVELOPMENT_TEAM="${{ secrets.MACOS_SIGNING_TEAM }}" \
+              ENABLE_HARDENED_RUNTIME=YES
           else
             xcodebuild archive \
               "${COMMON_ARGS[@]}"
