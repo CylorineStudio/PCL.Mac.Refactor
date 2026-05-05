@@ -38,9 +38,6 @@ jobs:
       
       - name: Process artifact
         run: |
-          ls -l
-          find ./artifact
-          ditto -x -k ./artifact/PCL.Mac-artifact.zip ./artifact
           ditto -c -k --keepParent ./artifact/PCL.Mac.app "./PCL.Mac-${{ env.TAG_NAME }}.zip"
           ditto -c -k --keepParent ./artifact/build.xcarchive ./build.xcarchive.zip
       
