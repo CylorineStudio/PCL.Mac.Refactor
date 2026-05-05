@@ -34,10 +34,13 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: PCL.Mac-artifact.zip
-          path: ./artifact
+          path: ./artifact.zip
+          skip-decompress: true
       
       - name: Notarize app
         run: |
+          ditto -x -k ./artifact.zip ./artifact
+          
           ditto -c -k --sequesterRsrc --keepParent ./artifact/PCL.Mac.app ./PCL.Mac.zip
           xcrun notarytool submit "./PCL.Mac.zip" \
             --apple-id "${{ secrets.MACOS_NOTARY_APPLE_ID }}" \
