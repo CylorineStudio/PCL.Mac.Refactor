@@ -39,8 +39,6 @@ jobs:
       
       - name: Notarize app
         run: |
-          ls -l
-          find ./artifact
           ditto -x -k ./artifact/PCL.Mac-artifact.zip ./artifact
           
           ditto -c -k --sequesterRsrc --keepParent ./artifact/PCL.Mac.app ./PCL.Mac.zip
