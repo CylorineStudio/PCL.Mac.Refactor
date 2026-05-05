@@ -4,14 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       build_configuration:
+        description: Build Configuration
         required: false
         type: string
         default: Release
-      artifact_name:
-        required: false
-        type: string
-        default: PCL.Mac-artifact
       upload_artifact:
+        description: Upload artifact
         required: false
         type: boolean
         default: true
@@ -21,10 +19,6 @@ on:
         required: false
         type: string
         default: Release
-      artifact_name:
-        required: false
-        type: string
-        default: PCL.Mac-artifact
       upload_artifact:
         required: false
         type: boolean
@@ -37,6 +31,8 @@ on:
       MACOS_CERTIFICATE_PASSWORD:
         required: false
       MACOS_SIGNING_IDENTITY:
+        required: false
+      MACOS_SIGNING_TEAM:
         required: false
 
 jobs:
@@ -67,42 +63,36 @@ jobs:
       - name: Build app
         run: |
           echo "Build number: $BUILD_NUMBER"
-          xcodebuild archive \
-            -project PCL.Mac.xcodeproj \
-            -scheme PCL.Mac \
-            -configuration "${{ inputs.build_configuration }}" \
-            CURRENT_PROJECT_VERSION=$BUILD_NUMBER \
+          COMMON_ARGS=(
+            -project PCL.Mac.xcodeproj
+            -scheme PCL.Mac
+            -configuration "${{ inputs.build_configuration }}"
+            CURRENT_PROJECT_VERSION=$BUILD_NUMBER
             -archivePath build
+          )
 
-      - name: Prepare app artifact directory
+          if [ "${{ inputs.build_configuration }}" = "Release" ]; then
+            xcodebuild archive \
+              "${COMMON_ARGS[@]}" \
+              CODE_SIGN_STYLE=Manual \
+              CODE_SIGN_IDENTITY="${{ secrets.MACOS_SIGNING_IDENTITY }}" \
+              DEVELOPMENT_TEAM="${{ secrets.MACOS_SIGNING_TEAM }}"
+          else
+            xcodebuild archive \
+              "${COMMON_ARGS[@]}"
+          fi
+
+      - name: Prepare app artifact
         run: |
           mkdir "PCL.Mac-artifact"
           ditto ./build.xcarchive/Products/Applications/PCL.Mac.app ./PCL.Mac-artifact/PCL.Mac.app
           ditto ./build.xcarchive ./PCL.Mac-artifact/build.xcarchive
-
-      - name: Sign app
-        if: ${{ inputs.build_configuration == 'Release' }}
-        run: |
-          codesign --force \
-            --sign "${{ secrets.MACOS_SIGNING_IDENTITY }}" \
-            --options runtime \
-            --entitlements "PCL.Mac/PCL_Mac.entitlements" \
-            --timestamp \
-            PCL.Mac-artifact/PCL.Mac.app
-
-      - name: Prepare app artifact
-        run: |
-          tar -czf PCL.Mac-artifact.tar.gz -C ./PCL.Mac-artifact .
-          if [ "${{ inputs.artifact_name }}" = "PCL.Mac-artifact" ]; then
-            echo "ARTIFACT_NAME=${{ inputs.artifact_name }}-${BUILD_NUMBER}" >> $GITHUB_ENV
-          else
-            echo "ARTIFACT_NAME=${{ inputs.artifact_name }}" >> $GITHUB_ENV
-          fi
+          ditto -c -k --sequesterRsrc ./PCL.Mac-artifact ./PCL.Mac-artifact.zip
 
       - name: Upload app artifact
         if: ${{ inputs.upload_artifact }}
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: ./PCL.Mac-artifact.tar.gz
+          name: PCL.Mac-artifact
+          path: ./PCL.Mac-artifact.zip
           archive: false

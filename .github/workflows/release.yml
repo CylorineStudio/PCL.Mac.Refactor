@@ -12,7 +12,6 @@ jobs:
     with:
       build_configuration: Release
       upload_artifact: true
-      artifact_name: artifact
     secrets: inherit
   
   release:
@@ -34,12 +33,14 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v8
         with:
-          name: PCL.Mac-artifact.tar.gz
-          path: ./artifact.tar.gz
+          name: PCL.Mac-artifact.zip
+          path: ./artifact
       
       - name: Process artifact
         run: |
-          tar -xzf ./artifact.tar.gz -C ./artifact
+          ls -l
+          find ./artifact
+          ditto -x -k ./artifact/PCL.Mac-artifact.zip ./artifact
           ditto -c -k --keepParent ./artifact/PCL.Mac.app "./PCL.Mac-${{ env.TAG_NAME }}.zip"
           ditto -c -k --keepParent ./artifact/build.xcarchive ./build.xcarchive.zip
       
