@@ -36,10 +36,20 @@ jobs:
           name: PCL.Mac-artifact.zip
           path: ./artifact
       
+      - name: Notarize app
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent ./artifact/PCL.Mac.app ./PCL.Mac.zip
+          xcrun notarytool submit "./PCL.Mac.zip" \
+            --apple-id "${{ secrets.MACOS_NOTARY_APPLE_ID }}" \
+            --password "${{ secrets.MACOS_NOTARY_PASSWORD }}" \
+            --team-id "${{ secrets.MACOS_SIGNING_TEAM }}" \
+            --wait
+          xcrun stapler staple "./artifact/PCL.Mac.app"
+      
       - name: Process artifact
         run: |
-          ditto -c -k --keepParent ./artifact/PCL.Mac.app "./PCL.Mac-${{ env.TAG_NAME }}.zip"
-          ditto -c -k --keepParent ./artifact/build.xcarchive ./build.xcarchive.zip
+          ditto -c -k --sequesterRsrc --keepParent ./artifact/PCL.Mac.app "./PCL.Mac-${{ env.TAG_NAME }}.zip"
+          ditto -c -k --sequesterRsrc --keepParent ./artifact/build.xcarchive ./build.xcarchive.zip
       
       - name: Create release
         run: |
