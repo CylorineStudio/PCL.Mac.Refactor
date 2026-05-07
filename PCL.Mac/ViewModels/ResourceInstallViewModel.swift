@@ -71,7 +71,7 @@ class ResourceInstallViewModel: ObservableObject {
                     loader: key.loader
                 )
                 
-                if let selectedInstanceKey, selectedInstanceKey == key {
+                if let selectedInstanceKey, selectedInstanceKey.compatible(with: key) {
                     selectedVersionGroup?.1.append(value)
                 } else {
                     versionMap[key, default: []].append(value)
@@ -138,6 +138,13 @@ class ResourceInstallViewModel: ObservableObject {
         public let id: UUID = .init()
         public let loader: ModLoader?
         public let version: MinecraftVersion
+        
+        public func compatible(with another: VersionMapKey) -> Bool {
+            if another.loader != nil {
+                return self.loader == another.loader && self.version == another.version
+            }
+            return self.version == another.version
+        }
         
         public static func < (lhs: Self, rhs: Self) -> Bool {
             if lhs.version != rhs.version {
