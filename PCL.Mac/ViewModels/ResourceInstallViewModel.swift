@@ -70,7 +70,7 @@ class ResourceInstallViewModel: ObservableObject {
                     loader: key.loader
                 )
                 
-                if let selectedInstanceKey, selectedInstanceKey == key {
+                if let selectedInstanceKey, selectedInstanceKey == key, project.type != .modpack {
                     selectedVersionGroup?.1.append(value)
                 } else {
                     versionMap[key, default: []].append(value)
