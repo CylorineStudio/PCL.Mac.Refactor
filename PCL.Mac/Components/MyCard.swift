@@ -89,6 +89,7 @@ struct MyCard<Content: View, Action: View>: View {
             .onTapGesture {
                 guard foldable else { return }
                 self.foldWorkItem?.cancel()
+                
                 if folded {
                     // 展开卡片
                     folded = false
@@ -115,32 +116,35 @@ struct MyCard<Content: View, Action: View>: View {
                     }
                 }
             }
-            VStack {
-                content()
-            }
-            .disableHoverAnimation(!appearFinished)
-            .padding(EdgeInsets(top: 0, leading: padding, bottom: padding, trailing: padding))
-            .background {
-                GeometryReader { proxy in
-                    Color.clear
-                        .onAppear {
-                            contentHeight = proxy.size.height
-                            if initialFolded == false {
-                                internalContentHeight = contentHeight
-                            }
-                        }
-                        .onChange(of: proxy.size) { newSize in
-                            contentHeight = newSize.height
-                            if !folded {
-                                internalContentHeight = newSize.height
-                            }
-                        }
+            
+            if showContent || contentHeight == 0 {
+                VStack {
+                    content()
                 }
+                .disableHoverAnimation(!appearFinished)
+                .padding(EdgeInsets(top: 0, leading: padding, bottom: padding, trailing: padding))
+                .background {
+                    GeometryReader { proxy in
+                        Color.clear
+                            .onAppear {
+                                contentHeight = proxy.size.height
+                                if !foldable || !titled || initialFolded == false {
+                                    internalContentHeight = contentHeight
+                                }
+                            }
+                            .onChange(of: proxy.size) { newSize in
+                                contentHeight = newSize.height
+                                if !folded {
+                                    internalContentHeight = newSize.height
+                                }
+                            }
+                    }
+                }
+                .frame(height: limitHeight ? internalContentHeight : nil, alignment: .top)
+                .frame(maxHeight: limitHeight ? nil : .infinity)
+                .clipped()
+                .opacity(showContent ? 1 : 0)
             }
-            .frame(height: limitHeight ? internalContentHeight : nil, alignment: .top)
-            .frame(maxHeight: limitHeight ? nil : .infinity)
-            .clipped()
-            .opacity(showContent ? 1 : 0)
         }
         .onHover { hovered in
             self.hovered = hovered
@@ -169,12 +173,9 @@ struct MyCard<Content: View, Action: View>: View {
             if let initialFolded {
                 folded = initialFolded
                 showContent = !initialFolded
-            } else {
-                if !foldable || !titled {
-                    folded = false
-                    showContent = true
-                    internalContentHeight = contentHeight
-                }
+            } else if !foldable || !titled {
+                folded = false
+                showContent = true
             }
         }
     }
