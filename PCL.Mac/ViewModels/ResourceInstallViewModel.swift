@@ -46,7 +46,7 @@ class ResourceInstallViewModel: ObservableObject {
             var keys: [VersionMapKey] = []
             for gameVersion in version.gameVersions {
                 if let type = CoreState.versionManifest.version(for: gameVersion)?.type,
-                   !(type == .release || project.onlySupportsSnapshot || selectedVersionType != .release) {
+                   !(type == .release || project.onlySupportsSnapshot || selectedVersionType.map { $0 != .release } ?? false) {
                     continue
                 }
                 if version.loaders.isEmpty && project.type != .mod {
