@@ -16,10 +16,11 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
     public let iconURL: URL?
     public let tags: [String]
     public let supportDescription: String
+    public let onlySupportsSnapshot: Bool
     public let downloads: String
     public let lastUpdate: String
     
-    public init(id: String, title: String, description: String, type: ProjectType, iconURL: URL?, tags: [String], supportDescription: String, downloads: String, lastUpdate: String) {
+    public init(id: String, title: String, description: String, type: ProjectType, iconURL: URL?, tags: [String], supportDescription: String, onlySupportsSnapshot: Bool, downloads: String, lastUpdate: String) {
         self.id = id
         self.title = title
         self.description = description
@@ -27,11 +28,14 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
         self.iconURL = iconURL
         self.tags = tags
         self.supportDescription = supportDescription
+        self.onlySupportsSnapshot = onlySupportsSnapshot
         self.downloads = downloads
         self.lastUpdate = lastUpdate
     }
     
     public init(_ project: ModrinthProject) {
+        let (supportDescription, onlySupportsSnapshot) = Self.generateSupportDescription(for: project)
+        
         self.init(
             id: project.id,
             title: project.title,
@@ -39,7 +43,8 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
             type: project.type,
             iconURL: project.iconURL,
             tags: project.categories.compactMap { Self.tagMap[$0] },
-            supportDescription: Self.generateSupportDescription(for: project),
+            supportDescription: supportDescription,
+            onlySupportsSnapshot: onlySupportsSnapshot,
             downloads: Self.formatDownloads(project.downloads),
             lastUpdate: Self.formatLastUpdate(project.lastUpdate)
         )
@@ -62,7 +67,7 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
         }
     }
     
-    private static func generateSupportDescription(for project: ModrinthProject) -> String {
+    private static func generateSupportDescription(for project: ModrinthProject) -> (String, Bool) {
         var description: String = ""
         
         let modLoaders: [ModLoader] = project.categories.compactMap(ModLoader.init(rawValue:))
@@ -74,15 +79,15 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
         if !description.isEmpty { description += " " }
         
         guard let gameVersions = project.gameVersions else {
-            return description + "未知"
+            return (description + "未知", false)
         }
         let releaseVersions: [String] = gameVersions.filter { CoreState.versionManifest.version(for: $0)?.type == .release }
         guard !releaseVersions.isEmpty else {
-            return description + (modLoaders.count == 1 ? "" : "仅") + "快照版本"
+            return (description + (modLoaders.count == 1 ? "" : "仅") + "快照版本", true)
         }
         description += generateGameVersionDescription(releaseVersions, latestVersion: CoreState.versionManifest.latestRelease)
         
-        return description
+        return (description, false)
     }
     
     private static func generateGameVersionDescription(_ gameVersions: [String], latestVersion: String) -> String {

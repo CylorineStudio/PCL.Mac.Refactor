@@ -25,7 +25,8 @@ class ResourceInstallViewModel: ObservableObject {
     }
     
     public func load(selectedInstance: MinecraftInstance? = nil) async throws {
-        let selectedInstanceKey: VersionMapKey? = selectedInstance.map { .init(loader: $0.modLoader, version: $0.version) }
+        let selectedInstanceKey: VersionMapKey? = project.type == .modpack ? nil : selectedInstance.map { .init(loader: $0.modLoader, version: $0.version) }
+        let selectedVersionType: MinecraftVersion.VersionType? = (selectedInstance?.version).flatMap { CoreState.versionManifest.version(for: $0.id) }?.type
         var selectedVersionGroup: VersionGroup? = selectedInstanceKey.map { ($0, []) }
         
         let versions: [ModrinthVersion] = try await ModrinthAPIClient.shared.versions(ofProject: project.id, revalidate: true)
@@ -45,7 +46,7 @@ class ResourceInstallViewModel: ObservableObject {
             var keys: [VersionMapKey] = []
             for gameVersion in version.gameVersions {
                 if let type = CoreState.versionManifest.version(for: gameVersion)?.type,
-                   type != .release {
+                   !(type == .release || project.onlySupportsSnapshot || selectedVersionType != .release) {
                     continue
                 }
                 if version.loaders.isEmpty && project.type != .mod {
@@ -70,7 +71,7 @@ class ResourceInstallViewModel: ObservableObject {
                     loader: key.loader
                 )
                 
-                if let selectedInstanceKey, selectedInstanceKey == key, project.type != .modpack {
+                if let selectedInstanceKey, selectedInstanceKey == key {
                     selectedVersionGroup?.1.append(value)
                 } else {
                     versionMap[key, default: []].append(value)
