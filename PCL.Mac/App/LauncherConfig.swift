@@ -12,20 +12,6 @@ class LauncherConfig: Codable {
     public static let shared: LauncherConfig = {
         let url = URLConstants.configURL
         
-        if FileManager.default.fileExists(atPath: backupURL.path) {
-            log("配置文件备份存在，尝试加载")
-            do {
-                let data = try Data(contentsOf: backupURL)
-                let config = try JSONDecoder.shared.decode(LauncherConfig.self, from: data)
-                log("加载成功，正在替换默认配置")
-                try FileManager.default.removeItem(at: url)
-                try FileManager.default.copyItem(at: backupURL, to: url)
-                return config
-            } catch {
-                err("加载失败：\(error.localizedDescription)")
-            }
-        }
-        
         if !FileManager.default.fileExists(atPath: url.path) {
             let config: LauncherConfig = .init()
             log("配置文件不存在，正在创建")
@@ -51,7 +37,9 @@ class LauncherConfig: Codable {
                 err("备份配置文件失败：\(error.localizedDescription)")
             }
             loadError = error
-            return .init()
+            let config = LauncherConfig()
+            try? save(config, to: url)
+            return config
         }
     }()
     

@@ -56,7 +56,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             _ = alert.addButton(withTitle: "退出")
             
             let response = alert.runModal()
-            if response.rawValue == 1000 {
+            if response == .alertFirstButtonReturn {
                 NSWorkspace.shared.open(URL(string: "https://github.com/CylorineStudio/PCL.Mac.Refactor/discussions/new?category=q-a")!)
             }
             exit(1)
