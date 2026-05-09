@@ -208,7 +208,7 @@ public enum MinecraftLaunchTask {
                     continue
                 }
                 // https://github.com/Meloong-Git/PCL/blob/73bdc533097cfd36867b9249416cd681ec0b5a28/Plain%20Craft%20Launcher%202/Modules/Minecraft/ModLaunch.vb#L263-L285
-                if LocaleUtils.isSystemLocaleChinese() {
+                if await LocaleUtils.isInChinaMainland(strict: false) {
                     if [3, 8, 15, 30, 50, 70, 90, 110, 130, 180, 220, 280, 330, 380, 450, 550, 660, 750, 880, 950, 1100, 1300, 1500, 1700, 1900]
                         .contains(LauncherConfig.shared.launchCount) {
                         Task {
