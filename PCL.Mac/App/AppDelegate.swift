@@ -64,6 +64,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         LogManager.shared.enableLogging()
         log("正在启动 PCL.Mac.Refactor \(Metadata.appVersion)")
         _ = Secrets.shared
+        _ = LauncherConfig.shared
+        
         executeTask("开启 SwiftScaffolding 日志", silent: true) {
             try SwiftScaffolding.Logger.enableLogging(url: URLConstants.logsDirectoryURL.appending(path: "swift-scaffolding.log"))
         }
@@ -125,6 +127,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.window.makeKeyAndOrderFront(nil)
         log("成功创建窗口")
         addEscapeMonitor()
+        
+        if let loadError = LauncherConfig.loadError {
+            MessageBoxManager.shared.showText(
+                title: "加载配置文件失败",
+                content: "很抱歉，PCL.Mac 无法加载启动器配置文件……\n原因可能是文件损坏、代码破坏性变更，或者权限问题。\nPCL.Mac 创建了一个备份文件（\(LauncherConfig.backupURL.path)）以免配置丢失。\n\n错误信息：\(loadError.localizedDescription)",
+                level: .error
+            )
+        }
         
         if !LauncherConfig.shared.hasEnteredLauncher {
             MessageBoxManager.shared.showText(

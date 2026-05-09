@@ -10,7 +10,22 @@ import Core
 
 class LauncherConfig: Codable {
     public static let shared: LauncherConfig = {
-        let url: URL = URLConstants.configURL
+        let url = URLConstants.configURL
+        
+        if FileManager.default.fileExists(atPath: backupURL.path) {
+            log("配置文件备份存在，尝试加载")
+            do {
+                let data = try Data(contentsOf: backupURL)
+                let config = try JSONDecoder.shared.decode(LauncherConfig.self, from: data)
+                log("加载成功，正在替换默认配置")
+                try FileManager.default.removeItem(at: url)
+                try FileManager.default.copyItem(at: backupURL, to: url)
+                return config
+            } catch {
+                err("加载失败：\(error.localizedDescription)")
+            }
+        }
+        
         if !FileManager.default.fileExists(atPath: url.path) {
             let config: LauncherConfig = .init()
             log("配置文件不存在，正在创建")
@@ -22,13 +37,26 @@ class LauncherConfig: Codable {
             return config
         }
         do {
-            let data: Data = try Data(contentsOf: url)
+            let data = try Data(contentsOf: url)
             return try JSONDecoder.shared.decode(LauncherConfig.self, from: data)
         } catch {
             err("加载配置文件失败：\(error.localizedDescription)")
+            do {
+                if FileManager.default.fileExists(atPath: backupURL.path) {
+                    try FileManager.default.removeItem(at: backupURL)
+                }
+                try FileManager.default.copyItem(at: url, to: backupURL)
+                log("备份配置文件成功：\(backupURL.path)")
+            } catch {
+                err("备份配置文件失败：\(error.localizedDescription)")
+            }
+            loadError = error
             return .init()
         }
     }()
+    
+    public static let backupURL: URL = URLConstants.applicationSupportURL.appending(path: "config.bak.json")
+    public private(set) static var loadError: Error?
     
     public var minecraftRepositories: [MinecraftRepository] = []
     public var currentRepositoryId: UUID?
