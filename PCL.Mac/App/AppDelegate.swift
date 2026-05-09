@@ -44,7 +44,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-        URLConstants.createDirectories()
+        do {
+            try URLConstants.createDirectories()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "PCL.Mac 启动失败：创建数据目录失败。"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .critical
+            
+            _ = alert.addButton(withTitle: "反馈")
+            _ = alert.addButton(withTitle: "退出")
+            
+            let response = alert.runModal()
+            if response.rawValue == 1000 {
+                NSWorkspace.shared.open(URL(string: "https://github.com/CylorineStudio/PCL.Mac.Refactor/discussions/new?category=q-a")!)
+            }
+            exit(1)
+        }
         LogManager.shared.enableLogging()
         log("正在启动 PCL.Mac.Refactor \(Metadata.appVersion)")
         _ = Secrets.shared
