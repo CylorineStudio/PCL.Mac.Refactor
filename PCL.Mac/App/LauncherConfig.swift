@@ -10,7 +10,8 @@ import Core
 
 class LauncherConfig: Codable {
     public static let shared: LauncherConfig = {
-        let url: URL = URLConstants.configURL
+        let url = URLConstants.configURL
+        
         if !FileManager.default.fileExists(atPath: url.path) {
             let config: LauncherConfig = .init()
             log("配置文件不存在，正在创建")
@@ -22,13 +23,28 @@ class LauncherConfig: Codable {
             return config
         }
         do {
-            let data: Data = try Data(contentsOf: url)
+            let data = try Data(contentsOf: url)
             return try JSONDecoder.shared.decode(LauncherConfig.self, from: data)
         } catch {
             err("加载配置文件失败：\(error.localizedDescription)")
-            return .init()
+            do {
+                if FileManager.default.fileExists(atPath: backupURL.path) {
+                    try FileManager.default.removeItem(at: backupURL)
+                }
+                try FileManager.default.copyItem(at: url, to: backupURL)
+                log("备份配置文件成功：\(backupURL.path)")
+            } catch {
+                err("备份配置文件失败：\(error.localizedDescription)")
+            }
+            loadError = error
+            let config = LauncherConfig()
+            try? save(config, to: url)
+            return config
         }
     }()
+    
+    public static let backupURL: URL = URLConstants.applicationSupportURL.appending(path: "config.bak.json")
+    public private(set) static var loadError: Error?
     
     public var minecraftRepositories: [MinecraftRepository] = []
     public var currentRepositoryId: UUID?

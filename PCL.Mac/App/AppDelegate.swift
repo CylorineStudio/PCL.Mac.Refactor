@@ -44,10 +44,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-        URLConstants.createDirectories()
+        do {
+            try URLConstants.createDirectories()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "PCL.Mac 启动失败：创建数据目录失败。"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .critical
+            
+            _ = alert.addButton(withTitle: "反馈")
+            _ = alert.addButton(withTitle: "退出")
+            
+            let response = alert.runModal()
+            if response == .alertFirstButtonReturn {
+                NSWorkspace.shared.open(URL(string: "https://github.com/CylorineStudio/PCL.Mac.Refactor/discussions/new?category=q-a")!)
+            }
+            exit(1)
+        }
         LogManager.shared.enableLogging()
         log("正在启动 PCL.Mac.Refactor \(Metadata.appVersion)")
         _ = Secrets.shared
+        _ = LauncherConfig.shared
+        
         executeTask("开启 SwiftScaffolding 日志", silent: true) {
             try SwiftScaffolding.Logger.enableLogging(url: URLConstants.logsDirectoryURL.appending(path: "swift-scaffolding.log"))
         }
@@ -109,6 +127,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.window.makeKeyAndOrderFront(nil)
         log("成功创建窗口")
         addEscapeMonitor()
+        
+        if let loadError = LauncherConfig.loadError {
+            MessageBoxManager.shared.showText(
+                title: "加载配置文件失败",
+                content: "很抱歉，PCL.Mac 无法加载启动器配置文件……\n原因可能是文件损坏、代码破坏性变更，或者权限问题。\nPCL.Mac 创建了一个备份文件（\(LauncherConfig.backupURL.path)）以免配置丢失。\n\n错误信息：\(loadError.localizedDescription)",
+                level: .error
+            )
+        }
         
         if !LauncherConfig.shared.hasEnteredLauncher {
             MessageBoxManager.shared.showText(

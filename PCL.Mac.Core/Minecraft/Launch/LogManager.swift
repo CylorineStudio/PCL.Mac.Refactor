@@ -29,9 +29,10 @@ public class LogManager {
             Self.updateLogs(logsURL: logsURL)
             FileManager.default.createFile(atPath: logFileURL.path, contents: nil)
         }
-        let handle: FileHandle = try! FileHandle(forWritingTo: logFileURL)
-        try? handle.truncate(atOffset: 0)
-        self.fileHandle = handle
+        if let handle = try? FileHandle(forWritingTo: logFileURL) {
+            try? handle.truncate(atOffset: 0)
+            self.fileHandle = handle
+        }
     }
     
     public func log(message: Any, level: String, file: String = #file, line: Int = #line) {
