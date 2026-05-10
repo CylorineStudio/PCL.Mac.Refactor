@@ -104,7 +104,7 @@ public enum Requests {
         let (data, response): (Data, URLResponse)
         do {
             (data, response) = try await URLSession.shared.data(for: request)
-        } catch let error as URLError where error.code == .cancelled {
+        } catch let error where error.isCancellationError {
             throw CancellationError()
         }
         guard let response = response as? HTTPURLResponse else {
