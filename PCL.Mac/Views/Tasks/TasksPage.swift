@@ -77,14 +77,15 @@ private struct TaskCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         } action: {
-            Image(systemName: "xmark")
+            Image(.btnCancel)
                 .resizable()
                 .scaledToFit()
+                .frame(height: 10)
                 .foregroundStyle(Color.color2)
                 .contentShape(.rect)
                 .onTapGesture {
                     TaskManager.shared.cancel(task.id)
-                    hint("已取消任务 \(task.name) ！", type: .finish)
+                    hint("已请求取消任务 \(task.name)！", type: .finish)
                 }
         }
     }
