@@ -57,7 +57,7 @@ private struct TaskCard: View {
     var body: some View {
         MyCard(task.name, foldable: false) {
             VStack(alignment: .leading) {
-                ForEach(task.subTasks, id: \.name) { (subTask: AnyMyTask.SubTask) in
+                ForEach(task.subTasks, id: \.name) { subTask in
                     HStack {
                         Group {
                             if subTask.state == .executing {
@@ -77,8 +77,15 @@ private struct TaskCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         } action: {
-            MyText("\(Int(totalProgress * 100))%", color: .color2)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+            Image(systemName: "xmark")
+                .resizable()
+                .scaledToFit()
+                .foregroundStyle(Color.color2)
+                .contentShape(.rect)
+                .onTapGesture {
+                    TaskManager.shared.cancel(task.id)
+                    hint("已取消任务 \(task.name) ！", type: .finish)
+                }
         }
     }
     

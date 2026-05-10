@@ -32,19 +32,18 @@ public class TaskManager: ObservableObject {
             var e: Error?
             do {
                 try await task.start()
-            } catch is CancellationError {
             } catch {
                 e = error
             }
             let error = e
             if display {
-                if let error {
+                if let error, !error.isCancellationError {
                     _ = await MessageBoxManager.shared.showTextAsync(
                         title: "任务执行失败",
                         content: "任务 \(task.name) 执行失败：\(error.localizedDescription)\n\n若要寻求帮助，请将完整日志发送给他人，而不是发送关于此页面的图片。",
                         level: .error
                     )
-                } else {
+                } else if error == nil {
                     hint("任务 \(task.name) 执行完成", type: .finish)
                 }
             }
@@ -61,6 +60,7 @@ public class TaskManager: ObservableObject {
     /// 取消执行正在执行的任务.
     /// - Parameter id: 任务的 `id`。
     public func cancel(_ id: UUID) {
+        log("正在取消任务 \(id)")
         if let task = executorTasks[id] {
             task.cancel()
             clean(for: id)
