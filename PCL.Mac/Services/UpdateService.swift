@@ -46,7 +46,7 @@ class UpdateService {
                 content: "发现新版本：\(version.name)\n更新摘要：\(version.summary)\n\n是否下载并安装更新？",
                 level: .info,
                 buttons: version.updateLogLinks.enumerated().map { index, link in
-                    return .init(id: index + 2, label: link.name, type: .normal) {
+                    return .init(id: index + 10, label: link.name, type: .normal) {
                         NSWorkspace.shared.open(link.url)
                     }
                 } + [.init(id: 2, label: "不再提示", type: .normal), .no(), .yes(label: "下载并安装（\(formatSize(version.downloads.size))）", type: .highlight)]
@@ -58,7 +58,9 @@ class UpdateService {
             }
             
             if result != 1 {
-                hint("你也可以在设置中手动更新！")
+                if !manually {
+                    hint("你也可以在设置中手动更新！")
+                }
                 return
             }
             
