@@ -63,6 +63,7 @@ public enum Requests {
     ///   - body: 请求体，在请求方法为 `GET` 时被视为 URL params。
     ///   - encodeMethod: 请求体的编码方式。
     ///   - revalidate: 是否使用 `.reloadIgnoringLocalCacheData` 缓存策略（先判断本地缓存是否过期）。
+    ///   - timeout: 请求超时时间。
     /// - Returns: 返回的响应。
     public static func request(
         url: URLConvertible,
@@ -70,7 +71,8 @@ public enum Requests {
         headers: [String: String?]?,
         body: [String: Any?]?,
         using encodeMethod: EncodeMethod,
-        revalidate: Bool
+        revalidate: Bool,
+        timeout: TimeInterval
     ) async throws -> Response {
         guard let url = url.url else { throw RequestError.invalidURL }
         guard let scheme = url.scheme?.lowercased(),
@@ -87,6 +89,7 @@ public enum Requests {
         if revalidate {
             request.cachePolicy = .reloadRevalidatingCacheData
         }
+        request.timeoutInterval = timeout
         
         if let body {
             if method == "GET" {
@@ -119,14 +122,16 @@ public enum Requests {
     ///   - headers: 请求头。
     ///   - params: 请求的 URL params。
     ///   - revalidate: 是否使用 `.reloadIgnoringLocalCacheData` 缓存策略（先判断本地缓存是否过期）。
+    ///   - timeout: 请求超时时间，默认 30s。
     /// - Returns: 返回的响应。
     public static func get(
         _ url: URLConvertible,
         headers: [String: String?]? = nil,
         params: [String: String?]? = nil,
-        revalidate: Bool = false
+        revalidate: Bool = false,
+        timeout: TimeInterval = 30
     ) async throws -> Response {
-        return try await request(url: url, method: "GET", headers: headers, body: params, using: .urlEncoded, revalidate: revalidate)
+        return try await request(url: url, method: "GET", headers: headers, body: params, using: .urlEncoded, revalidate: revalidate, timeout: timeout)
     }
     
     /// 向目标 URL 发送 `POST` 请求。
@@ -135,14 +140,16 @@ public enum Requests {
     ///   - headers: 请求头。
     ///   - body: 请求体。
     ///   - encodeMethod: 请求体的编码方式。
+    ///   - timeout: 请求超时时间，默认 30s。
     /// - Returns: 返回的响应。
     public static func post(
         _ url: URLConvertible,
         headers: [String: String?]? = nil,
         body: [String: Any?]?,
-        using encodeMethod: EncodeMethod
+        using encodeMethod: EncodeMethod,
+        timeout: TimeInterval = 30
     ) async throws -> Response {
-        return try await request(url: url, method: "POST", headers: headers, body: body, using: encodeMethod, revalidate: false)
+        return try await request(url: url, method: "POST", headers: headers, body: body, using: encodeMethod, revalidate: false, timeout: timeout)
     }
     
     private static func encode(_ body: [String: Any], using method: EncodeMethod) throws -> (Data, String) {

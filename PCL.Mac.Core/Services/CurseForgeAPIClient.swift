@@ -46,7 +46,8 @@ public class CurseForgeAPIClient {
             headers: headers,
             body: body,
             using: .json,
-            revalidate: true
+            revalidate: true,
+            timeout: 30
         )
         await semaphore.signal()
         return response
