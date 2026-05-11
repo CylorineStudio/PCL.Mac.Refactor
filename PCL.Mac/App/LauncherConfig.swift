@@ -56,6 +56,7 @@ class LauncherConfig: Codable {
     public var launchCount: Int = 0
     public var hasEnteredLauncher: Bool = false
     public var multiplayerCustomPeer: String?
+    public var ignoreLauncherUpdates: Bool = false
     
     public init() {}
     
@@ -79,6 +80,7 @@ class LauncherConfig: Codable {
         self.launchCount = try container.decodeIfPresent(Int.self, forKey: .launchCount) ?? 0
         self.hasEnteredLauncher = try container.decodeIfPresent(Bool.self, forKey: .hasEnteredLauncher) ?? false
         self.multiplayerCustomPeer = try container.decodeIfPresent(String.self, forKey: .multiplayerCustomPeer)
+        self.ignoreLauncherUpdates = try container.decodeIfPresent(Bool.self, forKey: .ignoreLauncherUpdates) ?? false
     }
     
     public func encode(to encoder: any Encoder) throws {
@@ -93,6 +95,7 @@ class LauncherConfig: Codable {
         try container.encode(launchCount, forKey: .launchCount)
         try container.encode(hasEnteredLauncher, forKey: .hasEnteredLauncher)
         try container.encode(multiplayerCustomPeer, forKey: .multiplayerCustomPeer)
+        try container.encode(ignoreLauncherUpdates, forKey: .ignoreLauncherUpdates)
     }
     
     public static func save(_ config: LauncherConfig = .shared, to url: URL = URLConstants.configURL) throws {
@@ -111,5 +114,6 @@ class LauncherConfig: Codable {
         case launchCount
         case hasEnteredLauncher
         case multiplayerCustomPeer
+        case ignoreLauncherUpdates
     }
 }
