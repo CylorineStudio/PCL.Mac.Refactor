@@ -131,6 +131,9 @@ public enum MinecraftLaunchTask {
             model.instance.markDirty()
             model.options.javaRuntime = javaRuntime
             model.manifest = NativesMapper.map(model.manifest, to: javaRuntime.architecture)
+        } else {
+            warn("javaRuntime 未被设置，但启动任务没有被取消")
+            try task.cancel()
         }
     }
     
