@@ -52,7 +52,7 @@ public enum MinecraftLaunchTask {
             warn("未找到符合要求的 Java")
             if await MessageBoxManager.shared.showTextAsync(
                 title: "没有可用的 Java",
-                content: "这个实例需要\(systemArch == .x64 ? " x86_64 " : "任意")架构的 Java \(minMajorVersion) 才能启动，但你的电脑上没有安装！\n\n点击下方按钮可以跳转到安装页面。",
+                content: "这个实例需要\(requiredArch?.description ?? "任意")架构的 Java \(minMajorVersion) 才能启动，但你的电脑上没有安装！\n\n点击下方按钮可以跳转到安装页面。",
                 level: .error,
                 .no(),
                 .yes(label: "安装")
