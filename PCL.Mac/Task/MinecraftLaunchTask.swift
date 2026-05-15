@@ -38,13 +38,21 @@ public enum MinecraftLaunchTask {
     }
     
     private static func checkJava(task: SubTask, model: Model) async throws {
-        var javaRuntime: JavaRuntime! = model.instance.config.javaURL.flatMap { try? JavaSearcher.load(from: $0) }
+        var javaRuntime: JavaRuntime? = model.instance.config.javaURL.flatMap { try? JavaSearcher.load(from: $0) }
         let minMajorVersion = model.instance.manifest.javaVersion.majorVersion
         
-        guard let recommendedRuntime = JavaSearcher.pick(for: model.instance) else {
+        let systemArch = Architecture.systemArchitecture()
+        let requiredArch: Architecture? = model.instance.version < .init("1.7.2") ? .x64 : (systemArch == .x64 ? .x64 : nil)
+        let recommendedArch = requiredArch ?? systemArch
+        
+        log("当前 Java 信息：\(javaRuntime?.description ?? "未配置")")
+        log("当前实例需要 Java \(minMajorVersion) \(requiredArch?.description ?? "任意架构")，推荐架构：\(recommendedArch)")
+        
+        guard let bestMatch = JavaSearcher.pick(for: model.instance) else {
+            warn("未找到符合要求的 Java")
             if await MessageBoxManager.shared.showTextAsync(
                 title: "没有可用的 Java",
-                content: "这个实例需要\(Architecture.systemArchitecture() == .x64 ? " x86_64 " : "任意")架构的 Java \(minMajorVersion) 才能启动，但你的电脑上没有安装！\n\n点击下方按钮可以跳转到安装页面。",
+                content: "这个实例需要\(requiredArch?.description ?? "任意")架构的 Java \(minMajorVersion) 才能启动，但你的电脑上没有安装！\n\n点击下方按钮可以跳转到安装页面。",
                 level: .error,
                 .no(),
                 .yes(label: "安装")
@@ -55,98 +63,78 @@ public enum MinecraftLaunchTask {
             try task.cancel()
             return
         }
+        log("最佳 Java 搜索结果：\(bestMatch)")
+        
+        var bestMatchIssues: [String] = []
+        
+        if bestMatch.architecture != recommendedArch {
+            warn("最佳结果架构与推荐架构不一致")
+            bestMatchIssues.append("它需要通过 Rosetta 2 转译运行，这会导致性能下降，并大幅降低游戏体验。")
+        }
+        
+        func showSwitchMessageBox(_ title: String, _ reason: String, force: Bool) async throws {
+            var buttons: [MessageBoxModel.Button] = [.no(), .yes(label: "切换", type: .highlight)]
+            buttons.insert(.init(id: 2, label: "继续启动", type: .red), at: 1)
+            
+            let issueText: String
+            if bestMatchIssues.isEmpty { issueText = "" }
+            else if bestMatchIssues.count == 1 {
+                issueText = "但是\(bestMatchIssues[0])\n"
+            } else {
+                issueText = "但是：\n" + bestMatchIssues.map { " · " + $0 }.joined(separator: "\n") + "\n\n"
+            }
+            
+            let result = await MessageBoxManager.shared.showTextAsync(
+                title: title,
+                content: "\(reason)\n\nPCL.Mac 找到了一个可用的 Java：\(bestMatch)，\(issueText)是否切换并继续启动？",
+                level: force ? .error : .info,
+                buttons: buttons
+            )
+            if result == 0 { try task.cancel() }
+            
+            if result == 1 {
+                javaRuntime = bestMatch
+            }
+        }
         
         if javaRuntime == nil {
-            javaRuntime = recommendedRuntime
-            model.instance.config.javaURL = recommendedRuntime.executableURL
-        } else if javaRuntime.majorVersion < model.instance.manifest.javaVersion.majorVersion {
-            guard await MessageBoxManager.shared.showTextAsync(
-                title: "当前 Java 版本不满足要求",
-                content: "这个实例需要 Java \(minMajorVersion) 才能启动，但你当前选择的是 Java \(javaRuntime.majorVersion)！\n\nPCL.Mac 找到了一个可用的 Java：\(recommendedRuntime)，是否切换并继续启动？",
-                level: .info,
-                .no(),
-                .yes(label: "切换")
-            ) == 1 else {
-                try task.cancel()
-                return
-            }
-            javaRuntime = recommendedRuntime
-            model.instance.config.javaURL = recommendedRuntime.executableURL
-        }
-        if javaRuntime.architecture != .systemArchitecture() {
-            if Architecture.systemArchitecture() == .arm64 && model.instance.version >= .init("1.7.2") {
-                let foundArm64 = recommendedRuntime.architecture == .arm64
-                let hint = foundArm64 ? "PCL.Mac 找到了一个 ARM64 架构的 Java：\(recommendedRuntime)，是否切换并继续启动？" : "PCL.Mac 没有找到任何 ARM64 架构的 Java，但你可以安装一个。"
-                let result = await MessageBoxManager.shared.showTextAsync(
-                    title: "当前 Java 需要通过转译运行",
-                    content: "你正在 ARM64 平台上使用 x86_64 架构的 Java，由于指令集不一致，需要通过 Rosetta 2 转译运行，而会导致性能下降，并大幅降低游戏体验。\n\n\(hint)",
-                    level: .info,
-                    .no(),
-                    .yes(label: "继续启动"),
-                    .init(id: 2, label: foundArm64 ? "切换" : "去安装", type: foundArm64 ? .highlight : .normal)
-                )
-                if result == 0 { try task.cancel() }
-                if result == 2 {
-                    if foundArm64 {
-                        javaRuntime = recommendedRuntime
-                        model.instance.config.javaURL = recommendedRuntime.executableURL
-                    } else {
-                        await AppRouter.shared.setRoot(.settings)
-                        await AppRouter.shared.append(.javaSettings)
-                        try task.cancel()
-                    }
-                }
+            if bestMatchIssues.isEmpty {
+                log("已将当前 Java 设为最佳结果")
+                javaRuntime = bestMatch
             } else {
-                let foundX64 = recommendedRuntime.architecture == .x64
-                let hint = foundX64 ? "PCL.Mac 找到了一个可用的 Java：\(recommendedRuntime)，是否切换并继续启动？" : "PCL.Mac 没有找到任何 x86_64 架构的 Java，但你可以安装一个。"
-                guard await MessageBoxManager.shared.showTextAsync(
-                    title: "不支持的 Java 架构",
-                    content: "你正在 x86_64 平台上使用 ARM64 架构的 Java，由于指令集不一致，游戏无法运行。\n\n\(hint)",
-                    level: .error,
-                    .no(),
-                    .yes(label: foundX64 ? "切换" : "去安装", type: foundX64 ? .highlight : .normal)
-                ) == 1 else {
-                    try task.cancel()
-                    return
-                }
-                if foundX64 {
-                    javaRuntime = recommendedRuntime
-                    model.instance.config.javaURL = recommendedRuntime.executableURL
-                } else {
-                    await AppRouter.shared.setRoot(.settings)
-                    await AppRouter.shared.append(.javaSettings)
-                    try task.cancel()
-                }
+                try await showSwitchMessageBox("没有配置 Java", "你还没有为这个实例设置 Java！", force: true)
             }
-        }
-        if Architecture.systemArchitecture() == .arm64 && javaRuntime.architecture == .arm64 && model.instance.version < .init("1.7.2") {
-            let foundX64 = recommendedRuntime.architecture == .x64
-            let hint = foundX64 ? "PCL.Mac 找到了一个可用的 Java：\(recommendedRuntime)，是否切换并继续启动？" : "PCL.Mac 没有找到任何 x86_64 架构的 Java，但你可以安装一个。"
-            guard await MessageBoxManager.shared.showTextAsync(
-                title: "不支持的 Java 架构",
-                content: "很抱歉，PCL.Mac 不支持使用 ARM64 架构的 Java 启动当前版本（\(model.instance.version)）……\n\n\(hint)",
-                level: .error,
-                .no(),
-                .yes(label: foundX64 ? "切换" : "去安装", type: foundX64 ? .highlight : .normal)
-            ) == 1 else {
-                try task.cancel()
-                return
+        } else if javaRuntime != bestMatch {
+            var runtime: JavaRuntime! = javaRuntime
+            log("正在检查当前 Java")
+            // 只显示一个问题，避免信息过多
+            var currentJavaIssue: String?
+            
+            if runtime.majorVersion < minMajorVersion {
+                currentJavaIssue = "这个实例需要 Java \(minMajorVersion) 才能启动，但你当前选择的是 Java \(runtime.majorVersion)。"
+            } else if let requiredArch, runtime.architecture != requiredArch {
+                currentJavaIssue = "这个实例需要 \(requiredArch) 架构的 Java \(minMajorVersion) 才能启动，但你当前选择的 Java 是 \(runtime.architecture) 架构的。"
             }
-            if foundX64 {
-                javaRuntime = recommendedRuntime
-                model.instance.config.javaURL = recommendedRuntime.executableURL
-            } else {
-                await AppRouter.shared.setRoot(.settings)
-                await AppRouter.shared.append(.javaSettings)
-                try task.cancel()
+            
+            if let currentJavaIssue {
+                try await showSwitchMessageBox("当前 Java 不满足要求", currentJavaIssue, force: true)
+                runtime = javaRuntime
+            }
+            
+            if runtime.architecture != recommendedArch && bestMatch.architecture == recommendedArch {
+                try await showSwitchMessageBox("当前 Java 会导致性能下降", "当前实例设置的 Java（\(runtime!)）需要通过 Rosetta 2 转译运行，这会导致性能下降，并大幅降低游戏体验。", force: false)
             }
         }
         
-        // 保险起见，始终 markDirty
-        model.instance.markDirty()
-        
-        model.options.javaRuntime = javaRuntime
-        model.manifest = NativesMapper.map(model.manifest, to: javaRuntime.architecture)
+        if let javaRuntime {
+            model.instance.config.javaURL = javaRuntime.executableURL
+            model.instance.markDirty()
+            model.options.javaRuntime = javaRuntime
+            model.manifest = NativesMapper.map(model.manifest, to: javaRuntime.architecture)
+        } else {
+            warn("javaRuntime 未被设置，但启动任务没有被取消")
+            try task.cancel()
+        }
     }
     
     private static func refreshAccount(task: SubTask, model: Model) async throws {
