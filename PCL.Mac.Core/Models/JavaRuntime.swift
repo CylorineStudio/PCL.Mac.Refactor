@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct JavaRuntime: CustomStringConvertible {
+public struct JavaRuntime: CustomStringConvertible, Equatable {
     /// Java 版本号，如 `21.0.8`、`1.8.0_462`。
     public let version: String
     /// Java 主版本号，如 `21`、`8`。
@@ -38,4 +38,6 @@ public struct JavaRuntime: CustomStringConvertible {
         }
         return "\(type) \(version) \(architecture)"
     }
+    
+    public static func == (lhs: Self, rhs: Self) -> Bool { lhs.executableURL == rhs.executableURL }
 }
