@@ -38,7 +38,7 @@ public class YggdrasilAccount: Account {
     }
     
     public func refresh() async throws {
-        let response = try await service.refresh(accessToken, clientToken: clientToken)
+        let response = try await service.refresh(accessToken, clientToken: clientToken, profile: profile)
         self.accessToken = response.accessToken
         if let profile = response.selectedProfile {
             let fullProfile: PlayerProfile = try await service.fullProfile(for: profile.id)
