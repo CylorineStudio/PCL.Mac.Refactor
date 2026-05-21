@@ -49,6 +49,7 @@ struct ContentView: View {
                 if let error {
                     err("处理拖拽失败：\(error.localizedDescription)")
                     hint("处理拖拽失败：\(error.localizedDescription)", type: .critical)
+                    return
                 }
                 guard let data = item as? Data,
                       let url = URL(dataRepresentation: data, relativeTo: nil) else {
