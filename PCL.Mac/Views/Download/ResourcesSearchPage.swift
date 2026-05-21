@@ -29,7 +29,7 @@ struct ResourcesSearchPage: View {
                 Task {
                     do {
                         try await viewModel.search(query)
-                    } catch is CancellationError {
+                    } catch let error where error.isCancellationError {
                     } catch {
                         err("搜索\(viewModel.type.localizedName)失败：\(error.localizedDescription)")
                         await MainActor.run {
@@ -56,7 +56,7 @@ struct ResourcesSearchPage: View {
                     Task {
                         do {
                             try await viewModel.changePage(newValue)
-                        } catch is CancellationError {
+                        } catch let error where error.isCancellationError {
                         } catch {
                             err("搜索\(viewModel.type.localizedName)失败：\(error.localizedDescription)")
                             await MainActor.run {
@@ -72,7 +72,7 @@ struct ResourcesSearchPage: View {
         .task {
             do {
                 try await viewModel.search("")
-            } catch is CancellationError {
+            } catch let error where error.isCancellationError {
             } catch {
                 err("搜索\(viewModel.type.localizedName)失败：\(error)")
                 await MainActor.run {

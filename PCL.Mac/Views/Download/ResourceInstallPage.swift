@@ -38,7 +38,7 @@ struct ResourceInstallPage: View {
         .task(id: viewModel.project) {
             do {
                 try await viewModel.load(selectedInstance: instanceVM.currentInstance)
-            } catch is CancellationError {
+            } catch let error where error.isCancellationError {
             } catch {
                 err("加载\(viewModel.project.type) \(viewModel.project.title) 版本列表失败：\(error)")
                 viewModel.loadingVM.fail(with: "加载版本列表失败：\(error.localizedDescription)")

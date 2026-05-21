@@ -31,7 +31,7 @@ struct NetworkImage: View {
                             self.nsImage = nsImage
                         }
                     }
-                } catch is CancellationError {
+                } catch let error where error.isCancellationError {
                 } catch {
                     err("加载图片 \(url.absoluteString) 失败：\(error.localizedDescription)")
                 }

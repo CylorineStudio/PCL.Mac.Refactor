@@ -19,12 +19,12 @@ public struct URLConstants {
     public static let authlibInjectorURL: URL = applicationSupportURL.appending(path: "authlib-injector.jar")
     public static let easyTierURL: URL = applicationSupportURL.appending(path: "EasyTier")
     
-    public static func createDirectories() {
+    public static func createDirectories() throws {
         let fileManager: FileManager = .default
-        try? fileManager.createDirectory(at: applicationSupportURL, withIntermediateDirectories: true)
-        try? fileManager.createDirectory(at: logsDirectoryURL, withIntermediateDirectories: true)
-        try? fileManager.createDirectory(at: cacheURL, withIntermediateDirectories: true)
-        try? fileManager.createDirectory(at: tempURL, withIntermediateDirectories: true)
-        try? fileManager.createDirectory(at: easyTierURL, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: applicationSupportURL, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: logsDirectoryURL, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: cacheURL, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: tempURL, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: easyTierURL, withIntermediateDirectories: true)
     }
 }

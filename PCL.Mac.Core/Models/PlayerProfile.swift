@@ -36,7 +36,7 @@ public struct PlayerProfile: Codable {
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(self.name, forKey: .name)
-        try container.encode(UUIDUtils.string(of: self.id), forKey: .id)
+        try container.encode(UUIDUtils.string(of: self.id, withHyphens: false), forKey: .id)
         if !self.properties.isEmpty {
             try container.encode(self.properties, forKey: .properties)
         }

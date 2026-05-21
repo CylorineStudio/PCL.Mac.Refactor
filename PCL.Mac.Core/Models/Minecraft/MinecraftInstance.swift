@@ -53,6 +53,7 @@ public class MinecraftInstance: Hashable, Identifiable, Equatable {
 public extension JavaSearcher {
     static func pick(for instance: MinecraftInstance) -> JavaRuntime? {
         let systemArch: Architecture = .systemArchitecture()
+        let instanceNeedsX64 = instance.version < .init("1.7.2")
         
         func score(of javaRuntime: JavaRuntime) -> Int {
             var score = 0
@@ -62,8 +63,10 @@ public extension JavaSearcher {
             return score
         }
         
-        let javaRuntimes = JavaManager.shared.javaRuntimes
+        let javaRuntimes = JavaManager.shared.javaRuntimes.lazy
             .filter { $0.majorVersion >= instance.manifest.javaVersion.majorVersion && !(systemArch == .x64 && $0.architecture == .arm64) }
+            .filter { !(instanceNeedsX64 && $0.architecture != .x64)  }
+        
         return javaRuntimes.max(by: { score(of: $0) < score(of: $1) })
     }
 }

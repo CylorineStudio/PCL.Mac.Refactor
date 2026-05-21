@@ -93,14 +93,20 @@ public class YggdrasilService {
     /// - Parameters:
     ///   - accessToken: 令牌的 `accessToken`。
     ///   - clientToken: 令牌的 `clientToken`（可选）。
+    ///   - profile: 令牌绑定的角色。如果令牌处于无效状态，且此参数未被设置，将无法刷新。
     /// - Returns: 包含新 `accessToken` 和新角色档案（若发生变更）的 `RefreshResponse`。
-    public func refresh(_ accessToken: String, clientToken: String? = nil) async throws -> RefreshResponse {
+    public func refresh(
+        _ accessToken: String,
+        clientToken: String? = nil,
+        profile: PlayerProfile?
+    ) async throws -> RefreshResponse {
         let response = try await request(
             "POST", "/authserver/refresh",
             body: [
                 "accessToken": accessToken,
                 "clientToken": clientToken,
-                "requestUser": true
+                "requestUser": true,
+                "selectedProfile": try profile?.toDictionary()
             ]
         )
         
@@ -203,7 +209,7 @@ public class YggdrasilService {
         headers: [String: String]? = nil,
         body: [String: Any?]? = nil
     ) async throws -> Requests.Response {
-        let response = try await Requests.request(url: authServerURL.appending(path: path), method: method, headers: headers, body: body, using: .json, revalidate: false)
+        let response = try await Requests.request(url: authServerURL.appending(path: path), method: method, headers: headers, body: body, using: .json, revalidate: false, timeout: 30)
         if !(200..<300).contains(response.statusCode) {
             if let json: JSON = try? response.json(),
                let error: String = json["error"].string {

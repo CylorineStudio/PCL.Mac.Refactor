@@ -97,7 +97,7 @@ public class InstanceManager: ObservableObject {
             do {
                 try await repository.load()
                 await completion?(.success(()))
-            } catch let error as CancellationError {
+            } catch let error where error.isCancellationError {
                 await completion?(.failure(error))
             } catch {
                 log("加载仓库 \(repository.name) 失败：\(error.localizedDescription)")

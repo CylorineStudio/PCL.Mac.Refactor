@@ -91,7 +91,7 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
             }
             do {
                 try await execute(taskList: subTaskList)
-            } catch let error as CancellationError {
+            } catch let error where error.isCancellationError {
                 log("任务 \(name) 被中断")
                 failureHandler?(error)
                 throw error
@@ -148,12 +148,12 @@ public class MyTask<Model: TaskModel>: ObservableObject, Identifiable {
             await setState(.executing)
             do {
                 try await execute(self, model)
-            } catch let error as CancellationError {
-                throw error
             } catch {
-                err("子任务 \(name) 执行失败：\(error.localizedDescription)")
-                debug(error)
-                await setState(.failed)
+                if !error.isCancellationError {
+                    err("子任务 \(name) 执行失败：\(error.localizedDescription)")
+                    debug(error)
+                    await setState(.failed)
+                }
                 throw error
             }
             log("子任务 \(name) 执行完成")

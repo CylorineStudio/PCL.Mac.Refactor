@@ -39,7 +39,8 @@ public class CLAPIClient {
             headers: [:],
             body: body,
             using: .json,
-            revalidate: false
+            revalidate: false,
+            timeout: 30
         ).json()
         return .init(json: json)
     }

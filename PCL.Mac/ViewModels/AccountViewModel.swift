@@ -149,7 +149,7 @@ class AccountViewModel: ObservableObject {
                     LauncherConfig.shared.hasMicrosoftAccount = true
                     addAccount(account)
                 }
-            } catch is CancellationError {
+            } catch let error where error.isCancellationError {
             } catch let error as MicrosoftAuthService.Error {
                 switch error {
                 case .xboxAuthenticationFailed(let code):
