@@ -260,6 +260,8 @@ public extension ModpackImportService {
                 return false
             } else if case .unknownFormat = error {
                 return false
+            } else if case .failedToDecodeIndex = error {
+                return false
             }
         }
         return true
