@@ -42,7 +42,9 @@ public class ModpackImportService {
             let nestedModpackURL = tempDirectory.appending(path: modpackEntry.path)
             let nestedArchive: Archive
             do {
-                _ = try archive.extract(modpackEntry, to: nestedModpackURL, allowUncontainedSymlinks: false)
+                if !FileManager.default.fileExists(atPath: nestedModpackURL.path) {
+                    _ = try archive.extract(modpackEntry, to: nestedModpackURL, allowUncontainedSymlinks: false)
+                }
                 nestedArchive = try .init(url: nestedModpackURL, accessMode: .read)
                 self.modpackURL = nestedModpackURL
             } catch {
@@ -250,17 +252,13 @@ public class ModpackImportService {
 
 public extension ModpackImportService {
     static func isModpack(_ url: URL) -> Bool {
-        let archive: Archive
-        do {
-            archive = try Archive(url: url, accessMode: .read)
-        } catch {
-            return false
-        }
         let service = ModpackImportService(modpackURL: url)
         do {
-            _ = try service.loadIndex(from: archive)
+            _ = try service.load()
         } catch {
-            if case .unknownFormat = error {
+            if case .extractFailed = error {
+                return false
+            } else if case .unknownFormat = error {
                 return false
             }
         }

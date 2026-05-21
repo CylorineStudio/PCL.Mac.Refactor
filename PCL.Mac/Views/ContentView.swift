@@ -45,14 +45,13 @@ struct ContentView: View {
         .contrast(easterEggManager.modifyColor ? -1 : 1)
         .onDrop(of: [UTType.fileURL], isTargeted: nil) { providers in
             guard let provider = providers.first else { return false }
-            provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) { item, error in
+            _ = provider.loadObject(ofClass: URL.self) { item, error in
                 if let error {
                     err("处理拖拽失败：\(error.localizedDescription)")
                     hint("处理拖拽失败：\(error.localizedDescription)", type: .critical)
                     return
                 }
-                guard let data = item as? Data,
-                      let url = URL(dataRepresentation: data, relativeTo: nil) else {
+                guard let url = item else {
                     hint("处理拖拽失败：发生未知错误。", type: .critical)
                     return
                 }
@@ -224,8 +223,4 @@ private struct ExtraButtonsOverlay: View {
                 .animation(.spring(response: 0.4), value: show)
         }
     }
-}
-
-#Preview {
-    ContentView()
 }
