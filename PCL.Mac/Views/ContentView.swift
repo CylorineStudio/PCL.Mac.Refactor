@@ -6,11 +6,15 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
+import Core
 
 struct ContentView: View {
     @ObservedObject private var hintManager: HintManager = .shared
     @ObservedObject private var router: AppRouter = .shared
     @ObservedObject private var easterEggManager: EasterEggManager = .shared
+    
+    @EnvironmentObject private var instanceManager: InstanceManager
     
     var body: some View {
         VStack(spacing: 0) {
@@ -39,6 +43,24 @@ struct ContentView: View {
         .background(Color(0xC0DEF5))
         .rotation3DEffect(easterEggManager.rotationAngle, axis: easterEggManager.rotationAxis)
         .contrast(easterEggManager.modifyColor ? -1 : 1)
+        .onDrop(of: [UTType.fileURL], isTargeted: nil) { providers in
+            guard let provider = providers.first else { return false }
+            provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) { item, error in
+                if let error {
+                    err("处理拖拽失败：\(error.localizedDescription)")
+                    hint("处理拖拽失败：\(error.localizedDescription)", type: .critical)
+                }
+                guard let data = item as? Data,
+                      let url = URL(dataRepresentation: data, relativeTo: nil) else {
+                    hint("处理拖拽失败：发生未知错误。", type: .critical)
+                    return
+                }
+                Task {
+                    await FileDropHandler.handle(url, instanceManager: instanceManager)
+                }
+            }
+            return true
+        }
     }
 }
 

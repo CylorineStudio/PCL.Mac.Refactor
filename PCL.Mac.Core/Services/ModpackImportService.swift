@@ -246,3 +246,24 @@ public class ModpackImportService {
         }
     }
 }
+
+
+public extension ModpackImportService {
+    static func isModpack(_ url: URL) -> Bool {
+        let archive: Archive
+        do {
+            archive = try Archive(url: url, accessMode: .read)
+        } catch {
+            return false
+        }
+        let service = ModpackImportService(modpackURL: url)
+        do {
+            _ = try service.loadIndex(from: archive)
+        } catch {
+            if case .unknownFormat = error {
+                return false
+            }
+        }
+        return true
+    }
+}
