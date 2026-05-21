@@ -86,28 +86,24 @@ struct MyLoading: View {
     
     private func startAnimationLoop() {
         guard animationLoopTask == nil else { return }
-        animationLoopTask = .init {
+        animationLoopTask = .init { @MainActor in
             defer { stopAnimationLoop() }
             do {
                 while !Task.isCancelled && !isFailed {
                     try await setPickaxeAngle(-65, duration: 0.35, animation: .easeIn(duration: 0.35), wait: true)
-                    await MainActor.run {
-                        leftPathOffset = .zero
-                        rightPathOffset = .zero
-                        pathOpacity = 1
-                        withAnimation(.easeOut(duration: 0.18)) {
-                            leftPathOffset = .init(width: -5, height: -6)
-                            rightPathOffset = .init(width: 5, height: -6)
-                            pathOpacity = 0
-                        }
+                    leftPathOffset = .zero
+                    rightPathOffset = .zero
+                    pathOpacity = 1
+                    withAnimation(.easeOut(duration: 0.18)) {
+                        leftPathOffset = .init(width: -5, height: -6)
+                        rightPathOffset = .init(width: 5, height: -6)
+                        pathOpacity = 0
                     }
                     try await setPickaxeAngle(50, duration: 0.35, animation: .easeOut(duration: 0.35), wait: true)
                     try await setPickaxeAngle(25, duration: 0.35, animation: .easeOut(duration: 0.35))
                     if viewModel.isFailed {
-                        await MainActor.run {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                self.isFailed = true
-                            }
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            self.isFailed = true
                         }
                     }
                     
