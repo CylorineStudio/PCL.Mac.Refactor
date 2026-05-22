@@ -52,17 +52,13 @@ class EasyTierManager {
         }
     }
     
-    public func makeEasyTier() -> EasyTier {
+    public func makeEasyTier(peers: [String]) -> EasyTier {
         easyTierInstances.removeAll { $0.process == nil }
-        var options: [EasyTier.Option] = [
+        let options: [EasyTier.Option] = [
             .p2pOnly,
-            .peer(address: "tcp://public.easytier.top:11010"),
-            .peer(address: "tcp://public2.easytier.cn:54321"),
             .enableKcpProxy, .latencyFirst, .multiThread, .compression(algorithm: "zstd")
-        ]
-        if let customPeer = LauncherConfig.shared.multiplayerCustomPeer {
-            options.append(.peer(address: customPeer))
-        }
+        ] + peers.map(EasyTier.Option.peer(address:))
+        
         let instance: EasyTier = .init(coreURL: coreURL, cliURL: cliURL, logURL: logURL, options: options)
         easyTierInstances.append(instance)
         return instance

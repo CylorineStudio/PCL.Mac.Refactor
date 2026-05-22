@@ -30,6 +30,10 @@ public class CLAPIClient {
         }
     }
     
+    public func getEasyTierPeers() async throws -> [String] {
+        return try await Requests.get("https://cylorine.studio/meta/PCL.Mac/easytier_peers.json", timeout: 10).decode([String].self)
+    }
+    
     private init() {}
     
     private func request(path: String, method: String, body: [String: Any]?) async throws -> Response {

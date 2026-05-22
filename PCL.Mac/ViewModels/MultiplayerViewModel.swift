@@ -20,6 +20,7 @@ class MultiplayerViewModel: ObservableObject {
     private var server: ScaffoldingServer?
     private var client: ScaffoldingClient?
     private var serverCheckTask: Task<Void, Swift.Error>?
+    private var peers: [String]?
     private let vendor: String = "PCL.Mac \(Metadata.appVersion), SwiftScaffolding 0.2.1, EasyTier v2.5.0"
     
     /// 创建并启动一个 Scaffolding 联机中心。
@@ -38,15 +39,17 @@ class MultiplayerViewModel: ObservableObject {
             }
             state = .creatingRoom
             let code: String = RoomCode.generate()
-            let server: ScaffoldingServer = .init(
-                easyTier: EasyTierManager.shared.makeEasyTier(),
-                roomCode: code,
-                serverPort: serverPort,
-                hostInfo: playerInfo()
-            )
-            registerCustomProtocols(to: server)
             Task.detached {
                 do {
+                    let peers = await self.peers()
+                    let server: ScaffoldingServer = .init(
+                        easyTier: EasyTierManager.shared.makeEasyTier(peers: peers),
+                        roomCode: code,
+                        serverPort: serverPort,
+                        hostInfo: self.playerInfo()
+                    )
+                    self.registerCustomProtocols(to: server)
+                    
                     _ = try await server.startListener()
                     try server.createRoom(terminationHandler: { [weak self] process in
                         guard let self else { return }
@@ -106,13 +109,15 @@ class MultiplayerViewModel: ObservableObject {
     ///   - playerName: 房客玩家名。
     @MainActor
     public func join(roomCode: String) {
-        let client: ScaffoldingClient = .init(
-            easyTier: EasyTierManager.shared.makeEasyTier(),
-            playerInfo: playerInfo()
-        )
         state = .joiningRoom
         Task.detached {
             do {
+                let peers = await self.peers()
+                let client: ScaffoldingClient = .init(
+                    easyTier: EasyTierManager.shared.makeEasyTier(peers: peers),
+                    playerInfo: self.playerInfo()
+                )
+                
                 try await client.connect(to: roomCode, terminationHandler: { [weak self] process in
                     guard let self else { return }
                     Task { @MainActor in
@@ -251,6 +256,29 @@ class MultiplayerViewModel: ObservableObject {
             name: AccountViewModel().currentAccount?.profile.name ?? "Anonymous",
             vendor: vendor
         )
+    }
+    
+    private func fetchPeers() async throws -> [String] {
+        var peers: [String] = try await CLAPIClient.shared.getEasyTierPeers()
+        
+        if let customPeer = LauncherConfig.shared.multiplayerCustomPeer {
+            peers.append(customPeer)
+        }
+        return peers
+    }
+    
+    private func peers() async -> [String] {
+        if let peers { return peers }
+        do {
+            let peers = try await fetchPeers()
+            self.peers = peers
+            return peers
+        } catch {
+            err("拉取节点列表失败：\(error.localizedDescription)")
+            hint("拉取节点列表失败：“\(error.localizedDescription)”，联机可能会失败！", type: .critical)
+            self.peers = []
+            return []
+        }
     }
     
     public enum State: Equatable {
