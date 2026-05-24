@@ -49,6 +49,16 @@ jobs:
             --wait
           xcrun stapler staple "./artifact/PCL.Mac.app"
       
+      - name: Create DMG
+        run: |
+          mkdir dmg_temp
+
+          ditto ./artifact/PCL.Mac.app dmg_temp/PCL.Mac.app
+          ditto Resources/DS_Store dmg_temp/.DS_Store
+          ln -s /Applications "dmg_temp/将左边的 App 拖至此处"
+
+          hdiutil create -volname "PCL.Mac" -srcfolder "dmg_temp" -ov -format UDZO "PCL.Mac-${{ env.TAG_NAME }}.dmg"
+      
       - name: Process artifact
         run: |
           ditto -c -k --sequesterRsrc --keepParent ./artifact/PCL.Mac.app "./PCL.Mac-${{ env.TAG_NAME }}.zip"
@@ -57,6 +67,7 @@ jobs:
       - name: Create release
         run: |
           gh release create $TAG_NAME \
+            "PCL.Mac-${{ env.TAG_NAME }}.dmg" \
             "PCL.Mac-${{ env.TAG_NAME }}.zip" \
             "build.xcarchive.zip" \
             --title $VERSION_NUMBER \
