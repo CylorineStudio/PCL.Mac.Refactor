@@ -20,7 +20,7 @@ class MultiplayerViewModel: ObservableObject {
     private var server: ScaffoldingServer?
     private var client: ScaffoldingClient?
     private var serverCheckTask: Task<Void, Swift.Error>?
-    private var peers: [String]?
+    @MainActor private var peers: [String]?
     private let vendor: String = "PCL.Mac \(Metadata.appVersion), SwiftScaffolding 0.2.1, EasyTier v2.5.0"
     
     /// 创建并启动一个 Scaffolding 联机中心。
@@ -267,6 +267,7 @@ class MultiplayerViewModel: ObservableObject {
         return peers
     }
     
+    @MainActor
     private func peers() async -> [String] {
         if let peers { return peers }
         do {
@@ -276,7 +277,6 @@ class MultiplayerViewModel: ObservableObject {
         } catch {
             err("拉取节点列表失败：\(error.localizedDescription)")
             hint("拉取节点列表失败：“\(error.localizedDescription)”，联机可能会失败！", type: .critical)
-            self.peers = []
             return []
         }
     }
