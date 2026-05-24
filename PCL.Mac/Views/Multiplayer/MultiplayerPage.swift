@@ -49,7 +49,11 @@ struct MultiplayerPage: View {
         }
         .task {
             if viewModel.easyTierStatus == nil {
-                _ = try? await viewModel.fetchEasyTierStatus()
+                do {
+                    _ = try await viewModel.fetchEasyTierStatus()
+                } catch {
+                    err("获取 EasyTier 状态失败：\(error.localizedDescription)")
+                }
             }
         }
         .onChange(of: viewModel.state) { newValue in
