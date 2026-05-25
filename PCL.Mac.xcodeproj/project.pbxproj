@@ -57,6 +57,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		EC3D0C9C2FC3F3FB0025586E /* Exceptions for "Packaging" folder in "PCL.Mac" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				background.png,
+				DS_Store,
+			);
+			target = ECC26BC22EBEDD67002B7E3E /* PCL.Mac */;
+		};
 		EC996CF72EBEEF100094E524 /* Exceptions for "PCL.Mac" folder in "PCL.Mac" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -74,16 +82,17 @@
 			);
 			target = ECC26BC22EBEDD67002B7E3E /* PCL.Mac */;
 		};
-		ECEAFF982FC3255900ABE829 /* Exceptions for "Resources" folder in "PCL.Mac" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				DS_Store,
-			);
-			target = ECC26BC22EBEDD67002B7E3E /* PCL.Mac */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		EC3D0C9B2FC3F3F20025586E /* Packaging */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				EC3D0C9C2FC3F3FB0025586E /* Exceptions for "Packaging" folder in "PCL.Mac" target */,
+			);
+			path = Packaging;
+			sourceTree = "<group>";
+		};
 		EC71A32E2EC034AA006E496F /* PCL.Mac.Tests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = PCL.Mac.Tests;
@@ -91,9 +100,6 @@
 		};
 		EC9969932EBEE6A20094E524 /* Resources */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				ECEAFF982FC3255900ABE829 /* Exceptions for "Resources" folder in "PCL.Mac" target */,
-			);
 			path = Resources;
 			sourceTree = "<group>";
 		};
@@ -163,6 +169,7 @@
 		ECC26BBA2EBEDD67002B7E3E = {
 			isa = PBXGroup;
 			children = (
+				EC3D0C9B2FC3F3F20025586E /* Packaging */,
 				ECA78B8D2F67524900F5B097 /* PCL.Mac.xctestplan */,
 				ECE3EC022F1B8DB200754684 /* Configs */,
 				EC9969932EBEE6A20094E524 /* Resources */,
@@ -261,6 +268,7 @@
 				EC996B432EBEE80F0094E524 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				EC3D0C9B2FC3F3F20025586E /* Packaging */,
 				EC9969932EBEE6A20094E524 /* Resources */,
 				ECC26BC52EBEDD67002B7E3E /* PCL.Mac */,
 				ECE3EC022F1B8DB200754684 /* Configs */,
