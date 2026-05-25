@@ -29,6 +29,10 @@ class ResourceInstallViewModel: ObservableObject {
         let selectedVersionType: MinecraftVersion.VersionType? = (selectedInstance?.version).flatMap { CoreState.versionManifest.version(for: $0.id) }?.type
         var selectedVersionGroup: VersionGroup? = selectedInstanceKey.map { ($0, []) }
         
+        if let selected = selectedVersionGroup, project.type != .mod {
+            selectedVersionGroup?.0 = .init(loader: nil, version: selected.0.version)
+        }
+        
         let versions: [ModrinthVersion] = try await ModrinthAPIClient.shared.versions(ofProject: project.id, revalidate: true)
         
         var versionMap: [VersionMapKey: [ProjectVersionModel]] = [:]
