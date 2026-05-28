@@ -119,7 +119,7 @@ struct MyCard<Content: View, Action: View>: View {
                         }
                         self.foldWorkItem = foldWorkItem
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7, execute: foldWorkItem)
-                        contentHeightLimit = min(1000, actualContentHeight) // 控制回弹上限
+                        contentHeightLimit = min(1000, actualContentHeight) + padding // 控制回弹上限
                         withAnimation(.spring(response: 0.35)) {
                             contentHeightLimit = 0
                         }
