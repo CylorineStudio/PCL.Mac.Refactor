@@ -13,7 +13,7 @@ import Combine
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: AppWindow!
-    private lazy var isUnderTesting: Bool = ProcessInfo.processInfo.environment["PCL_MAC_TESTING"] != nil
+    private lazy var shouldInit: Bool = ProcessInfo.processInfo.environment["PCL_MAC_TESTING"] == nil && ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1"
     private var keyMonitor: Any?
     
     private var instanceManager: InstanceManager!
@@ -90,7 +90,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         
-        if !isUnderTesting {
+        if shouldInit {
             _ = LauncherConfig.shared
             _ = JavaManager.shared
             executeTask("加载字体") {
@@ -103,7 +103,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        if isUnderTesting { return }
+        if !shouldInit { return }
         log("App 启动完成")
         let instanceManager = InstanceManager(
             repositories: LauncherConfig.shared.minecraftRepositories.reduce(into: [:], { $0[$1.id] = $1 }),

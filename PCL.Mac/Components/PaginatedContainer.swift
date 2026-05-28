@@ -43,7 +43,7 @@ struct PaginatedContainer<Content: View>: View {
                 .disableCardAppearAnimation(disableAppearAnimation)
                 .animation(.easeInOut(duration: 0.2), value: currentPage)
             
-            MyCard("", titled: false, padding: 8) {
+            MyCard(nil, padding: 8) {
                 HStack(alignment: .center, spacing: 0) {
                     pageButton(.btnFirstPage) {
                         currentPage = 0

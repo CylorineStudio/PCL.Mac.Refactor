@@ -15,7 +15,7 @@ struct TasksPage: View {
     var body: some View {
         CardContainer {
             if Metadata.debugMode {
-                MyCard("", titled: false) {
+                MyCard(nil) {
                     HStack {
                         MyButton("添加一个任务") {
                             let task: MyTask<EmptyModel> = .init(

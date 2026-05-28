@@ -20,10 +20,10 @@ struct InstanceConfigPage: View {
     
     var body: some View {
         CardContainer {
-            MyCard("", titled: false, padding: 10) {
+            MyCard(nil, padding: 10) {
                 MyListItem(.init(image: viewModel.icon, name: viewModel.instance.name, description: viewModel.description))
             }
-            MyCard("", titled: false) {
+            MyCard(nil) {
                 HStack {
                     MyButton("打开实例目录") {
                         NSWorkspace.shared.open(viewModel.instance.url)

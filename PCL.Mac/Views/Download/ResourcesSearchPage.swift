@@ -41,7 +41,7 @@ struct ResourcesSearchPage: View {
             
             if let searchResults = viewModel.searchResults {
                 PaginatedContainer(currentPage: $currentPage, pageCount: viewModel.totalPages) { _ in
-                    MyCard("", titled: false) {
+                    MyCard(nil) {
                         LazyVStack(spacing: 0) {
                             ForEach(searchResults) { project in
                                 ProjectListItemView(project: project)

@@ -13,7 +13,7 @@ struct JavaSettingsPage: View {
     
     var body: some View {
         CardContainer {
-            MyCard("", titled: false) {
+            MyCard(nil) {
                 HStack {
                     MyButton("刷新 Java 列表") {
                         do {

@@ -20,7 +20,7 @@ struct ResourceInstallPage: View {
     
     var body: some View {
         CardContainer {
-            MyCard("", titled: false) {
+            MyCard(nil) {
                 ProjectListItemView(project: viewModel.project)
             }
             if viewModel.loaded, let versionList = viewModel.versionList {

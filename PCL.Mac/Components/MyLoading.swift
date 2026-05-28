@@ -28,7 +28,7 @@ struct MyLoading: View {
     var body: some View {
         Group {
             if showCard {
-                MyCard("", titled: false) {
+                MyCard(nil) {
                     pickaxe
                 }
             } else {

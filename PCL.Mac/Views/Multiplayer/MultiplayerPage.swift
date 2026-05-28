@@ -160,7 +160,7 @@ struct MultiplayerPage: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 HStack(alignment: .top, spacing: 20) {
-                    MyCard("操作", foldable: false, limitHeight: false) {
+                    MyCard("操作", foldable: false) {
                         VStack(spacing: 0) {
                             if viewModel.state == .hostReady, let roomCode = viewModel.roomCode() {
                                 ActionView(.iconCopy, "复制房间码") {
@@ -237,7 +237,7 @@ private struct PlayerListView: View {
     }
     
     var body: some View {
-        MyCard("玩家列表", foldable: false, limitHeight: false) {
+        MyCard("玩家列表", foldable: false) {
             LazyVStack(spacing: 0) {
                 ForEach(room.members, id: \.machineId) { member in
                     MyListItem(.init(name: member.name, description: "[\(member.kind.localizedName)] \(member.vendor)"))

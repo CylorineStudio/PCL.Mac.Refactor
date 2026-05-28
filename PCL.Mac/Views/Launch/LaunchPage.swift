@@ -51,12 +51,12 @@ struct LaunchPage: View {
             }
             .cardIndex(1)
             
-            MyCard("", titled: false) {
+            MyCard(nil) {
                 MyText("不可折叠也没有标题的卡片")
             }
             .cardIndex(2)
             
-            MyCard("", titled: false) {
+            MyCard(nil) {
                 HStack {
                     MyButton(".tasks") {
                         AppRouter.shared.append(.tasks)

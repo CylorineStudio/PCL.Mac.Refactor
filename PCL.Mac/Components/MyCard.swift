@@ -11,53 +11,57 @@ struct MyCard<Content: View, Action: View>: View {
     @Environment(\.cardIndex) private var index: Int
     @Environment(\.disableCardAppearAnimation) private var disableCardAppearAnimation: Bool
     @Environment(\.disableHoverAnimation) private var disableHoverAnimation: Bool
-    /// 带动画
+    
+    /// 下移出现动画变量。
     @State private var appeared: Bool = false
-    /// 无动画，在 `appeared` 动画结束后变更
+    
+    /// 下移出现动画是否已完成。
     @State private var appearFinished: Bool = false
+    
+    /// 卡片是否已被折叠。
     @State private var folded: Bool = true
+    
+    /// 是否被鼠标悬停。
     @State private var hovered: Bool = false
+    
+    /// 是否显示卡片内容，在被折叠时为 `false`。
     @State private var showContent: Bool = false
+    
     /// `content()` 的实际高度。
-    @State private var contentHeight: CGFloat = 0
+    @State private var actualContentHeight: CGFloat = 0
+    
     /// `content()` 的高度限制。
-    @State private var internalContentHeight: CGFloat = 0
+    @State private var contentHeightLimit: CGFloat? = nil
     @State private var foldWorkItem: DispatchWorkItem?
     
     private let title: String
     private let foldable: Bool
-    private let initialFolded: Bool?
+    private let initialFolded: Bool
     private let titled: Bool
-    private let limitHeight: Bool
     private let padding: CGFloat
     private let content: () -> Content
     private let action: () -> Action
     
     /// 创建一个卡片视图。
     /// - Parameters:
-    ///   - title: 卡片的标题。在 `titled` 为 `false` 时，该参数会被忽略。
-    ///   - foldable: 卡片是否可被折叠。当 `folded` 未被指定时，卡片默认不会被折叠。
+    ///   - title: 卡片的标题，为 `nil` 时没有标题栏且不可折叠。
+    ///   - foldable: 卡片是否可被折叠。
     ///   - folded: 卡片的初始折叠状态。
-    ///   - titled: 卡片是否拥有标题栏。当 `folded` 未被指定时，卡片默认不会被折叠。
-    ///   - limitHeight: 是否限制卡片高度。若该参数为 `false`，请手动设置卡片高度。
     ///   - padding: 卡片的内边距。
     ///   - content: 卡片内容。
-    ///   - action: 显示在右上角的内容。如果 `foldable` 为 `true`，此参数会被忽略。
+    ///   - action: 显示在右上角的内容。如果 `foldable` 为 `true`，或卡片没有标题栏，此参数会被忽略。
     init(
-        _ title: String,
+        _ title: String?,
         foldable: Bool = true,
-        folded: Bool? = nil,
-        titled: Bool = true,
-        limitHeight: Bool = true,
+        folded: Bool = true,
         padding: CGFloat = 18,
         @ViewBuilder _ content: @escaping () -> Content,
         @ViewBuilder action: @escaping () -> Action = { EmptyView() }
     ) {
-        self.title = title
+        self.title = title ?? ""
+        self.titled = title != nil
         self.foldable = foldable && titled
         self.initialFolded = folded
-        self.titled = titled
-        self.limitHeight = limitHeight
         self.padding = padding
         self.content = content
         self.action = action
@@ -65,8 +69,8 @@ struct MyCard<Content: View, Action: View>: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                if titled {
+            if titled {
+                HStack {
                     Text(title)
                         .font(.custom("PingFangSC-Semibold", size: 14))
                     Spacer()
@@ -80,72 +84,70 @@ struct MyCard<Content: View, Action: View>: View {
                         action()
                     }
                 }
-            }
-            .foregroundStyle(appearFinished && !disableHoverAnimation && hovered ? Color.color2 : .color1)
-            .frame(height: titled ? 12 : 0)
-            .frame(maxWidth: .infinity)
-            .padding(titled ? 12 : padding / 2)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                guard foldable else { return }
-                self.foldWorkItem?.cancel()
-                
-                if folded {
-                    // 展开卡片
-                    folded = false
-                    showContent = true
-                    withAnimation(.linear(duration: 0.2)) {
-                        internalContentHeight = min(1000, contentHeight)
-                    }
-                    let foldWorkItem: DispatchWorkItem = .init {
-                        internalContentHeight = contentHeight
-                    }
-                    self.foldWorkItem = foldWorkItem
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: foldWorkItem)
-                } else {
-                    // 折叠卡片
-                    folded = true
-                    let foldWorkItem: DispatchWorkItem = .init {
-                        showContent = false
-                    }
-                    self.foldWorkItem = foldWorkItem
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: foldWorkItem)
-                    internalContentHeight = min(1000, contentHeight) // 控制回弹上限
-                    withAnimation(.spring(response: 0.35)) {
-                        internalContentHeight = 0
+                .foregroundStyle(appearFinished && !disableHoverAnimation && hovered ? Color.color2 : .color1)
+                .frame(height: 12)
+                .padding(12)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    guard foldable else { return }
+                    self.foldWorkItem?.cancel()
+                    
+                    if folded {
+                        // 展开卡片
+                        folded = false
+                        showContent = true
+                        withAnimation(.linear(duration: 0.2)) {
+                            contentHeightLimit = min(1000, actualContentHeight) + padding
+                        }
+                        let foldWorkItem: DispatchWorkItem = .init {
+                            contentHeightLimit = nil
+                        }
+                        self.foldWorkItem = foldWorkItem
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: foldWorkItem)
+                    } else {
+                        // 折叠卡片
+                        folded = true
+                        let foldWorkItem: DispatchWorkItem = .init {
+                            showContent = false
+                        }
+                        self.foldWorkItem = foldWorkItem
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: foldWorkItem)
+                        contentHeightLimit = min(1000, actualContentHeight) // 控制回弹上限
+                        withAnimation(.spring(response: 0.35)) {
+                            contentHeightLimit = 0
+                        }
                     }
                 }
             }
             
-            if showContent || contentHeight == 0 {
+            if showContent || actualContentHeight == 0 {
                 VStack {
                     content()
                 }
                 .disableHoverAnimation(!appearFinished)
-                .padding(EdgeInsets(top: 0, leading: padding, bottom: padding, trailing: padding))
                 .background {
                     GeometryReader { proxy in
                         Color.clear
                             .onAppear {
-                                contentHeight = proxy.size.height
-                                if !foldable || !titled || initialFolded == false {
-                                    internalContentHeight = contentHeight
-                                }
+                                actualContentHeight = proxy.size.height
                             }
                             .onChange(of: proxy.size) { newSize in
-                                contentHeight = newSize.height
-                                if !folded {
-                                    internalContentHeight = newSize.height
+                                if actualContentHeight != newSize.height {
+                                    DispatchQueue.main.async {
+                                        actualContentHeight = newSize.height
+                                    }
                                 }
                             }
                     }
                 }
-                .frame(height: limitHeight ? internalContentHeight : nil, alignment: .top)
-                .frame(maxHeight: limitHeight ? nil : .infinity)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(EdgeInsets(top: !titled ? padding : 0, leading: padding, bottom: padding, trailing: padding))
+                .frame(height: contentHeightLimit, alignment: .top)
                 .clipped()
                 .opacity(showContent ? 1 : 0)
             }
         }
+        .frame(maxWidth: .infinity)
         .onHover { hovered in
             self.hovered = hovered
         }
@@ -170,24 +172,57 @@ struct MyCard<Content: View, Action: View>: View {
                 }
             }
             
-            if let initialFolded {
-                folded = initialFolded
-                showContent = !initialFolded
-            } else if !foldable || !titled {
+            if !foldable {
                 folded = false
                 showContent = true
+            } else {
+                folded = initialFolded
+                showContent = !initialFolded
+                if folded {
+                    contentHeightLimit = 0
+                }
             }
         }
     }
 }
 
 #Preview {
-    MyCard("卡片测试") {
-        ZStack {
-            Rectangle()
-                .fill(.red)
-            Text("内容")
+    if #available(macOS 13.0, *) {
+        VStack {
+            let content = {
+                ZStack(alignment: .center) {
+                    Rectangle()
+                        .fill(.red)
+                    MyText(String(repeating: "关注风花喵 关注风花谢谢喵\n", count: 16))
+                        .frame(maxHeight: .infinity)
+                }
+                .frame(maxHeight: .infinity)
+            }
+            
+            Grid(alignment: .top) {
+                GridRow {
+                    MyCard("foldable, titled") {
+                        content()
+                    }
+                    
+                    MyCard("foldable, titled, folded", folded: true) {
+                        content()
+                    }
+                }
+                
+                GridRow {
+                    MyCard("not-foldable, titled", foldable: false) {
+                        content()
+                    }
+                    
+                    MyCard(nil) {
+                        content()
+                    }
+                }
+            }
+            .padding()
+            
+            Spacer()
         }
     }
-    .padding()
 }

@@ -19,7 +19,7 @@ struct MySearchBox: View {
     }
     
     var body: some View {
-        MyCard("", titled: false) {
+        MyCard(nil) {
             HStack {
                 Image(.iconSearch)
                     .resizable()

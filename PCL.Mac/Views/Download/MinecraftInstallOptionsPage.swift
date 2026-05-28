@@ -22,7 +22,7 @@ struct MinecraftInstallOptionsPage: View {
             VStack {
                 MyTip(text: "Forge / NeoForge 版本列表由 BMCLAPI 提供。", theme: .blue)
                     .padding(.bottom, 10)
-                MyCard("", titled: false, limitHeight: false) {
+                MyCard(nil) {
                     HStack {
                         Image(icon)
                             .resizable()
@@ -99,7 +99,7 @@ private struct ModLoaderCard: View {
     }
     
     var body: some View {
-        MyCard("", titled: false, limitHeight: false, padding: 0) {
+        MyCard(nil, padding: 0) {
             ZStack(alignment: .topLeading) {
                 MyCard(type.description, foldable: loadState == .finished, folded: true) {
                     if let versions {
