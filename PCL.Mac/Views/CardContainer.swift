@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct CardContainer<Content: View>: View {
+    @StateObject private var interactionState: CardInteractionState = .init()
     private let content: () -> Content
     
     init(@ViewBuilder _ content: @escaping () -> Content) {
@@ -22,5 +23,10 @@ struct CardContainer<Content: View>: View {
             .frame(maxWidth: .infinity)
             .padding(24)
         }
+        .environmentObject(interactionState)
     }
+}
+
+class CardInteractionState: ObservableObject {
+    @Published var isTransitioning = false
 }

@@ -11,6 +11,7 @@ struct MyCard<Content: View, Action: View>: View {
     @Environment(\.cardIndex) private var index: Int
     @Environment(\.disableCardAppearAnimation) private var disableCardAppearAnimation: Bool
     @Environment(\.disableHoverAnimation) private var disableHoverAnimation: Bool
+    @EnvironmentObject private var interactionState: CardInteractionState
     
     /// 下移出现动画变量。
     @State private var appeared: Bool = false
@@ -23,6 +24,9 @@ struct MyCard<Content: View, Action: View>: View {
     
     /// 是否被鼠标悬停。
     @State private var hovered: Bool = false
+    
+    /// 是否显示鼠标悬停样式，用于避免动画冲突。
+    @State private var showHovered: Bool = false
     
     /// 是否显示卡片内容，在被折叠时为 `false`。
     @State private var showContent: Bool = false
@@ -84,13 +88,14 @@ struct MyCard<Content: View, Action: View>: View {
                         action()
                     }
                 }
-                .foregroundStyle(appearFinished && !disableHoverAnimation && hovered ? Color.color2 : .color1)
+                .foregroundStyle(appearFinished && !disableHoverAnimation && showHovered ? Color.color2 : .color1)
                 .frame(height: 12)
                 .padding(12)
                 .contentShape(Rectangle())
                 .onTapGesture {
                     guard foldable else { return }
                     self.foldWorkItem?.cancel()
+                    interactionState.isTransitioning = true
                     
                     if folded {
                         // 展开卡片
@@ -101,6 +106,7 @@ struct MyCard<Content: View, Action: View>: View {
                         }
                         let foldWorkItem: DispatchWorkItem = .init {
                             contentHeightLimit = nil
+                            interactionState.isTransitioning = false
                         }
                         self.foldWorkItem = foldWorkItem
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: foldWorkItem)
@@ -109,9 +115,10 @@ struct MyCard<Content: View, Action: View>: View {
                         folded = true
                         let foldWorkItem: DispatchWorkItem = .init {
                             showContent = false
+                            interactionState.isTransitioning = false
                         }
                         self.foldWorkItem = foldWorkItem
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: foldWorkItem)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7, execute: foldWorkItem)
                         contentHeightLimit = min(1000, actualContentHeight) // 控制回弹上限
                         withAnimation(.spring(response: 0.35)) {
                             contentHeightLimit = 0
@@ -150,15 +157,22 @@ struct MyCard<Content: View, Action: View>: View {
         .frame(maxWidth: .infinity)
         .onHover { hovered in
             self.hovered = hovered
+            if !interactionState.isTransitioning || !hovered {
+                self.showHovered = hovered
+            }
+        }
+        .onChange(of: interactionState.isTransitioning) { newValue in
+            if newValue == true || showHovered == hovered { return }
+            self.showHovered = hovered
         }
         .background {
             RoundedRectangle(cornerRadius: 5)
                 .fill(Color.colorGray8)
-                .shadow(color: hovered ? .color3.opacity(0.6) : .black.opacity(0.1), radius: 6)
+                .shadow(color: showHovered ? .color3.opacity(0.6) : .black.opacity(0.1), radius: 6)
         }
         .offset(y: appeared ? 0 : -25)
         .opacity(appeared ? 1 : 0)
-        .animation(.easeInOut(duration: 0.2), value: hovered)
+        .animation(.easeInOut(duration: 0.2), value: showHovered)
         .onAppear {
             if disableCardAppearAnimation {
                 appeared = true
@@ -188,7 +202,7 @@ struct MyCard<Content: View, Action: View>: View {
 
 #Preview {
     if #available(macOS 13.0, *) {
-        VStack {
+        CardContainer {
             let content = {
                 ZStack(alignment: .center) {
                     Rectangle()
