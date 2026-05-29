@@ -65,21 +65,33 @@ public enum SingleFileDownloader {
         request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         request.setValue("PCL-Mac/\(Metadata.appVersion)", forHTTPHeaderField: "User-Agent")
         
-        let task: URLSessionDownloadTask = session.downloadTask(with: request)
-        try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                DownloadDelegate.shared.register(task: task, destination: destination, continuation: continuation, progressHandler: progressHandler)
-                task.resume()
-            }
-        } onCancel: {
-            task.cancel()
-        }
-        
-        // 验证 checksums
-        if let checksums {
-            guard try FileUtils.checkFile(at: destination, with: checksums) == true else {
-                try FileManager.default.removeItem(at: destination)
-                throw DownloadError.checksumMismatch
+        var retryCount: Int = 0
+        while true {
+            let task: URLSessionDownloadTask = session.downloadTask(with: request)
+            do {
+                try await withTaskCancellationHandler {
+                    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                        DownloadDelegate.shared.register(task: task, destination: destination, continuation: continuation, progressHandler: progressHandler)
+                        task.resume()
+                    }
+                } onCancel: {
+                    task.cancel()
+                }
+
+                // 验证 checksums
+                if let checksums {
+                    guard try FileUtils.checkFile(at: destination, with: checksums) == true else {
+                        try FileManager.default.removeItem(at: destination)
+                        throw DownloadError.checksumMismatch
+                    }
+                }
+                break
+            } catch {
+                if error.isCancellationError { throw CancellationError() }
+                try? FileManager.default.removeItem(at: destination)
+                guard retryCount < 2 else { throw error }
+                retryCount += 1
+                try await Task.sleep(nanoseconds: UInt64(retryCount) * 500_000_000)
             }
         }
         if executable {
@@ -87,4 +99,3 @@ public enum SingleFileDownloader {
         }
     }
 }
-
