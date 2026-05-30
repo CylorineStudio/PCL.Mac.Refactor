@@ -11,6 +11,7 @@ public class MultiFileDownloader {
     private let items: [DownloadItem]
     private let concurrentLimit: Int
     private let replaceMethod: ReplaceMethod
+    private let maxRetryCount: Int
     private let progressHandler: (@MainActor (Double) -> Void)?
     private var progress: [UUID: Double] = [:]
     
@@ -18,11 +19,13 @@ public class MultiFileDownloader {
         items: [DownloadItem],
         concurrentLimit: Int,
         replaceMethod: ReplaceMethod,
+        maxRetryCount: Int = 2,
         progressHandler: (@MainActor (Double) -> Void)? = nil
     ) {
         self.items = items
         self.concurrentLimit = concurrentLimit
         self.replaceMethod = replaceMethod
+        self.maxRetryCount = maxRetryCount
         self.progressHandler = progressHandler
     }
     
@@ -87,7 +90,7 @@ public class MultiFileDownloader {
         await MainActor.run {
             progress[uuid] = 0
         }
-        try await SingleFileDownloader.download(item, replaceMethod: replaceMethod) { progress in
+        try await SingleFileDownloader.download(item, replaceMethod: replaceMethod, maxRetryCount: maxRetryCount) { progress in
             self.progress[uuid] = progress
         }
     }
