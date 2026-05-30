@@ -11,8 +11,8 @@ import Foundation
 public enum SingleFileDownloader {
     public static let session: URLSession = .init(configuration: .default, delegate: DownloadDelegate.shared, delegateQueue: DownloadDelegate.queue)
     
-    public static func download(_ item: DownloadItem, replaceMethod: ReplaceMethod, progressHandler: (@MainActor (Double) -> Void)? = nil) async throws {
-        try await download(url: item.url, destination: item.destination, checksums: item.checksums, executable: item.executable, replaceMethod: replaceMethod, progressHandler: progressHandler)
+    public static func download(_ item: DownloadItem, replaceMethod: ReplaceMethod, maxRetryCount: Int = 2, progressHandler: (@MainActor (Double) -> Void)? = nil) async throws {
+        try await download(url: item.url, destination: item.destination, checksums: item.checksums, executable: item.executable, replaceMethod: replaceMethod, maxRetryCount: maxRetryCount, progressHandler: progressHandler)
     }
     
     public static func download(
@@ -21,6 +21,7 @@ public enum SingleFileDownloader {
         sha1: String?,
         executable: Bool = false,
         replaceMethod: ReplaceMethod,
+        maxRetryCount: Int = 2,
         progressHandler: (@MainActor (Double) -> Void)? = nil
     ) async throws {
         try await download(
@@ -29,6 +30,7 @@ public enum SingleFileDownloader {
             checksums: sha1.map { ["sha1": $0] } ?? [:],
             executable: executable,
             replaceMethod: replaceMethod,
+            maxRetryCount: maxRetryCount,
             progressHandler: progressHandler
         )
     }
@@ -39,6 +41,7 @@ public enum SingleFileDownloader {
         checksums: [String: String]?,
         executable: Bool = false,
         replaceMethod: ReplaceMethod,
+        maxRetryCount: Int = 2,
         progressHandler: (@MainActor (Double) -> Void)? = nil
     ) async throws {
         // 文件已存在处理
@@ -77,21 +80,21 @@ public enum SingleFileDownloader {
                 } onCancel: {
                     task.cancel()
                 }
-
-                // 验证 checksums
-                if let checksums {
-                    guard try FileUtils.checkFile(at: destination, with: checksums) == true else {
-                        try FileManager.default.removeItem(at: destination)
-                        throw DownloadError.checksumMismatch
-                    }
-                }
                 break
             } catch {
                 if error.isCancellationError { throw CancellationError() }
                 try? FileManager.default.removeItem(at: destination)
-                guard retryCount < 2 else { throw error }
+                guard retryCount < maxRetryCount else { throw error }
                 retryCount += 1
-                try await Task.sleep(nanoseconds: UInt64(retryCount) * 500_000_000)
+                try await Task.sleep(seconds: Double(retryCount) * 0.5)
+            }
+        }
+
+        // 验证 checksums
+        if let checksums {
+            guard try FileUtils.checkFile(at: destination, with: checksums) == true else {
+                try FileManager.default.removeItem(at: destination)
+                throw DownloadError.checksumMismatch
             }
         }
         if executable {
