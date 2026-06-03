@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<homepage author="风花AnemoFlower" summary="主页解析测试">
+    <config
+        trimText="true"
+    />
+    <MyHint>这是一个用于预览控件与测试 XML 主页解析的主页！</MyHint>
+    <MyHint>
+        富文本字面量测试
+        bold 空{bold; Bold 粗体} {italic; Italic（斜体，中文由于字体问题不支持斜体qwq）} {bold,italic; Bold &amp; Italic}
+        {#ff0000;R}{#ff7f00;a}{#ffff00;i}{#00ff00;n}{#0000ff;b}{#4b0082;o}{#9400d3;w}
+        {20px; 20px} {16px; 16px} {12px; 12px} {1px; 1px}
+    </MyHint>
+    
+    <MyCard title="可折叠的卡片">
+        未被标签包裹的{bold;文本}
+        <Text>被标签包裹的{bold;文本}</Text>
+        <Text>
+            {;}
+            上面和下面应该有空行
+            {;}
+        </Text>
+    </MyCard>
+    
+    <MyCard title="不可折叠的卡片" foldable="false">
+        该卡片默认展开
+    </MyCard>
+    
+    <MyCard>
+        不可折叠也没有标题的卡片
+    </MyCard>
+    
+    <MyCard title="英文字体替换测试" folded="false">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus sollicitudin metus ipsum, vitae mattis dolor sollicitudin sit amet. Etiam vel magna id mauris fermentum ullamcorper eget ut nisl. Nullam molestie nibh nisi, vitae cursus nulla volutpat ut. Praesent tristique est sit amet elit lobortis laoreet. Curabitur nunc tortor, iaculis in elementum ut, mollis sed purus. Donec ut ante gravida, ultricies ipsum in, convallis mi. Fusce tempor mi vel mauris luctus efficitur. Donec sit amet dictum ipsum. {16px,bold;关注风花喵 关注风花谢谢喵} Sed imperdiet justo sem, eu placerat sem fringilla eleifend. Pellentesque vehicula ullamcorper nisl, ac pretium metus rutrum malesuada. Aenean sed est eget nibh viverra vestibulum. Nulla gravida magna sed ipsum hendrerit vehicula. Donec maximus auctor erat, vel convallis mauris semper eu. Nullam varius at mi mattis eleifend.
+    </MyCard>
+</homepage>

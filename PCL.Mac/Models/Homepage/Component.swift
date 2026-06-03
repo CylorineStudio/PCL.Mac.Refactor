@@ -25,14 +25,25 @@ struct HomepageComponentParser {
         guard let element = indexer.element else { return [] }
         
         var result: [any HomepageComponent] = []
+        var textBuffer = ""
+        
         for element in element.children {
-            if let xmlElement = element as? SWXMLHash.XMLElement,
-               let parsedComponent = parse(.element(xmlElement)) {
-                result.append(parsedComponent)
-            } else if let textElement = element as? TextElement,
-                      !textElement.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                result.append(TextComponent(content: try RichText.parse(rawContent: textElement.text, trimText: config.trimText)))
+            if let xmlElement = element as? SWXMLHash.XMLElement {
+                if !textBuffer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    result.append(TextComponent(content: try RichText.parse(rawContent: textBuffer, trimText: config.trimText)))
+                }
+                textBuffer = ""
+                
+                if let parsedComponent = parse(.element(xmlElement)) {
+                    result.append(parsedComponent)
+                }
+            } else if let textElement = element as? TextElement {
+                textBuffer += textElement.text
             }
+        }
+        
+        if !textBuffer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            result.append(TextComponent(content: try RichText.parse(rawContent: textBuffer, trimText: config.trimText)))
         }
         
         return result
@@ -127,6 +138,11 @@ private struct TextComponent: HomepageComponent {
 }
 
 private enum RichText {
+    private static let pclEnglishCharacterSet: CharacterSet = {
+        guard let font = NSFont(name: "PCLEnglish", size: 14) else { return CharacterSet() }
+        return CTFontCopyCharacterSet(font as CTFont) as CharacterSet
+    }()
+    
     static func parse(_ indexer: XMLIndexer, trimText: Bool) throws -> AttributedString {
         return try parse(rawContent: indexer.value(), trimText: trimText)
     }
@@ -164,6 +180,8 @@ private enum RichText {
             currentIndex = content.index(after: closeBrace)
         }
         
+        result = applyPCLEnglish(to: result)
+        
         return result
     }
     
@@ -183,7 +201,9 @@ private enum RichText {
                 result.font = (result.font ?? .system(size: 14)).italic()
             default:
                 if style.hasSuffix("px"), let size = Float(style.dropLast(2)) {
-                    result.font = .system(size: CGFloat(size))
+                    let size = CGFloat(size)
+                    result.font = .system(size: size)
+                    result.richText.originalFontSize = size
                 } else if style.hasPrefix("#"), style.count == 7, let hex = UInt(style.dropFirst(), radix: 16) {
                     result.foregroundColor = .init(hex)
                 }
@@ -192,4 +212,64 @@ private enum RichText {
         
         return result
     }
+    
+    private static func applyPCLEnglish(to text: AttributedString) -> AttributedString {
+        var result = AttributedString()
+        let runs = text.runs
+        for run in runs {
+            let substr = text[run.range]
+            if isBoldOrItalic(substr.font) {
+                result.append(substr)
+                continue
+            }
+            
+            var currentPart: String = ""
+            var lastShouldUse: Bool? = nil
+            for char in substr.characters {
+                let shouldUse = char.unicodeScalars.allSatisfy(pclEnglishCharacterSet.contains)
+                if let lastShouldUse, lastShouldUse != shouldUse {
+                    result.append(buildAttributedPart(from: substr, currentPart, usePCLEnglish: lastShouldUse))
+                    currentPart = ""
+                }
+                currentPart.append(char)
+                lastShouldUse = shouldUse
+            }
+            if let lastShouldUse {
+                result.append(buildAttributedPart(from: substr, currentPart, usePCLEnglish: lastShouldUse))
+            }
+        }
+        
+        return result
+    }
+    
+    private static func buildAttributedPart(
+        from source: any AttributedStringProtocol,
+        _ content: String,
+        usePCLEnglish: Bool
+    ) -> AttributedString {
+        var result = AttributedString(content)
+        result.foregroundColor = source.foregroundColor
+        let size = source.richText.originalFontSize ?? 14
+        result.font = usePCLEnglish ? .custom("PCLEnglish", size: size) : .system(size: size)
+        return result
+    }
+    
+    private static func isBoldOrItalic(_ font: Font?) -> Bool {
+        guard let font else { return false }
+        let description = String(describing: font).lowercased()
+        return description.contains("bold") || description.contains("italic")
+    }
+}
+
+private struct OriginalFontSizeKey: AttributedStringKey {
+    typealias Value = CGFloat
+    static let name = "originalFontSize"
+}
+
+private extension AttributeScopes {
+    struct RichTextAttributes: AttributeScope {
+        let originalFontSize: OriginalFontSizeKey
+    }
+    
+    var richText: RichTextAttributes.Type { RichTextAttributes.self }
 }
