@@ -23,7 +23,7 @@ struct HomepageView: View {
         }
         .task {
             do {
-                try await viewModel.load(from: .local(URLConstants.resourcesURL.appending(path: "example.xml")))
+                try await viewModel.load(from: .local(URLConstants.resourcesURL.appending(path: "debug.xml")))
             } catch {
                 err("加载主页失败：\(error.localizedDescription)")
                 hint("加载主页失败：\(error.localizedDescription)", type: .critical)

@@ -139,7 +139,7 @@ private struct TextComponent: HomepageComponent {
 
 private enum RichText {
     private static let pclEnglishCharacterSet: CharacterSet = {
-        guard let font = NSFont(name: "PCLEnglish", size: 14) else { return CharacterSet() }
+        guard let font = NSFont(name: "PCLEnglish", size: 14) else { return .init() }
         return CTFontCopyCharacterSet(font as CTFont) as CharacterSet
     }()
     
@@ -190,10 +190,10 @@ private enum RichText {
         guard parts.count == 2 else { return .init(block) }
         
         let styles = parts[0].split(separator: ",")
-        var result: AttributedString = AttributedString(String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines))
+        var result: AttributedString = .init(String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines))
         
         for style in styles {
-            let style = String(style)
+            let style = String(style).trimmingCharacters(in: .whitespacesAndNewlines)
             switch style {
             case "bold":
                 result.font = (result.font ?? .system(size: 14)).bold()
