@@ -128,7 +128,7 @@ public class ForgeInstallService {
     }
     
     internal func installerDownloadURL() -> URL {
-        let path = version >= "11.14.0.1296"
+        let path = version.compare("11.14.0.1296", options: .numeric) != .orderedAscending
         ? "net/minecraftforge/forge/\(minecraftVersion)-\(version)/forge-\(minecraftVersion)-\(version)-installer.jar"
         : "net/minecraftforge/forge/\(minecraftVersion)-\(version)-\(minecraftVersion)/forge-\(minecraftVersion)-\(version)-\(minecraftVersion)-installer.jar"
         
