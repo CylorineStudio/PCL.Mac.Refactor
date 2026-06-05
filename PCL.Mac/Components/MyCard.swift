@@ -50,14 +50,14 @@ struct MyCard<Content: View, Action: View>: View {
     /// - Parameters:
     ///   - title: 卡片的标题，为 `nil` 时没有标题栏且不可折叠。
     ///   - foldable: 卡片是否可被折叠。
-    ///   - folded: 卡片的初始折叠状态。
+    ///   - folded: 卡片的初始折叠状态，为 `nil` 时根据是否可折叠决定。
     ///   - padding: 卡片的内边距。
     ///   - content: 卡片内容。
     ///   - action: 显示在右上角的内容。如果 `foldable` 为 `true`，或卡片没有标题栏，此参数会被忽略。
     init(
         _ title: String?,
         foldable: Bool = true,
-        folded: Bool = true,
+        folded: Bool? = nil,
         padding: CGFloat = 18,
         @ViewBuilder _ content: @escaping () -> Content,
         @ViewBuilder action: @escaping () -> Action = { EmptyView() }
@@ -65,7 +65,7 @@ struct MyCard<Content: View, Action: View>: View {
         self.title = title ?? ""
         self.titled = title != nil
         self.foldable = foldable && titled
-        self.initialFolded = folded
+        self.initialFolded = folded ?? (self.foldable ? true : false)
         self.padding = padding
         self.content = content
         self.action = action
@@ -186,15 +186,10 @@ struct MyCard<Content: View, Action: View>: View {
                 }
             }
             
-            if !foldable {
-                folded = false
-                showContent = true
-            } else {
-                folded = initialFolded
-                showContent = !initialFolded
-                if folded {
-                    contentHeightLimit = 0
-                }
+            folded = initialFolded
+            showContent = !initialFolded
+            if folded {
+                contentHeightLimit = 0
             }
         }
     }
