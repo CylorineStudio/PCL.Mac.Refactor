@@ -44,7 +44,7 @@ public class ModLoadService {
             remoteInfo = nil
         }
         
-        if let mod = try loadModFile(at: fileURL, remoteInfo: remoteInfo) {
+        if let mod = try loadModFile(at: fileURL, sha1: sha1, remoteInfo: remoteInfo) {
             cache.store(mod, forHash: sha1)
             return mod
         }
@@ -103,7 +103,7 @@ public class ModLoadService {
         
         for (fileURL, hash) in hashes {
             do {
-                guard let mod = try loadModFile(at: fileURL, remoteInfo: remoteLookupResult[hash]) else { continue }
+                guard let mod = try loadModFile(at: fileURL, sha1: hash, remoteInfo: remoteLookupResult[hash]) else { continue }
                 result[fileURL] = mod
                 cache.store(mod, forHash: hash)
             } catch {
@@ -141,7 +141,7 @@ public class ModLoadService {
     }
     
     
-    private func loadModFile(at url: URL, remoteInfo: ModRemoteLookupService.RemoteModInfo?) throws(LoadError) -> Mod? {
+    private func loadModFile(at url: URL, sha1: String, remoteInfo: ModRemoteLookupService.RemoteModInfo?) throws(LoadError) -> Mod? {
         let archive: Archive
         do {
             archive = try .init(url: url, accessMode: .read)
@@ -157,7 +157,22 @@ public class ModLoadService {
         }
         
         guard let meta else { return nil }
-        let icon: ResourceIcon? = meta.icon.map { .archiveEntry(path: $0) } ?? remoteInfo?.icon.map { .network(url: $0) }
+        
+        let icon: ResourceIcon?
+        if let iconPath = meta.icon, let entry = archive[iconPath] {
+            do {
+                let iconData = try archive.extract(entry)
+                let hash = try cache.store(iconData, relativePath: iconPath, jarHash: sha1)
+                icon = .archiveEntry(path: iconPath, globalHash: hash)
+            } catch {
+                err("写入缓存失败：\(error.localizedDescription)")
+                icon = nil
+            }
+        } else if let iconURL = remoteInfo?.icon {
+            icon = .network(url: iconURL)
+        } else {
+            icon = nil
+        }
         
         return .init(
             name: meta.name ?? remoteInfo?.name ?? meta.id,

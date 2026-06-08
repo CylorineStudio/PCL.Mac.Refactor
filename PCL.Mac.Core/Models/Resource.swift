@@ -12,7 +12,7 @@ public enum ProjectType: String, Codable {
 }
 
 public enum ResourceIcon: Codable, Hashable, Equatable {
-    case archiveEntry(path: String)
+    case archiveEntry(path: String, globalHash: String)
     case network(url: URL)
 }
 

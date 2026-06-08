@@ -36,6 +36,7 @@ struct MyListItem<Content: View>: View {
                                 switch image {
                                 case .resource(let imageResource): Image(imageResource).resizable()
                                 case .nsImage(let nsImage): Image(nsImage: nsImage).resizable()
+                                case .network(let url): NetworkImage(url: url)
                                 }
                             }
                             .scaledToFit()

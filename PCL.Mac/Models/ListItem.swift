@@ -27,5 +27,6 @@ struct ListItem {
     enum Image {
         case resource(ImageResource)
         case nsImage(NSImage)
+        case network(URL)
     }
 }
