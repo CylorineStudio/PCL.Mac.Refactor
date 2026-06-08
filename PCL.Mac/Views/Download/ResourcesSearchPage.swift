@@ -98,6 +98,8 @@ struct ProjectListItemView: View {
                         NetworkImage(url: iconURL)
                     } else {
                         Image(.iconModLogo)
+                            .resizable()
+                            .scaledToFit()
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 6))
