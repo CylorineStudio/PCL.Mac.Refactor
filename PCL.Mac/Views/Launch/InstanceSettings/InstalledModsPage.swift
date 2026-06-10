@@ -49,12 +49,17 @@ struct InstalledModsPage: View {
                 .padding(40)
             } else {
                 CardContainer {
-                    if let mods = viewModel.mods {
-                        MyCard(nil) {
-                            LazyVStack(spacing: 0) {
-                                ForEach(mods, id: \.id) { mod in
-                                    ResourceListItem(resource: mod)
+                    if let resources = viewModel.resources {
+                        PaginatedContainer(currentPage: $viewModel.currentPage, pageCount: viewModel.pageCount) { currentPage in
+                            MyCard(nil) {
+                                VStack(spacing: 0) {
+                                    ForEach(resources, id: \.id) { resource in
+                                        ResourceListItem(resource: resource)
+                                    }
                                 }
+                            }
+                            .onChange(of: currentPage) { _ in
+                                viewModel.onPageChanged()
                             }
                         }
                     } else {
@@ -64,6 +69,7 @@ struct InstalledModsPage: View {
             }
         }
         .task {
+            loadingVM.reset()
             do {
                 try await viewModel.load()
             } catch {
@@ -72,7 +78,7 @@ struct InstalledModsPage: View {
             }
         }
         .onDisappear {
-            viewModel.mods = nil
+            viewModel.resources = nil
         }
     }
 }
@@ -100,8 +106,11 @@ private struct ResourceListItem: View {
                 .foregroundStyle(Color.color1)
                 
                 VStack(alignment: .leading) {
-                    MyText(resource.name)
-                        .lineLimit(1)
+                    HStack(spacing: 0) {
+                        MyText(resource.name)
+                            .lineLimit(1)
+                        MyText(" | \(resource.version)", color: .colorGray3)
+                    }
                     MyText("\(resource.version) | \(resource.description)", color: .colorGray3)
                         .lineLimit(1)
                 }

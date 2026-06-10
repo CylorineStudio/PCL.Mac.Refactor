@@ -80,12 +80,22 @@ public class ModLoadService {
             }
         }
         
+        var total = 0
+        var cached = 0
+        var loaded = 0
+        var unsupported = 0
+        var failed = 0
+        
+        defer { debug("模组目录加载完成，共 \(total) 个文件，\(cached) 个命中缓存，\(loaded) 个加载成功，\(unsupported) 个无法识别，\(failed) 个加载失败") }
+        
         var result: [URL: Mod] = [:]
         var hashes: [URL: String] = [:]
         enumerateFiles { url in
+            total += 1
             try autoreleasepool {
                 let hash = try FileUtils.sha1(of: url)
                 if let mod = cache.mod(forHash: hash) {
+                    cached += 1
                     result[url] = mod
                 } else {
                     hashes[url] = hash
@@ -107,11 +117,17 @@ public class ModLoadService {
         
         for (fileURL, hash) in hashes {
             do {
-                guard let mod = try loadModFile(at: fileURL, sha1: hash, remoteInfo: remoteLookupResult[hash]) else { continue }
+                guard let mod = try loadModFile(at: fileURL, sha1: hash, remoteInfo: remoteLookupResult[hash]) else {
+                    unsupported += 1
+                    warn("无法识别 \(fileURL.lastPathComponent) 的类型")
+                    continue
+                }
                 result[fileURL] = mod
+                loaded += 1
                 cache.store(mod, forHash: hash)
             } catch {
                 err("处理模组 \(fileURL.lastPathComponent) 失败：\(error.localizedDescription)")
+                failed += 1
             }
         }
         
