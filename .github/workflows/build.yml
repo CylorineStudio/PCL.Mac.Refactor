@@ -49,7 +49,7 @@ jobs:
 
       - name: Generate Secrets.properties
         run: |
-          cat <<EOF > ./Resources/Secrets.properties
+          cat > ./Resources/Secrets.properties <<'EOF'
           CURSE_FORGE_API_KEY=${{ secrets.CURSE_FORGE_API_KEY }}
           EOF
 

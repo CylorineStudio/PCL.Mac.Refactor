@@ -58,6 +58,7 @@ public class YggdrasilService {
         do {
             return try response.decode(AuthResponse.self)
         } catch let error as DecodingError {
+            debug(error)
             throw Error.invalidResponseFormat(underlying: error)
         }
     }
@@ -119,6 +120,7 @@ public class YggdrasilService {
             }
             return refreshResponse
         } catch let error as DecodingError {
+            debug(error)
             throw Error.invalidResponseFormat(underlying: error)
         }
     }
@@ -142,6 +144,7 @@ public class YggdrasilService {
                 encoded: response.data.base64EncodedString()
             )
         } catch let error as DecodingError {
+            debug(error)
             throw Error.invalidResponseFormat(underlying: error)
         }
     }
@@ -160,6 +163,7 @@ public class YggdrasilService {
             )
             .decode(PlayerProfile.self)
         } catch let error as DecodingError {
+            debug(error)
             throw Error.invalidResponseFormat(underlying: error)
         }
     }
