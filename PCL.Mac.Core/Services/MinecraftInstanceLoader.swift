@@ -76,10 +76,8 @@ public enum MinecraftInstanceLoader {
             config = .default
         }
         
-        if metadata == nil {
-            try? JSONEncoder.shared.encode(InstanceMetadata(uuid: uuid, version: version))
-                .write(to: metadataURL)
-        }
+        try? JSONEncoder.shared.encode(InstanceMetadata(uuid: uuid, version: version))
+            .write(to: metadataURL)
         
         return .init(
             id: uuid,
