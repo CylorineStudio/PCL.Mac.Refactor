@@ -26,7 +26,7 @@ class ResourceInstallViewModel: ObservableObject {
     
     public func load(selectedInstance: MinecraftInstance? = nil) async throws {
         let selectedInstanceKey: VersionMapKey? = project.type == .modpack ? nil : selectedInstance.map { .init(loader: $0.modLoader, version: $0.version) }
-        let selectedVersionType: MinecraftVersion.VersionType? = (selectedInstance?.version).flatMap { CoreState.versionManifest.version(for: $0.id) }?.type
+        let selectedVersionType: MinecraftVersion.VersionType? = (selectedInstance?.version).flatMap { VersionManifest.shared?.version(for: $0.id) }?.type
         var selectedVersionGroup: VersionGroup? = selectedInstanceKey.map { ($0, []) }
         
         if let selected = selectedVersionGroup, project.type != .mod {
@@ -49,7 +49,7 @@ class ResourceInstallViewModel: ObservableObject {
             
             var keys: [VersionMapKey] = []
             for gameVersion in version.gameVersions {
-                if let type = CoreState.versionManifest.version(for: gameVersion)?.type,
+                if let type = VersionManifest.shared?.version(for: gameVersion)?.type,
                    !(type == .release || project.onlySupportsSnapshot || selectedVersionType.map { $0 != .release } ?? false) {
                     continue
                 }
