@@ -19,6 +19,8 @@ class MinecraftDownloadPageViewModel: ObservableObject {
     init() {
         if let manifest = VersionManifest.shared {
             updateVersionMap(from: manifest)
+        } else {
+            reload()
         }
     }
     
@@ -70,9 +72,7 @@ class MinecraftDownloadPageViewModel: ObservableObject {
     
     private func updateVersionMap(from manifest: VersionManifest) {
         latestRelease = manifest.version(for: manifest.latestRelease)
-        if let latestSnapshot = manifest.latestSnapshot {
-            self.latestSnapshot = manifest.version(for: latestSnapshot)
-        }
+        latestSnapshot = manifest.latestSnapshot.flatMap { manifest.version(for: $0) }
         versionMap[.release] = manifest.versions.filter { $0.type == .release }
         versionMap[.snapshot] = manifest.versions.filter { $0.type == .snapshot }
         versionMap[.aprilFool] = manifest.versions.filter { $0.type == .aprilFool }

@@ -10,7 +10,7 @@ import SwiftyJSON
 
 /// https://zh.minecraft.wiki/w/Version_manifest.json#JSON格式
 public struct VersionManifest: Decodable, Equatable {
-    public static var shared: VersionManifest!
+    public static var shared: VersionManifest?
     public let latestRelease: String
     public let latestSnapshot: String?
     public let versions: [Version]
@@ -105,7 +105,11 @@ public extension VersionManifest {
         if Self.shared == nil || Self.shared != manifest {
             log("刷新版本清单成功")
             Self.shared = manifest
-            try response.data.write(to: cacheURL)
+            do {
+                try response.data.write(to: cacheURL)
+            } catch {
+                err("保存版本列表缓存失败：\(error.localizedDescription)")
+            }
         }
         return manifest
     }
