@@ -67,6 +67,10 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
         }
     }
     
+    public static func localizeTag(_ key: String) -> String {
+        return tagMap[key] ?? key
+    }
+    
     private static func generateSupportDescription(for project: ModrinthProject) -> (String, Bool) {
         var description: String = ""
         

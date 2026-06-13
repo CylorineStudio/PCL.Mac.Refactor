@@ -58,6 +58,20 @@ public class ModrinthAPIClient {
         return try await Requests.get(apiRoot.appending(path: "/v2/project/\(slug)"), revalidate: revalidate).decode(ModrinthProject.self)
     }
     
+    /// 批量获取指定 id 或 slug 对应的 `ModrinthProject`
+    /// - Parameters:
+    ///   - slugs: id 或 slug 列表。
+    ///   - revalidate: 是否验证本地缓存有效性。
+    /// - Returns: 对应的 `[ModrinthProject]`，长度可能与 `slugs` 不一致。
+    public func projects(_ slugs: [String], revalidate: Bool = false) async throws -> [ModrinthProject] {
+        let idssString = String(data: try JSONSerialization.data(withJSONObject: slugs), encoding: .utf8)!
+        return try await Requests.get(
+            apiRoot.appending(path: "/v2/projects"),
+            params: ["ids": idssString],
+            revalidate: revalidate
+        ).decode([ModrinthProject].self)
+    }
+    
     /// 获取指定 project 的所有 `ModrinthVersion`。
     /// - Parameters:
     ///   - slug: 指定 project 的 id 或 slug。

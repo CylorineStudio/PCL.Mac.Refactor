@@ -8,7 +8,10 @@
 import Foundation
 
 public struct CurseForgeMod: Codable {
+    public let id: Int32
     public let name: String
+    public let summary: String
+    public let logo: CurseForgeModAsset
     public let classId: Int?
     
     public var projectType: ProjectType? {
@@ -19,6 +22,17 @@ public struct CurseForgeMod: Codable {
         case 6552: .shader
         default: nil
         }
+    }
+}
+
+public struct CurseForgeModAsset: Codable {
+    public let id: Int32
+    public let title: String
+    public let url: URL
+    public let thumbnailURL: URL
+    
+    private enum CodingKeys: String, CodingKey {
+        case id, title, url, thumbnailURL = "thumbnailUrl"
     }
 }
 

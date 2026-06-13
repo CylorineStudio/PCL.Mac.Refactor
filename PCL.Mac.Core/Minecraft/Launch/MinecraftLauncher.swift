@@ -63,7 +63,7 @@ public class MinecraftLauncher {
         }
         arguments.append(manifest.mainClass)
         arguments.append(contentsOf: manifest.gameArguments.flatMap { $0.rules.allSatisfy { $0.test(with: options) } ? $0.value : [] })
-        arguments = arguments.map { Utils.replace($0, withValues: values) }
+        arguments = arguments.map { $0.replacingPlaceholders(with: values) }
         process.arguments = arguments
         
         let pipe: Pipe = .init()

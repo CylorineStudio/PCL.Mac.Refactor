@@ -97,7 +97,9 @@ struct ProjectListItemView: View {
                     if let iconURL: URL = project.iconURL {
                         NetworkImage(url: iconURL)
                     } else {
-                        Color.clear
+                        Image(.iconModLogo)
+                            .resizable()
+                            .scaledToFit()
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 6))

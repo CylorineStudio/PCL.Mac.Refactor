@@ -28,5 +28,17 @@ struct CardContainer<Content: View>: View {
 }
 
 class CardInteractionState: ObservableObject {
-    @Published var isTransitioning = false
+    @Published private var value = false
+    private let isStatic: Bool
+    
+    init(isStatic: Bool = false) {
+        self.isStatic = isStatic
+    }
+    
+    var isTransitioning: Bool {
+        get { isStatic ? false : value }
+        set {
+            if !isStatic { value = newValue }
+        }
+    }
 }

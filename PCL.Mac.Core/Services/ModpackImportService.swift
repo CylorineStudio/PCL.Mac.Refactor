@@ -168,9 +168,9 @@ public class ModpackImportService {
     }
     
     private func decodeIndex<T: Decodable>(from entry: Entry, in archive: Archive) throws(LoadError) -> T {
-        var data = Data()
+        var data: Data
         do {
-            _ = try archive.extract(entry, consumer: { data += $0 })
+            data = try archive.extract(entry)
         } catch {
             throw .extractFailed(underlying: error)
         }
