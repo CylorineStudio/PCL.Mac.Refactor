@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<homepage author="风花AnemoFlower" summary="主页解析测试">
+    <config
+        trimText="true"
+    />
+    <MyHint>这是一个用于预览控件与测试 XML 主页解析的主页！</MyHint>
+    <MyHint>
+        富文本字面量测试
+        bold 空{bold; Bold 粗体} {italic; Italic（斜体，中文由于字体问题不支持斜体qwq）} {bold,italic; Bold &amp; Italic}
+        {#ff0000;R}{#ff7f00;a}{#ffff00;i}{#00ff00;n}{#0000ff;b}{#4b0082;o}{#9400d3;w}
+        {20px; 20px} {16px; 16px} {12px; 12px} {1px; 1px}
+    </MyHint>
+    
+    <MyCard title="可折叠的卡片">
+        未被标签包裹的{bold;文本}
+        <Text>被标签包裹的{bold;文本}</Text>
+        <Text>
+            {;}
+            上面和下面应该有空行
+            {;}
+        </Text>
+    </MyCard>
+    
+    <MyCard title="不可折叠的卡片" foldable="false">
+        该卡片默认展开
+    </MyCard>
+    
+    <MyCard>
+        不可折叠也没有标题的卡片
+    </MyCard>
+    
+    <MyCard title="英文字体替换测试" folded="false">
+        {16px, bold, #1E1E24;Technical Analysis Report: "关注风花喵 关注风花谢谢喵"}
+        {14px, bold, #2E5B88;1. Semantic Pipeline &amp; Overlap}
+        The target string executes a dual-stage attention injection. The first cluster ({italic;“关注风花喵”}) functions as an unencrypted, mandatory operation code. The second cluster ({italic;“关注风花谢谢喵”}) acts as a {bold;De-escalation Handshake}. By inserting tokens for gratitude and feline onomatopoeia, it bypasses the user’s cognitive firewall via weaponized cuteness, softening the underlying demand for digital subscription.
+        {14px, bold, #2E5B88;2. Linguistic Symmetry &amp; Rhythmic Cadence}
+        {;}  The payload is structurally engineered to maximize user retention through rhythmic repetition:
+        {;}  * {bold;Phonetic Anchoring:} The duplication of the core phonetic trigger creates a persistent echo effect in the user's short-term memory.
+        {;}  * {bold;Pacing Modulation:} The transition into a longer secondary clause subtly alters the reading pace, drawing cognitive focus toward the final syllables.
+        {14px, bold, #2E5B88;3. Compilation Verdict}
+        The payload is optimized for production. It successfully balances extreme technical utility with absolute semantic nonsense. It {italic;SHOULD} remain in the active layout tree indefinitely.
+        {12px, italic, #888888;Notice: This diagnostic report was generated automatically by an advanced AI system. Any psychological urge to follow the target entity upon reading is entirely within expected telemetry parameters.}
+    </MyCard>
+    
+    <MyCard title="Style 测试">
+        <text background="#FF6B6B">{40px;红色背景}</text>
+        <text background="linearGradient(0, 0, 1, 0, #FF6B6B, #FF8E53, #FFB347, #FFD700, #32CD32, #4ECDC4, #6C63FF)">{40px;线性渐变背景}</text>
+        <text background="radialGradient(0, 30, 0.5, 0.5, #FF6B6B, #FF8E53, #FFB347, #FFD700, #32CD32, #4ECDC4, #6C63FF)">{40px;径向渐变背景}</text>
+        <text background="angularGradient(-90, 270, 0.5, 0.5, #FF6B6B, #FF8E53, #FFB347, #FFD700, #32CD32, #4ECDC4, #6C63FF)">{40px;圆锥渐变背景}</text>
+    </MyCard>
+</homepage>

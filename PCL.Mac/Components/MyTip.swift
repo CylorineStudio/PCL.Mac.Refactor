@@ -7,13 +7,17 @@
 
 import SwiftUI
 
-
 struct MyTip: View {
-    private let text: String
+    private let text: AttributedString
     private let theme: Theme
     
+    init(attributedText: AttributedString, theme: Theme) {
+        self.text = attributedText
+        self.theme = theme
+    }
+    
     init(text: String, theme: Theme) {
-        self.text = text
+        self.text = AttributedString(text)
         self.theme = theme
     }
     

@@ -67,6 +67,11 @@ struct AboutPage: View {
                         sourceURL: "https://github.com/EasyTier/EasyTier",
                         licenseURL: "https://github.com/EasyTier/EasyTier/blob/main/LICENSE"
                     )
+                    LicenseListItem(
+                        "SWXMLHash", "Copyright (c) 2014 David Mohundro\nLicensed under the MIT License.",
+                        sourceURL: "https://github.com/drmohundro/SWXMLHash",
+                        licenseURL: "https://github.com/drmohundro/SWXMLHash/blob/main/LICENSE"
+                    )
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
