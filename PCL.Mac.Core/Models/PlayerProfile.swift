@@ -18,7 +18,7 @@ public struct PlayerProfile: Codable {
         self.properties = properties
     }
     
-    public func property(forName name: String) -> Data? {
+    public func property(forName name: String) -> String? {
         return properties.first(where: { $0.name == name })?.value
     }
     
@@ -45,6 +45,6 @@ public struct PlayerProfile: Codable {
     public struct Property: Codable {
         public let name: String
         public let signature: String?
-        public let value: Data
+        public let value: String
     }
 }

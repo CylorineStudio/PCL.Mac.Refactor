@@ -112,6 +112,7 @@ public enum MinecraftInstallTask {
                 )
                 await repository.addInstance(instance)
                 try? FileManager.default.removeItem(at: model.runningDirectory.appending(path: ".incomplete"))
+                FileManager.default.createFile(atPath: model.runningDirectory.appending(path: "options.txt").path, contents: "lang:zh_cn".data(using: .utf8)!)
                 await MainActor.run {
                     completion?(instance)
                 }
