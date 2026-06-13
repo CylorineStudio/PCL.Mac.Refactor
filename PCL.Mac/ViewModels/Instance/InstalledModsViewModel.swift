@@ -11,7 +11,7 @@ import Combine
 
 @MainActor
 class InstalledModsViewModel: ObservableObject {
-    @Published public var resources: [ModDisplayModel]?
+    @Published public var resources: [ResourceDisplayModel]?
     @Published public var supportMods: Bool = true
     @Published public var currentRepositoryId: UUID
     @Published public var currentPage: Int = 0
@@ -28,7 +28,12 @@ class InstalledModsViewModel: ObservableObject {
         self.instanceManager = instanceManager
         self.id = id
         self.currentRepositoryId = instanceManager.currentRepositoryId
-        self.service = .init(remoteLookupService: .init(curseforgeClient: .init(apiKey: "")), cache: .shared)
+        self.service = .init(
+            remoteLookupService: .init(
+                curseforgeClient: .init(apiKey: Secrets.shared.curseforgeApiKey ?? "")
+            ),
+            cache: .shared
+        )
         
         instanceManager.$currentRepositoryId
             .receive(on: DispatchQueue.main)
@@ -36,7 +41,7 @@ class InstalledModsViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    func load() async throws {
+    func load(resetPage: Bool = true) async throws {
         guard let instance = instanceManager.currentRepository.instance(named: id) else {
             throw SimpleError("实例不存在。")
         }
@@ -52,8 +57,10 @@ class InstalledModsViewModel: ObservableObject {
             .sorted { $0.1.name.compare($1.1.name, options: .literal) == .orderedAscending }
         
         self.loadResult = result
-        self.currentPage = 0
         self.pageCount = Int(ceil(Double(result.count) / Double(entriesPerPage)))
+        if resetPage {
+            self.currentPage = 0
+        }
         self.onPageChanged()
     }
     
@@ -72,7 +79,7 @@ class InstalledModsViewModel: ObservableObject {
                 let resources = try loadResult[start..<end]
                     .map {
                         try Task.checkCancellation()
-                        return ModDisplayModel($0.0, $0.1)
+                        return ResourceDisplayModel($0.0, $0.1)
                     }
                 await MainActor.run {
                     self.resources = resources
@@ -85,5 +92,19 @@ class InstalledModsViewModel: ObservableObject {
                 self.convertTask = nil
             }
         }
+    }
+    
+    func toggleDisabled(_ resource: ResourceDisplayModel) async throws {
+        let newURL: URL
+        if resource.disabled {
+            newURL = resource.url.deletingPathExtension()
+            log("正在启用资源 \(resource.fileName)")
+        } else {
+            newURL = resource.url.appendingPathExtension("disabled")
+            log("正在禁用资源 \(resource.fileName)")
+        }
+        try FileManager.default.moveItem(at: resource.url, to: newURL)
+        resource.disabled.toggle()
+        resource.url = newURL
     }
 }

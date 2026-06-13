@@ -9,15 +9,17 @@ import Foundation
 import AppKit
 import Core
 
-struct ModDisplayModel {
+class ResourceDisplayModel: ObservableObject, Hashable, Equatable {
     let id: UUID = .init()
     let name: String
     let version: String
     let description: String
     let tags: [String]
     let icon: ListItem.Image
-    let fileName: String
-    let disabled: Bool
+    @Published var url: URL
+    @Published var disabled: Bool
+    
+    var fileName: String { url.lastPathComponent }
     
     init(
         name: String,
@@ -25,7 +27,7 @@ struct ModDisplayModel {
         description: String,
         tags: [String],
         icon: ListItem.Image?,
-        fileName: String,
+        url: URL,
         disabled: Bool
     ) {
         self.name = name
@@ -33,11 +35,11 @@ struct ModDisplayModel {
         self.description = description
         self.tags = tags
         self.icon = icon ?? .resource(.iconModLogo)
-        self.fileName = fileName
+        self.url = url
         self.disabled = disabled
     }
     
-    init(_ url: URL, _ mod: Mod) {
+    convenience init(_ url: URL, _ mod: Mod) {
         let icon: ListItem.Image?
         if let modIcon = mod.icon {
             switch modIcon {
@@ -61,8 +63,14 @@ struct ModDisplayModel {
             description: mod.description ?? "",
             tags: mod.tags.map(ProjectListItemModel.localizeTag(_:)),
             icon: icon,
-            fileName: url.lastPathComponent,
-            disabled: mod.disabled
+            url: url,
+            disabled: url.pathExtension == "disabled"
         )
     }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(url)
+    }
+    
+    static func == (lhs: ResourceDisplayModel, rhs: ResourceDisplayModel) -> Bool { lhs.url == rhs.url }
 }

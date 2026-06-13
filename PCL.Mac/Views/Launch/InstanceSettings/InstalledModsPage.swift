@@ -54,7 +54,7 @@ struct InstalledModsPage: View {
                             MyCard(nil) {
                                 VStack(spacing: 0) {
                                     ForEach(resources, id: \.id) { resource in
-                                        ResourceListItem(resource: resource)
+                                        ResourceListItem(viewModel: viewModel, resource: resource)
                                     }
                                 }
                             }
@@ -84,14 +84,16 @@ struct InstalledModsPage: View {
 }
 
 private struct ResourceListItem: View {
-    private let resource: ModDisplayModel
+    @ObservedObject private var viewModel: InstalledModsViewModel
+    @ObservedObject private var resource: ResourceDisplayModel
     
-    init(resource: ModDisplayModel) {
+    init(viewModel: InstalledModsViewModel, resource: ResourceDisplayModel) {
+        self.viewModel = viewModel
         self.resource = resource
     }
     
     var body: some View {
-        MyListItem {
+        MyListItem { hovered in
             HStack {
                 Group {
                     switch resource.icon {
@@ -107,12 +109,16 @@ private struct ResourceListItem: View {
                 
                 VStack(alignment: .leading) {
                     HStack(alignment: .center, spacing: 0) {
-                        if #available(macOS 13, *) {
-                            MyText(resource.name)
-                                .strikethrough(resource.disabled)
-                        } else {
-                            MyText((resource.disabled ? "（已禁用）" : "") + resource.name)
+                        Group {
+                            if #available(macOS 13, *) {
+                                MyText(resource.name)
+                                    .strikethrough(resource.disabled)
+                            } else {
+                                MyText((resource.disabled ? "（已禁用）" : "") + resource.name)
+                            }
                         }
+                        .animation(.easeInOut(duration: 0.1), value: resource.disabled)
+                        
                         MyText(" | \(resource.fileName)", size: 12, color: .colorGray3)
                         HStack(spacing: 3) {
                             ForEach(resource.tags, id: \.self) { tag in
@@ -127,6 +133,26 @@ private struct ResourceListItem: View {
                 .textSelection(.enabled)
                 
                 Spacer(minLength: 0)
+                
+                if hovered {
+                    HStack {
+                        ListItemButton(resource.disabled ? .btnEnable : .btnDisable, clickPerform: toggleDisabled)
+                            .animation(.easeInOut(duration: 0.1), value: resource.disabled)
+                    }
+                    .padding(.trailing, 4)
+                }
+            }
+        }
+    }
+    
+    private func toggleDisabled() {
+        Task {
+            do {
+                try await viewModel.toggleDisabled(resource)
+            } catch {
+                let type = resource.disabled ? "启用" : "禁用"
+                err("\(type)模组失败：\(error.localizedDescription)")
+                hint("\(type)模组失败：\(error.localizedDescription)", type: .critical)
             }
         }
     }

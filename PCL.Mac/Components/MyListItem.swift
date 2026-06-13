@@ -82,6 +82,38 @@ struct MyListItem<Content: View>: View {
     }
 }
 
+struct ListItemButton: View {
+    @State private var pressed: Bool = false
+    private let icon: ImageResource
+    private let clickPerform: () -> Void
+    
+    init(_ icon: ImageResource, clickPerform: @escaping () -> Void) {
+        self.icon = icon
+        self.clickPerform = clickPerform
+    }
+    
+    var body: some View {
+        Image(icon)
+            .resizable()
+            .scaledToFit()
+            .frame(height: 16)
+            .foregroundStyle(Color.color3)
+            .contentShape(.rect)
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        pressed = true
+                    }
+                    .onEnded { _ in
+                        clickPerform()
+                        pressed = false
+                    }
+            )
+            .scaleEffect(pressed ? 0.8 : 1.0)
+            .animation(.spring(response: 0.2), value: pressed)
+    }
+}
+
 #Preview {
     MyListItem(.init(name: "Test", description: "lorem ipsum dolor sit amet consectetur"))
     .frame(width: 400, height: 50)
