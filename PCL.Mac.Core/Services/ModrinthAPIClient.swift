@@ -18,14 +18,14 @@ public class ModrinthAPIClient {
     
     /// 搜索 Modrinth 项目。
     /// - Parameters:
-    ///   - type: 项目类型（`ProjectType`）。
+    ///   - type: 项目类型（`ResourceType`）。
     ///   - query: 搜索关键词。
     ///   - gameVersion: 过滤游戏版本。
     ///   - pageIndex: 页码，从 0 开始。
     ///   - limit: 返回结果数量上限。
     /// - Returns: 包含搜索结果和分页信息的 `SearchResponse`。
     public func search(
-        type: ProjectType,
+        type: ResourceType,
         _ query: String?,
         forVersion gameVersion: String?,
         pageIndex: Int = 0,

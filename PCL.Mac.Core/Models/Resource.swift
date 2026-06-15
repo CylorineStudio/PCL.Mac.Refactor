@@ -7,40 +7,43 @@
 
 import Foundation
 
-public enum ProjectType: String, Codable {
+public enum ResourceType: String, Codable {
     case mod, modpack, resourcepack, shader
 }
 
-public enum ResourceIcon: Codable, Hashable, Equatable {
-    case archiveEntry(path: String, globalHash: String)
-    case network(url: URL)
-}
-
-public struct Mod: Codable, Hashable, Equatable {
+public struct Resource: Codable, Hashable, Equatable {
     public enum Source: Codable, Hashable, Equatable {
         case modrinth(projectId: String)
         case curseforge(id: Int32)
     }
     
+    public enum Icon: Codable, Hashable, Equatable {
+        case archiveEntry(path: String, globalHash: String)
+        case network(url: URL)
+    }
+    
     public let id: UUID = .init()
+    public let type: ResourceType
     public let name: String
-    public let version: String
+    public let version: String?
     public let description: String?
-    public let icon: ResourceIcon?
+    public let icon: Icon?
     public let loaders: [ModLoader]
     public let tags: [String]
     public let sources: [Source]
     
     public init(
+        type: ResourceType,
         name: String,
         version: String,
         description: String?,
-        icon: ResourceIcon?,
+        icon: Icon?,
         loaders: [ModLoader],
         tags: [String],
         sources: [Source],
         disabled: Bool
     ) {
+        self.type = type
         self.name = name
         self.version = version
         self.description = description
@@ -52,6 +55,6 @@ public struct Mod: Codable, Hashable, Equatable {
     
     private enum CodingKeys: CodingKey {
         // 不持久化存储 id
-        case name, version, description, icon, loaders, tags, sources
+        case type, name, version, description, icon, loaders, tags, sources
     }
 }

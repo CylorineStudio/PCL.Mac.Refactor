@@ -14,7 +14,7 @@ public struct CurseForgeMod: Codable {
     public let logo: CurseForgeModAsset
     public let classId: Int?
     
-    public var projectType: ProjectType? {
+    public var projectType: ResourceType? {
         switch classId {
         case 12: .resourcepack
         case 6: .mod

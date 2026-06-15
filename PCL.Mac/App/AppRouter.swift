@@ -141,7 +141,7 @@ struct AppRouterView: View {
         case .instanceConfig(let id):
             InstanceConfigPage(instanceManager: instanceManager, id: id)
         case .installedMods(let id):
-            InstalledModsPage(instanceManager: instanceManager, id: id)
+            InstalledResourcesPage(instanceManager: instanceManager, id: id, type: .mod)
         default:
             Spacer()
         }

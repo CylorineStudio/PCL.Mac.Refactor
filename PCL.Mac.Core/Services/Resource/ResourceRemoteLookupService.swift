@@ -1,5 +1,5 @@
 //
-//  ModRemoteLookupService.swift
+//  ResourceRemoteLookupService.swift
 //  PCL.Mac
 //
 //  Created by AnemoFlower on 2026/6/7.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class ModRemoteLookupService {
+public class ResourceRemoteLookupService {
     private let modrinthClient: ModrinthAPIClient
     private let curseforgeClient: CurseForgeAPIClient
     
@@ -16,11 +16,11 @@ public class ModRemoteLookupService {
         self.curseforgeClient = curseforgeClient
     }
     
-    /// 根据 SHA-1 哈希值查询单个模组。
-    public func lookup(hash: String) async throws -> RemoteModInfo? {
+    /// 根据 SHA-1 哈希值查询单个资源。
+    public func lookup(hash: String) async throws -> RemoteResourceInfo? {
         if let modrinthVersion = try await modrinthClient.version(ofHash: hash) {
             let project = try await modrinthClient.project(modrinthVersion.id, revalidate: true)
-            return RemoteModInfo(project)
+            return RemoteResourceInfo(project)
         }
         
         // TODO: CurseForge
@@ -28,9 +28,9 @@ public class ModRemoteLookupService {
         return nil
     }
     
-    /// 根据 SHA-1 哈希值查询多个模组。
-    public func lookup(hashes: [String]) async throws -> [String: RemoteModInfo] {
-        var result: [String: RemoteModInfo] = [:]
+    /// 根据 SHA-1 哈希值查询多个资源。
+    public func lookup(hashes: [String]) async throws -> [String: RemoteResourceInfo] {
+        var result: [String: RemoteResourceInfo] = [:]
         result.reserveCapacity(hashes.count)
         
         do {
@@ -50,14 +50,14 @@ public class ModRemoteLookupService {
         return result
     }
     
-    public struct RemoteModInfo {
+    public struct RemoteResourceInfo {
         public let name: String
         public let description: String
         public let tags: [String]
         public let icon: URL?
-        public let source: Mod.Source
+        public let source: Resource.Source
         
-        public init(name: String, description: String, tags: [String], icon: URL?, source: Mod.Source) {
+        public init(name: String, description: String, tags: [String], icon: URL?, source: Resource.Source) {
             self.name = name
             self.description = description
             self.tags = tags

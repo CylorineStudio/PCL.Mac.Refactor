@@ -12,11 +12,11 @@ import Core
 class ResourceDisplayModel: ObservableObject, Hashable, Equatable {
     let id: UUID = .init()
     let name: String
-    let version: String
+    let version: String?
     let description: String
     let tags: [String]
     let icon: ListItem.Image
-    let sources: [Mod.Source]
+    let sources: [Resource.Source]
     @Published var url: URL
     @Published var disabled: Bool
     
@@ -24,11 +24,11 @@ class ResourceDisplayModel: ObservableObject, Hashable, Equatable {
     
     init(
         name: String,
-        version: String,
+        version: String?,
         description: String,
         tags: [String],
         icon: ListItem.Image?,
-        sources: [Mod.Source],
+        sources: [Resource.Source],
         url: URL,
         disabled: Bool
     ) {
@@ -42,12 +42,12 @@ class ResourceDisplayModel: ObservableObject, Hashable, Equatable {
         self.disabled = disabled
     }
     
-    convenience init(_ url: URL, _ mod: Mod) {
+    convenience init(_ url: URL, _ mod: Resource) {
         let icon: ListItem.Image?
         if let modIcon = mod.icon {
             switch modIcon {
             case .archiveEntry(_, let globalHash):
-                if let data = (try? ModCache.shared.icon(forHash: globalHash)),
+                if let data = (try? ResourceCache.shared.icon(forHash: globalHash)),
                    let nsImage = NSImage(data: data) {
                     icon = .nsImage(nsImage)
                 } else {
@@ -63,7 +63,7 @@ class ResourceDisplayModel: ObservableObject, Hashable, Equatable {
         self.init(
             name: mod.name,
             version: mod.version,
-            description: mod.description ?? "",
+            description: (mod.description ?? "").replacingOccurrences(of: "\n", with: "\\n"),
             tags: mod.tags.map(ProjectListItemModel.localizeTag(_:)),
             icon: icon,
             sources: mod.sources,

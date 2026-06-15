@@ -10,12 +10,12 @@ import ZIPFoundation
 import TOMLDecoder
 
 public class ModLoadService {
-    private let remoteLookupService: ModRemoteLookupService
-    private let cache: ModCache
+    private let remoteLookupService: ResourceRemoteLookupService
+    private let cache: ResourceCache
     private let tomlDecoder: TOMLDecoder = .init()
     private let validPathExtensions = ["jar", "disabled"]
     
-    public init(remoteLookupService: ModRemoteLookupService, cache: ModCache) {
+    public init(remoteLookupService: ResourceRemoteLookupService, cache: ResourceCache) {
         self.remoteLookupService = remoteLookupService
         self.cache = cache
     }
@@ -23,7 +23,7 @@ public class ModLoadService {
     /// 将单个模组文件加载为 `Mod` 结构体。
     /// - Returns: 一个 `Mod`，若无法识别模组则返回 `nil`。
     /// - Throws: `LoadError`
-    public func load(from fileURL: URL) async throws(LoadError) -> Mod? {
+    public func load(from fileURL: URL) async throws(LoadError) -> Resource? {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDirectory) else {
             throw .fileNotExists
@@ -39,7 +39,7 @@ public class ModLoadService {
         
         if let cached = cache.mod(forHash: sha1) { return cached }
         
-        let remoteInfo: ModRemoteLookupService.RemoteModInfo?
+        let remoteInfo: ResourceRemoteLookupService.RemoteResourceInfo?
         do {
             remoteInfo = try await remoteLookupService.lookup(hash: sha1)
         } catch {
@@ -58,7 +58,7 @@ public class ModLoadService {
     /// - Parameter directoryURL: 目录的 `URL`。
     /// - Returns: `[URL: Mod]` 字典，包含所有加载成功的模组。
     /// - Throws: `LoadError`
-    public func loadMods(in directoryURL: URL) async throws(LoadError) -> [URL: Mod] {
+    public func loadMods(in directoryURL: URL) async throws(LoadError) -> [URL: Resource] {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: directoryURL.path, isDirectory: &isDirectory) else {
             throw .fileNotExists
@@ -89,7 +89,7 @@ public class ModLoadService {
         
         defer { debug("模组目录加载完成，共 \(total) 个文件，\(cached) 个命中缓存，\(loaded) 个加载成功，\(unsupported) 个无法识别，\(failed) 个加载失败") }
         
-        var result: [URL: Mod] = [:]
+        var result: [URL: Resource] = [:]
         var hashes: [URL: String] = [:]
         enumerateFiles { url in
             total += 1
@@ -108,7 +108,7 @@ public class ModLoadService {
             return result
         }
         
-        let remoteLookupResult: [String: ModRemoteLookupService.RemoteModInfo]
+        let remoteLookupResult: [String: ResourceRemoteLookupService.RemoteResourceInfo]
         do {
             remoteLookupResult = try await remoteLookupService.lookup(hashes: Array(hashes.values))
         } catch {
@@ -162,7 +162,7 @@ public class ModLoadService {
     }
     
     
-    private func loadModFile(at url: URL, sha1: String, remoteInfo: ModRemoteLookupService.RemoteModInfo?) throws(LoadError) -> Mod? {
+    private func loadModFile(at url: URL, sha1: String, remoteInfo: ResourceRemoteLookupService.RemoteResourceInfo?) throws(LoadError) -> Resource? {
         let archive: Archive
         do {
             archive = try .init(url: url, accessMode: .read)
@@ -205,7 +205,7 @@ public class ModLoadService {
         
         guard let meta else { return nil }
         
-        let icon: ResourceIcon?
+        let icon: Resource.Icon?
         if let iconPath = meta.icon, let entry = archive[iconPath] {
             do {
                 let iconData = try archive.extract(entry)
@@ -222,6 +222,7 @@ public class ModLoadService {
         }
         
         return .init(
+            type: .mod,
             name: meta.name ?? remoteInfo?.name ?? meta.id,
             version: meta.version,
             description: meta.description ?? remoteInfo?.description,

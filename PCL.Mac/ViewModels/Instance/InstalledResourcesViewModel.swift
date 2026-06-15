@@ -1,5 +1,5 @@
 //
-//  InstalledModsViewModel.swift
+//  InstalledResourcesViewModel.swift
 //  PCL.Mac
 //
 //  Created by AnemoFlower on 2026/6/7.
@@ -10,30 +10,29 @@ import Core
 import Combine
 
 @MainActor
-class InstalledModsViewModel: ObservableObject {
+class InstalledResourcesViewModel: ObservableObject {
     @Published public var resources: [ResourceDisplayModel]?
     @Published public var supportMods: Bool = true
     @Published public var currentRepositoryId: UUID
     @Published public var currentPage: Int = 0
     @Published public var pageCount: Int = 0
     private var cancellables: Set<AnyCancellable> = []
-    private var loadResult: [(URL, Mod)]?
+    private var loadResult: [(URL, Resource)]?
     private var convertTask: Task<Void, Never>?
-    private let instanceManager: InstanceManager
+    private let instance: MinecraftInstance?
     private let id: String
-    private let service: ModLoadService
+    private let type: ResourceType
     private let entriesPerPage: Int = 20
     
-    init(instanceManager: InstanceManager, id: String) {
-        self.instanceManager = instanceManager
+    private let cache: ResourceCache = .shared
+    private let remoteLookupService: ResourceRemoteLookupService
+    
+    init(instanceManager: InstanceManager, id: String, type: ResourceType) {
+        self.instance = instanceManager.currentRepository.instance(named: id)
         self.id = id
+        self.type = type
         self.currentRepositoryId = instanceManager.currentRepositoryId
-        self.service = .init(
-            remoteLookupService: .init(
-                curseforgeClient: .init(apiKey: Secrets.shared.curseforgeApiKey ?? "")
-            ),
-            cache: .shared
-        )
+        self.remoteLookupService = .init(curseforgeClient: .init(apiKey: Secrets.shared.curseforgeApiKey ?? ""))
         
         instanceManager.$currentRepositoryId
             .receive(on: DispatchQueue.main)
@@ -42,17 +41,14 @@ class InstalledModsViewModel: ObservableObject {
     }
     
     func load(resetPage: Bool = true) async throws {
-        guard let instance = instanceManager.currentRepository.instance(named: id) else {
-            throw SimpleError("实例不存在。")
+        guard let instance else { throw SimpleError("实例不存在。") }
+        
+        let resources: [URL: Resource] = switch type {
+        case .mod: try await loadMods(of: instance)
+        default: [:]
         }
-        if instance.modLoader == nil {
-            await MainActor.run {
-                supportMods = false
-            }
-            return
-        }
-        let modsDirectory = instance.url.appending(path: "mods")
-        let result: [(URL, Mod)] = try await service.loadMods(in: modsDirectory)
+        
+        let result: [(URL, Resource)] = resources
             .map { ($0, $1) }
             .sorted { $0.1.name.compare($1.1.name, options: .literal) == .orderedAscending }
         
@@ -120,5 +116,19 @@ class InstalledModsViewModel: ObservableObject {
             }
         }
         return nil
+    }
+    
+    
+    private func loadMods(of instance: MinecraftInstance) async throws -> [URL: Resource] {
+        let service = ModLoadService(remoteLookupService: remoteLookupService, cache: cache)
+        if instance.modLoader == nil {
+            await MainActor.run {
+                supportMods = false
+            }
+            throw SimpleError("该实例不支持模组。")
+        }
+        
+        let modsDirectory = instance.url.appending(path: "mods")
+        return try await service.loadMods(in: modsDirectory)
     }
 }

@@ -1,5 +1,5 @@
 //
-//  InstalledModsPage.swift
+//  InstalledResourcesPage.swift
 //  PCL.Mac
 //
 //  Created by AnemoFlower on 2026/6/7.
@@ -8,12 +8,12 @@
 import SwiftUI
 import Core
 
-struct InstalledModsPage: View {
-    @StateObject private var viewModel: InstalledModsViewModel
+struct InstalledResourcesPage: View {
+    @StateObject private var viewModel: InstalledResourcesViewModel
     @StateObject private var loadingVM: MyLoadingViewModel
     
-    init(instanceManager: InstanceManager, id: String) {
-        self._viewModel = .init(wrappedValue: .init(instanceManager: instanceManager, id: id))
+    init(instanceManager: InstanceManager, id: String, type: ResourceType) {
+        self._viewModel = .init(wrappedValue: .init(instanceManager: instanceManager, id: id, type: type))
         self._loadingVM = .init(wrappedValue: MyLoadingViewModel(text: "加载中"))
     }
     
@@ -84,10 +84,10 @@ struct InstalledModsPage: View {
 }
 
 private struct ResourceListItem: View {
-    @ObservedObject private var viewModel: InstalledModsViewModel
+    @ObservedObject private var viewModel: InstalledResourcesViewModel
     @ObservedObject private var resource: ResourceDisplayModel
     
-    init(viewModel: InstalledModsViewModel, resource: ResourceDisplayModel) {
+    init(viewModel: InstalledResourcesViewModel, resource: ResourceDisplayModel) {
         self.viewModel = viewModel
         self.resource = resource
     }
@@ -127,7 +127,12 @@ private struct ResourceListItem: View {
                         }
                         .padding(.leading, 3)
                     }
-                    MyText("\(resource.version) | \(resource.description)", size: 12, color: .colorGray3)
+                    HStack(spacing: 0) {
+                        if let version = resource.version {
+                            MyText("\(version) | ", size: 12, color: .colorGray3)
+                        }
+                        MyText(resource.description, size: 12, color: .colorGray3)
+                    }
                 }
                 .lineLimit(1)
                 .textSelection(.enabled)

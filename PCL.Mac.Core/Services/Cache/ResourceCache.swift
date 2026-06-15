@@ -1,5 +1,5 @@
 //
-//  ModCache.swift
+//  ResourceCache.swift
 //  PCL.Mac
 //
 //  Created by AnemoFlower on 2026/6/7.
@@ -7,21 +7,21 @@
 
 import Foundation
 
-public class ModCache {
-    public static var shared: ModCache!
+public class ResourceCache {
+    public static var shared: ResourceCache!
     
     private let cacheFileURL: URL
     private let iconCacheDirectory: URL
-    private var cacheMap: [String: Mod]
+    private var cacheMap: [String: Resource]
     
     public init(cacheDirectory: URL) {
-        self.cacheFileURL = cacheDirectory.appending(path: "mod_cache.json")
+        self.cacheFileURL = cacheDirectory.appending(path: "resource_cache.json")
         self.iconCacheDirectory = cacheDirectory.appending(path: "resource_icon")
         
         if FileManager.default.fileExists(atPath: cacheFileURL.path) {
             do {
                 let data = try Data(contentsOf: cacheFileURL)
-                self.cacheMap = try JSONDecoder.shared.decode([String: Mod].self, from: data)
+                self.cacheMap = try JSONDecoder.shared.decode([String: Resource].self, from: data)
             } catch {
                 err("缓存文件加载失败：\(error.localizedDescription)")
                 try? FileManager.default.removeItem(at: cacheFileURL)
@@ -32,9 +32,9 @@ public class ModCache {
         }
     }
     
-    public func mod(forHash hash: String) -> Mod? { cacheMap[hash] }
+    public func mod(forHash hash: String) -> Resource? { cacheMap[hash] }
     
-    public func store(_ mod: Mod, forHash hash: String) { cacheMap[hash] = mod }
+    public func store(_ mod: Resource, forHash hash: String) { cacheMap[hash] = mod }
     
     public func icon(forHash globalHash: String) throws -> Data? {
         let url = url(of: globalHash)
