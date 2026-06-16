@@ -35,7 +35,7 @@ public struct Resource: Codable, Hashable, Equatable {
     public init(
         type: ResourceType,
         name: String,
-        version: String,
+        version: String?,
         description: String?,
         icon: Icon?,
         loaders: [ModLoader],

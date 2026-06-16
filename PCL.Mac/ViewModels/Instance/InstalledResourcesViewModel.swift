@@ -120,7 +120,7 @@ class InstalledResourcesViewModel: ObservableObject {
     
     
     private func loadMods(of instance: MinecraftInstance) async throws -> [URL: Resource] {
-        let service = ModLoadService(remoteLookupService: remoteLookupService, cache: cache)
+        let service = ResourceLoadService(remoteLookupService: remoteLookupService, cache: cache)
         if instance.modLoader == nil {
             await MainActor.run {
                 supportMods = false
@@ -129,6 +129,6 @@ class InstalledResourcesViewModel: ObservableObject {
         }
         
         let modsDirectory = instance.url.appending(path: "mods")
-        return try await service.loadMods(in: modsDirectory)
+        return try await service.loadResources(in: modsDirectory)
     }
 }

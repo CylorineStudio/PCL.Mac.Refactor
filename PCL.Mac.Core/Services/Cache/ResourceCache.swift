@@ -32,9 +32,9 @@ public class ResourceCache {
         }
     }
     
-    public func mod(forHash hash: String) -> Resource? { cacheMap[hash] }
+    public func resource(forHash hash: String) -> Resource? { cacheMap[hash] }
     
-    public func store(_ mod: Resource, forHash hash: String) { cacheMap[hash] = mod }
+    public func store(_ resource: Resource, forHash hash: String) { cacheMap[hash] = resource }
     
     public func icon(forHash globalHash: String) throws -> Data? {
         let url = url(of: globalHash)
@@ -44,8 +44,8 @@ public class ResourceCache {
         return nil
     }
     
-    public func store(_ iconData: Data, relativePath: String, jarHash: String) throws -> String {
-        let globalHash = globalHash(of: relativePath, with: jarHash)
+    public func store(_ iconData: Data, relativePath: String, fileHash: String) throws -> String {
+        let globalHash = globalHash(of: relativePath, with: fileHash)
         let url = url(of: globalHash)
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try iconData.write(to: url)
@@ -63,7 +63,7 @@ public class ResourceCache {
         return iconCacheDirectory.appending(path: "\(globalHash.prefix(2))/\(globalHash)")
     }
     
-    private func globalHash(of path: String, with jarHash: String) -> String {
-        return (jarHash + path).sha1
+    private func globalHash(of path: String, with fileHash: String) -> String {
+        return (fileHash + path).sha1
     }
 }
