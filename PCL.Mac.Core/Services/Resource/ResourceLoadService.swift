@@ -13,7 +13,9 @@ public class ResourceLoadService {
     private let cache: ResourceCache
     private let validPathExtensions = ["zip", "jar", "disabled"]
     private let parsers: [ResourceType: ResourceParser.Type] = [
-        .mod: ModParser.self
+        .mod: ModParser.self,
+        .resourcepack: ResourcepackParser.self,
+        .shader: ShaderParser.self
     ]
     
     public init(remoteLookupService: ResourceRemoteLookupService, cache: ResourceCache) {
@@ -175,7 +177,7 @@ public class ResourceLoadService {
         var parseResult: ResourceParseResult?
         for (type, parser) in parsers {
             if parser.canHandle(fileURL: url, archive: archive),
-               let result = parser.parse(fileURL: url, archive: archive) {
+               let result = parser.parse(fileURL: url, archive: archive, remoteInfo: remoteInfo) {
                 debug("成功解析 \(url.lastPathComponent)，类型：\(type)")
                 fileType = type
                 parseResult = result
@@ -205,7 +207,7 @@ public class ResourceLoadService {
             type: fileType,
             name: parseResult.name,
             version: parseResult.version,
-            description: parseResult.description ?? remoteInfo?.description,
+            description: parseResult.description,
             icon: icon,
             loaders: parseResult.loaders,
             tags: remoteInfo?.tags ?? [],

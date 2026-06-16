@@ -16,7 +16,7 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     case instanceList(repositoryId: UUID), instanceSettings(id: String)
     
     // 实例设置页面的子页面
-    case instanceConfig(id: String), installedMods(id: String)
+    case instanceConfig(id: String), installedMods(id: String), installedResourcePacks(id: String), installedShaders(id: String)
     
     // 下载页面的子页面
     case minecraftDownload, minecraftInstallOptions(version: VersionManifest.Version), modDownload, resourcepackDownload, shaderpackDownload, modpackDownload
@@ -52,7 +52,7 @@ class AppRouter: ObservableObject {
         switch last {
         case .tasks: "任务列表"
         case .instanceList: "实例列表"
-        case .instanceSettings(let id), .instanceConfig(let id), .installedMods(let id): "实例设置 - \(id)"
+        case .instanceSettings(let id), .instanceConfig(let id), .installedMods(let id), .installedResourcePacks(let id), .installedShaders(let id): "实例设置 - \(id)"
         case .minecraftInstallOptions(let version): "游戏安装 - \(version.id)"
         case .projectInstall(let project): "资源下载 - \(project.title)"
         default: "错误：当前页面没有标题，请报告此问题！"
@@ -61,14 +61,7 @@ class AppRouter: ObservableObject {
     
     /// 当前页面是不是子页面（需要显示返回键和标题，隐藏导航按钮）
     var isSubPage: Bool {
-        switch last {
-        case .tasks: true
-        case .instanceList: true
-        case .instanceSettings, .instanceConfig, .installedMods: true
-        case .minecraftInstallOptions: true
-        case .projectInstall: true
-        default: false
-        }
+        path.count > 1
     }
     
     var last: AppRoute { path[path.count - 1] }
@@ -142,6 +135,10 @@ struct AppRouterView: View {
             InstanceConfigPage(instanceManager: instanceManager, id: id)
         case .installedMods(let id):
             InstalledResourcesPage(instanceManager: instanceManager, id: id, type: .mod)
+        case .installedResourcePacks(let id):
+            InstalledResourcesPage(instanceManager: instanceManager, id: id, type: .resourcepack)
+        case .installedShaders(let id):
+            InstalledResourcesPage(instanceManager: instanceManager, id: id, type: .shader)
         default:
             Spacer()
         }
@@ -160,7 +157,7 @@ struct AppSidebarView: View {
         switch router.last {
         case .launch: LaunchSidebar(instanceManager: instanceManager)
         case .instanceList: InstanceListSidebar(instanceManager: instanceManager)
-        case .instanceSettings(let id), .instanceConfig(let id), .installedMods(let id): InstanceSettingsSidebar(id: id)
+        case .instanceSettings(let id), .instanceConfig(let id), .installedMods(let id), .installedResourcePacks(let id), .installedShaders(let id): InstanceSettingsSidebar(id: id)
         case .minecraftDownload, .modDownload, .resourcepackDownload, .shaderpackDownload, .modpackDownload: DownloadSidebar()
         case .multiplayer, .multiplayerSub, .multiplayerSettings: MultiplayerSidebar()
         case .settings, .javaSettings, .otherSettings: SettingsSidebar()

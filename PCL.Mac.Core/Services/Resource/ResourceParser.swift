@@ -13,7 +13,7 @@ protocol ResourceParser {
     
     static func canHandle(fileURL: URL, archive: Archive) -> Bool
     
-    static func parse(fileURL: URL, archive: Archive) -> ResourceParseResult?
+    static func parse(fileURL: URL, archive: Archive, remoteInfo: ResourceRemoteLookupService.RemoteResourceInfo?) -> ResourceParseResult?
 }
 
 struct ResourceParseResult {

@@ -21,10 +21,10 @@ enum ModParser: ResourceParser {
     ]
     
     static func canHandle(fileURL: URL, archive: Archive) -> Bool {
-        return fileURL.pathExtension == "jar" && metaFiles.contains { archive[$0] != nil }
+        return metaFiles.contains { archive[$0] != nil }
     }
     
-    static func parse(fileURL: URL, archive: Archive) -> ResourceParseResult? {
+    static func parse(fileURL: URL, archive: Archive, remoteInfo: ResourceRemoteLookupService.RemoteResourceInfo?) -> ResourceParseResult? {
         var jarManifest: [String: String] = [:]
         if let entry = archive["META-INF/MANIFEST.MF"] {
             do {
@@ -60,9 +60,9 @@ enum ModParser: ResourceParser {
 
         guard let meta else { return nil }
         return .init(
-            name: meta.name ?? meta.id,
+            name: meta.name ?? remoteInfo?.name ?? meta.id,
             version: meta.version,
-            description: meta.description,
+            description: meta.description ?? remoteInfo?.description,
             iconPath: meta.icon,
             loaders: loaders
         )

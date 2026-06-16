@@ -43,12 +43,15 @@ class InstalledResourcesViewModel: ObservableObject {
     func load(resetPage: Bool = true) async throws {
         guard let instance else { throw SimpleError("实例不存在。") }
         
-        let resources: [URL: Resource] = switch type {
-        case .mod: try await loadMods(of: instance)
-        default: [:]
+        let service = ResourceLoadService(remoteLookupService: remoteLookupService, cache: cache)
+        let directoryName = switch type {
+        case .mod: "mods"
+        case .modpack: ""
+        case .resourcepack: "resourcepacks"
+        case .shader: "shaderpacks"
         }
         
-        let result: [(URL, Resource)] = resources
+        let result: [(URL, Resource)] = try await service.loadResources(in: instance.url.appending(path: directoryName))
             .map { ($0, $1) }
             .sorted { $0.1.name.compare($1.1.name, options: .literal) == .orderedAscending }
         
