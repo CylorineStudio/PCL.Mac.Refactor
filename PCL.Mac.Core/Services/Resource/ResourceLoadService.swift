@@ -64,7 +64,7 @@ public class ResourceLoadService {
     public func loadResources(in directoryURL: URL) async throws(LoadError) -> [URL: Resource] {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: directoryURL.path, isDirectory: &isDirectory) else {
-            throw .fileNotExists
+            return [:]
         }
         guard isDirectory.boolValue == true else { throw .foundFile }
         
@@ -149,7 +149,7 @@ public class ResourceLoadService {
         public var errorDescription: String? {
             switch self {
             case .fileNotExists:
-                "资源文件或文件夹不存在。"
+                "指定的资源文件不存在。"
             case .foundDirectory:
                 "期望获得文件，但找到了一个文件夹。"
             case .foundFile:

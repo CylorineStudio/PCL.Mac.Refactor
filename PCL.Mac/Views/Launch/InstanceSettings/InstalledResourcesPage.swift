@@ -49,7 +49,18 @@ struct InstalledResourcesPage: View {
                 .padding(40)
             } else {
                 CardContainer {
-                    if let resources = viewModel.resources {
+                    if viewModel.type == .shader {
+                        MyTip(text: "光影包需要搭配光影加载器使用。\n详细教程：https://cylorine.studio/helps/shader", theme: .blue)
+                            .onTapGesture {
+                                NSWorkspace.shared.open(URL(string: "https://cylorine.studio/helps/shader")!)
+                            }
+                    }
+                    
+                    MySearchBox(placeholder: "搜索\(viewModel.type.localizedName)") { keyword in
+                        viewModel.setSearchKeyword(keyword)
+                    }
+                    
+                    if let resources = viewModel.resources, !resources.isEmpty {
                         PaginatedContainer(currentPage: $viewModel.currentPage, pageCount: viewModel.pageCount) { currentPage in
                             MyCard(nil) {
                                 VStack(spacing: 0) {
@@ -59,7 +70,7 @@ struct InstalledResourcesPage: View {
                                 }
                             }
                             .onChange(of: currentPage) { _ in
-                                viewModel.onPageChanged()
+                                viewModel.updateResources()
                             }
                         }
                     } else {
@@ -73,8 +84,17 @@ struct InstalledResourcesPage: View {
             do {
                 try await viewModel.load()
             } catch {
-                err("加载模组列表失败：\(error.localizedDescription)")
-                loadingVM.fail(with: "加载模组列表失败：\(error.localizedDescription)")
+                err("加载资源列表失败：\(error.localizedDescription)")
+                loadingVM.fail(with: "加载资源列表失败：\(error.localizedDescription)")
+            }
+        }
+        .onChange(of: viewModel.resources) { newValue in
+            if let newValue, newValue.isEmpty {
+                if viewModel.hasSearchKeyword {
+                    loadingVM.fail(with: "没有匹配的结果")
+                } else {
+                    loadingVM.fail(with: "这个实例没有安装任何\(viewModel.type.localizedName)！")
+                }
             }
         }
         .onDisappear {
@@ -139,14 +159,16 @@ private struct ResourceListItem: View {
                 
                 Spacer(minLength: 0)
                 
-                if hovered {
-                    HStack {
+                HStack {
+                    if !resource.sources.isEmpty {
                         ListItemButton(.iconAbout, clickPerform: viewInfo)
-                        ListItemButton(resource.disabled ? .btnEnable : .btnDisable, clickPerform: toggleDisabled)
-                            .animation(.easeInOut(duration: 0.1), value: resource.disabled)
                     }
-                    .padding(.trailing, 4)
+                    ListItemButton(resource.disabled ? .btnEnable : .btnDisable, clickPerform: toggleDisabled)
+                        .animation(.easeInOut(duration: 0.1), value: resource.disabled)
                 }
+                .padding(.horizontal, 4)
+                .allowsHitTesting(hovered)
+                .opacity(hovered ? 1 : 0)
             }
         }
     }
@@ -171,8 +193,8 @@ private struct ResourceListItem: View {
             try viewModel.toggleDisabled(resource)
         } catch {
             let type = resource.disabled ? "启用" : "禁用"
-            err("\(type)模组失败：\(error.localizedDescription)")
-            hint("\(type)模组失败：\(error.localizedDescription)", type: .critical)
+            err("\(type)资源失败：\(error.localizedDescription)")
+            hint("\(type)资源失败：\(error.localizedDescription)", type: .critical)
         }
     }
 }

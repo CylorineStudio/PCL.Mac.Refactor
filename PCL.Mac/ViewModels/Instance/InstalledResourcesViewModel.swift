@@ -16,23 +16,28 @@ class InstalledResourcesViewModel: ObservableObject {
     @Published public var currentRepositoryId: UUID
     @Published public var currentPage: Int = 0
     @Published public var pageCount: Int = 0
+    
+    public let type: ResourceType
+    public var hasSearchKeyword: Bool { !searchKeyword.isEmpty }
     private var cancellables: Set<AnyCancellable> = []
     private var loadResult: [(URL, Resource)]?
     private var convertTask: Task<Void, Never>?
+    private var searchKeyword: String = ""
     private let instance: MinecraftInstance?
     private let id: String
-    private let type: ResourceType
     private let entriesPerPage: Int = 20
     
-    private let cache: ResourceCache = .shared
-    private let remoteLookupService: ResourceRemoteLookupService
+    private let service: ResourceLoadService
     
     init(instanceManager: InstanceManager, id: String, type: ResourceType) {
         self.instance = instanceManager.currentRepository.instance(named: id)
         self.id = id
         self.type = type
         self.currentRepositoryId = instanceManager.currentRepositoryId
-        self.remoteLookupService = .init(curseforgeClient: .init(apiKey: Secrets.shared.curseforgeApiKey ?? ""))
+        self.service = .init(
+            remoteLookupService: .init(curseforgeClient: .init(apiKey: Secrets.shared.curseforgeApiKey ?? "")),
+            cache: .shared
+        )
         
         instanceManager.$currentRepositoryId
             .receive(on: DispatchQueue.main)
@@ -43,7 +48,11 @@ class InstalledResourcesViewModel: ObservableObject {
     func load(resetPage: Bool = true) async throws {
         guard let instance else { throw SimpleError("实例不存在。") }
         
-        let service = ResourceLoadService(remoteLookupService: remoteLookupService, cache: cache)
+        if type == .mod && instance.modLoader == nil {
+            supportMods = false
+            return
+        }
+        
         let directoryName = switch type {
         case .mod: "mods"
         case .modpack: ""
@@ -56,26 +65,31 @@ class InstalledResourcesViewModel: ObservableObject {
             .sorted { $0.1.name.compare($1.1.name, options: .literal) == .orderedAscending }
         
         self.loadResult = result
-        self.pageCount = Int(ceil(Double(result.count) / Double(entriesPerPage)))
         if resetPage {
             self.currentPage = 0
         }
-        self.onPageChanged()
+        self.updateResources()
     }
     
-    func onPageChanged() {
+    func updateResources() {
         if let convertTask {
             convertTask.cancel()
             self.convertTask = nil
         }
         guard let loadResult else { return }
         
+        let validResources: [(URL, Resource)] = loadResult
+            .lazy
+            .filter { searchKeyword.isEmpty || $0.1.name.contains(searchKeyword) }
+        
+        self.pageCount = Int(ceil(Double(validResources.count) / Double(entriesPerPage)))
+        
         let start = currentPage * entriesPerPage
-        let end = min(start + entriesPerPage, loadResult.count)
+        let end = min(start + entriesPerPage, validResources.count)
         self.resources = nil
         convertTask = .detached {
             do {
-                let resources = try loadResult[start..<end]
+                let resources = try validResources[start..<end]
                     .map {
                         try Task.checkCancellation()
                         return ResourceDisplayModel($0.0, $0.1)
@@ -91,6 +105,11 @@ class InstalledResourcesViewModel: ObservableObject {
                 self.convertTask = nil
             }
         }
+    }
+    
+    func setSearchKeyword(_ keyword: String) {
+        searchKeyword = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+        updateResources()
     }
     
     func toggleDisabled(_ resource: ResourceDisplayModel) throws {
@@ -119,19 +138,5 @@ class InstalledResourcesViewModel: ObservableObject {
             }
         }
         return nil
-    }
-    
-    
-    private func loadMods(of instance: MinecraftInstance) async throws -> [URL: Resource] {
-        let service = ResourceLoadService(remoteLookupService: remoteLookupService, cache: cache)
-        if instance.modLoader == nil {
-            await MainActor.run {
-                supportMods = false
-            }
-            throw SimpleError("该实例不支持模组。")
-        }
-        
-        let modsDirectory = instance.url.appending(path: "mods")
-        return try await service.loadResources(in: modsDirectory)
     }
 }
