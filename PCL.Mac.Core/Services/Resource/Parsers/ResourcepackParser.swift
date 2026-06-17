@@ -32,7 +32,7 @@ enum ResourcepackParser: ResourceParser {
         
         return .init(
             name: fileURL.deletingAllPathExtensions().lastPathComponent,
-            version: nil,
+            version: remoteInfo?.version,
             description: remoteInfo?.description ?? meta.description,
             iconPath: "pack.png",
             loaders: []

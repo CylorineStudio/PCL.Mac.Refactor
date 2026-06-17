@@ -20,7 +20,7 @@ public class ResourceRemoteLookupService {
     public func lookup(hash: String) async throws -> RemoteResourceInfo? {
         if let modrinthVersion = try await modrinthClient.version(ofHash: hash) {
             let project = try await modrinthClient.project(modrinthVersion.id, revalidate: true)
-            return RemoteResourceInfo(project)
+            return RemoteResourceInfo(project, version: modrinthVersion)
         }
         
         // TODO: CurseForge
@@ -41,7 +41,7 @@ public class ResourceRemoteLookupService {
             
             for (hash, version) in versions {
                 guard let project = projects[version.projectId] else { continue }
-                result[hash] = .init(project)
+                result[hash] = .init(project, version: version)
             }
         }
         
@@ -52,22 +52,25 @@ public class ResourceRemoteLookupService {
     
     public struct RemoteResourceInfo {
         public let name: String
+        public let version: String
         public let description: String
         public let tags: [String]
         public let icon: URL?
         public let source: Resource.Source
         
-        public init(name: String, description: String, tags: [String], icon: URL?, source: Resource.Source) {
+        public init(name: String, version: String, description: String, tags: [String], icon: URL?, source: Resource.Source) {
             self.name = name
+            self.version = version
             self.description = description
             self.tags = tags
             self.icon = icon
             self.source = source
         }
         
-        public init(_ modrinthProject: ModrinthProject) {
+        public init(_ modrinthProject: ModrinthProject, version modrinthVersion: ModrinthVersion) {
             self.init(
                 name: modrinthProject.title,
+                version: modrinthVersion.versionNumber,
                 description: modrinthProject.description,
                 tags: modrinthProject.categories,
                 icon: modrinthProject.iconURL,
@@ -75,9 +78,10 @@ public class ResourceRemoteLookupService {
             )
         }
         
-        public init(_ curseforgeMod: CurseForgeMod) {
+        public init(_ curseforgeMod: CurseForgeMod, file curseforgeModFile: CurseForgeModFile) {
             self.init(
                 name: curseforgeMod.name,
+                version: "not implemented",
                 description: curseforgeMod.summary,
                 tags: [],
                 icon: curseforgeMod.logo.thumbnailURL,

@@ -55,7 +55,7 @@ class AppRouter: ObservableObject {
         case .instanceSettings(let id), .instanceConfig(let id), .installedResources(let id, _): "实例设置 - \(id)"
         case .minecraftInstallOptions(let version): "游戏安装 - \(version.id)"
         case .projectInstall(let project): "资源下载 - \(project.title)"
-        default: "错误：当前页面没有标题，请报告此问题！"
+        default: "错误：当前页面（\(last)）没有标题，请报告此问题！"
         }
     }
     

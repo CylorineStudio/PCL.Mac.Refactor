@@ -18,7 +18,7 @@ enum ShaderParser: ResourceParser {
     static func parse(fileURL: URL, archive: Archive, remoteInfo: ResourceRemoteLookupService.RemoteResourceInfo?) -> ResourceParseResult? {
         return .init(
             name: remoteInfo?.name ?? fileURL.deletingAllPathExtensions().lastPathComponent,
-            version: nil,
+            version: remoteInfo?.version,
             description: remoteInfo?.description,
             iconPath: nil,
             loaders: []
