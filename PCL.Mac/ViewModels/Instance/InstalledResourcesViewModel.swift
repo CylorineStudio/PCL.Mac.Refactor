@@ -35,6 +35,7 @@ class InstalledResourcesViewModel: ObservableObject {
         self.type = type
         self.currentRepositoryId = instanceManager.currentRepositoryId
         self.service = .init(
+            preferredType: type,
             remoteLookupService: .init(curseforgeClient: .init(apiKey: Secrets.shared.curseforgeApiKey ?? "")),
             cache: .shared
         )
@@ -71,11 +72,20 @@ class InstalledResourcesViewModel: ObservableObject {
         }
         guard let loadResult else { return }
         
-        let validResources: [(URL, Resource)] = loadResult
-            .lazy
-            .filter { searchKeyword.isEmpty || $0.1.name.contains(searchKeyword) || $0.1.description?.contains(searchKeyword) == true }
+        let validResources: [(URL, Resource)] = loadResult.lazy
+            .filter {
+                searchKeyword.isEmpty
+                || $0.1.name.contains(searchKeyword)
+                || $0.1.description?.contains(searchKeyword) == true
+            }
         
-        self.pageCount = Int(ceil(Double(validResources.count) / Double(entriesPerPage)))
+        self.pageCount = validResources.isEmpty ? 0 : Int(ceil(Double(validResources.count) / Double(entriesPerPage)))
+        if pageCount == 0 {
+            self.resources = []
+            return
+        } else {
+            currentPage = min(pageCount - 1, currentPage)
+        }
         
         let start = currentPage * entriesPerPage
         let end = min(start + entriesPerPage, validResources.count)

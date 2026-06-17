@@ -40,8 +40,7 @@ public struct Resource: Codable, Hashable, Equatable {
         icon: Icon?,
         loaders: [ModLoader],
         tags: [String],
-        sources: [Source],
-        disabled: Bool
+        sources: [Source]
     ) {
         self.type = type
         self.name = name

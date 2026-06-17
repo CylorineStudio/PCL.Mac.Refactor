@@ -9,16 +9,18 @@ import Foundation
 import ZIPFoundation
 
 public class ResourceLoadService {
+    private let preferredType: ResourceType?
     private let remoteLookupService: ResourceRemoteLookupService
     private let cache: ResourceCache
     private let validPathExtensions = ["zip", "jar", "disabled"]
-    private let parsers: [ResourceType: ResourceParser.Type] = [
-        .mod: ModParser.self,
-        .resourcepack: ResourcepackParser.self,
-        .shader: ShaderParser.self
+    private let parsers: [ResourceParser.Type] = [
+        ModParser.self,
+        ResourcepackParser.self,
+        ShaderParser.self
     ]
     
-    public init(remoteLookupService: ResourceRemoteLookupService, cache: ResourceCache) {
+    public init(preferredType: ResourceType? = nil, remoteLookupService: ResourceRemoteLookupService, cache: ResourceCache) {
+        self.preferredType = preferredType
         self.remoteLookupService = remoteLookupService
         self.cache = cache
     }
@@ -175,11 +177,14 @@ public class ResourceLoadService {
         
         var fileType: ResourceType?
         var parseResult: ResourceParseResult?
-        for (type, parser) in parsers {
+        
+        let preferredParsers = parsers.filter { $0.type == preferredType }
+        let otherParsers = parsers.filter { $0.type != preferredType }
+        for parser in preferredParsers + otherParsers {
             if parser.canHandle(fileURL: url, archive: archive),
                let result = parser.parse(fileURL: url, archive: archive, remoteInfo: remoteInfo) {
-                debug("成功解析 \(url.lastPathComponent)，类型：\(type)")
-                fileType = type
+                debug("成功解析 \(url.lastPathComponent)，类型：\(parser.type)")
+                fileType = parser.type
                 parseResult = result
                 break
             }
@@ -211,8 +216,7 @@ public class ResourceLoadService {
             icon: icon,
             loaders: parseResult.loaders,
             tags: remoteInfo?.tags ?? [],
-            sources: (remoteInfo?.source).map { [$0] } ?? [],
-            disabled: url.pathExtension == "disabled"
+            sources: (remoteInfo?.source).map { [$0] } ?? []
         )
     }
 }

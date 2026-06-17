@@ -64,10 +64,10 @@ public class ModrinthAPIClient {
     ///   - revalidate: 是否验证本地缓存有效性。
     /// - Returns: 对应的 `[ModrinthProject]`，长度可能与 `slugs` 不一致。
     public func projects(_ slugs: [String], revalidate: Bool = false) async throws -> [ModrinthProject] {
-        let idssString = String(data: try JSONSerialization.data(withJSONObject: slugs), encoding: .utf8)!
+        let idsString = String(data: try JSONSerialization.data(withJSONObject: slugs), encoding: .utf8)!
         return try await Requests.get(
             apiRoot.appending(path: "/v2/projects"),
-            params: ["ids": idssString],
+            params: ["ids": idsString],
             revalidate: revalidate
         ).decode([ModrinthProject].self)
     }

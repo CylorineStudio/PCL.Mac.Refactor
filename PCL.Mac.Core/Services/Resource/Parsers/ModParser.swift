@@ -69,21 +69,6 @@ enum ModParser: ResourceParser {
     }
     
     
-    private static func loadModMeta(_ archive: Archive, _ path: String, loader: (Data) throws -> ModMeta) -> ModMeta? {
-        if let entry = archive[path] {
-            do {
-                let data = try archive.extract(entry)
-                return try loader(data)
-            } catch let error as DecodingError {
-                err("解析模组元数据失败：\(error)")
-            } catch {
-                err("解压 \(path) 失败：\(error.localizedDescription)")
-                return nil
-            }
-        }
-        return nil
-    }
-    
     private static func loadFabric(from data: Data) throws -> ModMeta {
         let fabricMeta: FabricMeta = try JSONDecoder.shared.decode(FabricMeta.self, from: data)
         return .init(
