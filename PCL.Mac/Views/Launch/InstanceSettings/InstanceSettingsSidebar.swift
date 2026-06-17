@@ -19,9 +19,9 @@ struct InstanceSettingsSidebar: Sidebar {
         VStack {
             MyNavigationList(
                 .init(.instanceConfig(id: id), .iconSettingsPage, "配置"),
-                .init(.installedMods(id: id), .iconMod, "Mod 管理"),
-                .init(.installedResourcePacks(id: id), .iconPicture, "资源包"),
-                .init(.installedShaders(id: id), .iconSun, "光影包")
+                .init(.installedResources(id: id, type: .mod), .iconMod, "Mod 管理"),
+                .init(.installedResources(id: id, type: .resourcepack), .iconPicture, "资源包"),
+                .init(.installedResources(id: id, type: .shader), .iconSun, "光影包")
             )
             Spacer()
         }
