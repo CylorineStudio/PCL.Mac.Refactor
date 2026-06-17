@@ -32,13 +32,7 @@ struct MyListItem<Content: View>: View {
                     }
                     HStack {
                         if let image = model.image {
-                            Group {
-                                switch image {
-                                case .resource(let imageResource): Image(imageResource).resizable()
-                                case .nsImage(let nsImage): Image(nsImage: nsImage).resizable()
-                                case .network(let url): NetworkImage(url: url)
-                                }
-                            }
+                            image.makeView()
                             .scaledToFit()
                             .frame(width: model.imageSize, height: model.imageSize)
                             .foregroundStyle(Color.color1)
@@ -84,17 +78,18 @@ struct MyListItem<Content: View>: View {
 
 struct ListItemButton: View {
     @State private var pressed: Bool = false
-    private let icon: ImageResource
+    private let icon: ListItem.Image
+    private let scale: Double
     private let clickPerform: () -> Void
     
-    init(_ icon: ImageResource, clickPerform: @escaping () -> Void) {
+    init(_ icon: ListItem.Image, scale: Double = 1.0, clickPerform: @escaping () -> Void) {
         self.icon = icon
+        self.scale = scale
         self.clickPerform = clickPerform
     }
     
     var body: some View {
-        Image(icon)
-            .resizable()
+        icon.makeView()
             .scaledToFit()
             .frame(height: 16)
             .foregroundStyle(Color.color3)
@@ -109,7 +104,7 @@ struct ListItemButton: View {
                         pressed = false
                     }
             )
-            .scaleEffect(pressed ? 0.8 : 1.0)
+            .scaleEffect((pressed ? 0.8 : 1.0) * scale)
             .animation(.spring(response: 0.2), value: pressed)
     }
 }

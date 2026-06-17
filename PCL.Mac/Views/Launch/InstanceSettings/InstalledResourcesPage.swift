@@ -60,6 +60,20 @@ struct InstalledResourcesPage: View {
                         viewModel.setSearchKeyword(keyword)
                     }
                     
+                    MyCard(nil) {
+                        HStack {
+                            MyButton("打开文件夹") {
+                                if let directory = viewModel.directory() {
+                                    NSWorkspace.shared.open(directory)
+                                }
+                            }
+                            .frame(width: 120)
+                            Spacer(minLength: 0)
+                        }
+                        .frame(height: 40)
+                    }
+                    .cardIndex(1)
+                    
                     if let resources = viewModel.resources, !resources.isEmpty {
                         PaginatedContainer(currentPage: $viewModel.currentPage, pageCount: viewModel.pageCount) { currentPage in
                             MyCard(nil) {
@@ -115,17 +129,11 @@ private struct ResourceListItem: View {
     var body: some View {
         MyListItem { hovered in
             HStack {
-                Group {
-                    switch resource.icon {
-                    case .resource(let imageResource): Image(imageResource).resizable()
-                    case .nsImage(let nsImage): Image(nsImage: nsImage).resizable().interpolation(.none)
-                    case .network(let url): NetworkImage(url: url)
-                    }
-                }
-                .scaledToFit()
-                .frame(width: 36, height: 36)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-                .foregroundStyle(Color.color1)
+                resource.icon.makeView()
+                    .scaledToFit()
+                    .frame(width: 36, height: 36)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .foregroundStyle(Color.color1)
                 
                 VStack(alignment: .leading) {
                     HStack(alignment: .center, spacing: 0) {
@@ -160,10 +168,13 @@ private struct ResourceListItem: View {
                 Spacer(minLength: 0)
                 
                 HStack {
-                    if !resource.sources.isEmpty {
-                        ListItemButton(.iconAbout, clickPerform: viewInfo)
+                    ListItemButton(.resource(.btnOpen), scale: 0.8) {
+                        NSWorkspace.shared.activateFileViewerSelecting([resource.url])
                     }
-                    ListItemButton(resource.disabled ? .btnEnable : .btnDisable, clickPerform: toggleDisabled)
+                    if !resource.sources.isEmpty {
+                        ListItemButton(.resource(.iconAbout), clickPerform: viewInfo)
+                    }
+                    ListItemButton(.resource(resource.disabled ? .btnEnable : .btnDisable), clickPerform: toggleDisabled)
                         .animation(.easeInOut(duration: 0.1), value: resource.disabled)
                 }
                 .padding(.horizontal, 4)
