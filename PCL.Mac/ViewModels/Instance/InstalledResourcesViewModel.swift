@@ -80,7 +80,7 @@ class InstalledResourcesViewModel: ObservableObject {
         
         let validResources: [(URL, Resource)] = loadResult
             .lazy
-            .filter { searchKeyword.isEmpty || $0.1.name.contains(searchKeyword) }
+            .filter { searchKeyword.isEmpty || $0.1.name.contains(searchKeyword) || $0.1.description?.contains(searchKeyword) == true }
         
         self.pageCount = Int(ceil(Double(validResources.count) / Double(entriesPerPage)))
         
