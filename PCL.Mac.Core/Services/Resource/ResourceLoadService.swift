@@ -28,7 +28,7 @@ public class ResourceLoadService {
     /// 将单个资源文件加载为 `Resource` 结构体。
     /// - Returns: 一个 `Resource`，若无法识别资源则返回 `nil`。
     /// - Throws: `LoadError`
-    public func load(from fileURL: URL) async throws(LoadError) -> Resource? {
+    public func load(at fileURL: URL) async throws(LoadError) -> Resource? {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDirectory) else {
             throw .fileNotExists

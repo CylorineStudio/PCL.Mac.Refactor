@@ -9,6 +9,15 @@ import Foundation
 
 public enum ResourceType: String, Codable {
     case mod, modpack, resourcepack, shader
+    
+    public var saveDirectory: String? {
+        switch self {
+        case .mod: "mods"
+        case .modpack: nil
+        case .resourcepack: "resourcepacks"
+        case .shader: "shaderpacks"
+        }
+    }
 }
 
 public struct Resource: Codable, Hashable, Equatable {

@@ -146,12 +146,7 @@ class InstalledResourcesViewModel: ObservableObject {
     func directory() -> URL? {
         guard let instance else { return nil }
         
-        let directoryName = switch type {
-        case .mod: "mods"
-        case .modpack: ""
-        case .resourcepack: "resourcepacks"
-        case .shader: "shaderpacks"
-        }
+        let directoryName = type.saveDirectory ?? ""
         let url = instance.url.appending(path: directoryName)
         
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)

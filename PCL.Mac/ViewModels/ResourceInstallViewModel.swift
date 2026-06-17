@@ -116,13 +116,8 @@ class ResourceInstallViewModel: ObservableObject {
             throw SimpleError("这个版本中没有主要文件！")
         }
         
-        let saveDirectoryName: String = switch project.type {
-        case .mod: "mods"
-        case .modpack: fatalError()
-        case .resourcepack: "resourcepacks"
-        case .shader: "shaderpacks"
-        }
-        let saveDirectoryURL: URL = instance.url.appending(path: saveDirectoryName)
+        let saveDirectoryName = project.type.saveDirectory ?? ""
+        let saveDirectoryURL = instance.url.appending(path: saveDirectoryName)
         
         return .init(
             name: "资源下载 - \(project.title) \(version.version)",
