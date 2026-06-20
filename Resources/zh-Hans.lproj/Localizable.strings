@@ -1,0 +1,71 @@
+// categories
+"category.modrinth.adventure" = "冒险";
+"category.modrinth.decoration" = "装饰";
+"category.modrinth.equipment" = "装备";
+"category.modrinth.food" = "食物/烹饪";
+"category.modrinth.game-mechanics" = "游戏机制";
+"category.modrinth.library" = "支持库";
+"category.modrinth.magic" = "魔法";
+"category.modrinth.management" = "管理";
+"category.modrinth.minigame" = "小游戏";
+"category.modrinth.mobs" = "生物";
+"category.modrinth.social" = "服务器";
+"category.modrinth.storage" = "仓储";
+"category.modrinth.transportation" = "运输";
+"category.modrinth.utility" = "实用";
+"category.modrinth.worldgen" = "世界元素";
+"category.modrinth.challenging" = "挑战";
+"category.modrinth.combat" = "战斗";
+"category.modrinth.kitchen-sink" = "水槽包";
+"category.modrinth.lightweight" = "轻量";
+"category.modrinth.multiplayer" = "多人";
+"category.modrinth.optimization" = "性能优化";
+"category.modrinth.quests" = "任务";
+"category.modrinth.technology" = "科技";
+"category.modrinth.modded" = "兼容 Mod";
+"category.modrinth.simplistic" = "简洁";
+"category.modrinth.themed" = "主题";
+"category.modrinth.tweaks" = "改良";
+"category.modrinth.vanilla-like" = "原版风";
+"category.modrinth.cartoon" = "卡通风";
+"category.modrinth.cursed" = "邪门";
+"category.modrinth.fantasy" = "幻想风";
+"category.modrinth.realistic" = "写实风";
+"category.modrinth.semi-realistic" = "半写实风";
+
+// features
+"category.modrinth.audio" = "含声音";
+"category.modrinth.blocks" = "方块";
+"category.modrinth.core-shaders" = "核心着色器";
+"category.modrinth.entities" = "实体";
+"category.modrinth.environment" = "环境";
+"category.modrinth.fonts" = "含字体";
+"category.modrinth.gui" = "含 UI";
+"category.modrinth.items" = "物品";
+"category.modrinth.locale" = "含语言";
+"category.modrinth.models" = "含模型";
+"category.modrinth.atmosphere" = "大气效果";
+"category.modrinth.bloom" = "泛光";
+"category.modrinth.colored-lighting" = "彩色光照";
+"category.modrinth.foliage" = "植被";
+"category.modrinth.path-tracing" = "路径追踪";
+"category.modrinth.pbr" = "PBR";
+"category.modrinth.reflections" = "反射";
+"category.modrinth.shadows" = "阴影";
+
+// performance impact
+"category.modrinth.potato" = "性能要求：极低";
+"category.modrinth.low" = "性能要求：低";
+"category.modrinth.medium" = "性能要求：中等";
+"category.modrinth.high" = "性能要求：高";
+"category.modrinth.screenshot" = "性能要求：极高";
+
+// resolutions
+"category.modrinth.8x-" = "极简";
+"category.modrinth.16x" = "16x";
+"category.modrinth.32x" = "32x";
+"category.modrinth.48x" = "48x";
+"category.modrinth.64x" = "64x";
+"category.modrinth.128x" = "128x";
+"category.modrinth.256x" = "256x";
+"category.modrinth.512x+" = "超高清";
