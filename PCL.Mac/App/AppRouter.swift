@@ -16,7 +16,7 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     case instanceList(repositoryId: UUID), instanceSettings(id: String)
     
     // 实例设置页面的子页面
-    case instanceConfig(id: String)
+    case instanceConfig(id: String), installedResources(id: String, type: ResourceType)
     
     // 下载页面的子页面
     case minecraftDownload, minecraftInstallOptions(version: VersionManifest.Version), modDownload, resourcepackDownload, shaderpackDownload, modpackDownload
@@ -52,10 +52,10 @@ class AppRouter: ObservableObject {
         switch last {
         case .tasks: "任务列表"
         case .instanceList: "实例列表"
-        case .instanceSettings(let id), .instanceConfig(let id): "实例设置 - \(id)"
+        case .instanceSettings(let id), .instanceConfig(let id), .installedResources(let id, _): "实例设置 - \(id)"
         case .minecraftInstallOptions(let version): "游戏安装 - \(version.id)"
         case .projectInstall(let project): "资源下载 - \(project.title)"
-        default: "错误：当前页面没有标题，请报告此问题！"
+        default: "错误：当前页面（\(last)）没有标题，请报告此问题！"
         }
     }
     
@@ -64,7 +64,7 @@ class AppRouter: ObservableObject {
         switch last {
         case .tasks: true
         case .instanceList: true
-        case .instanceSettings, .instanceConfig: true
+        case .instanceSettings, .instanceConfig, .installedResources: true
         case .minecraftInstallOptions: true
         case .projectInstall: true
         default: false
@@ -140,6 +140,9 @@ struct AppRouterView: View {
             ToolboxPage()
         case .instanceConfig(let id):
             InstanceConfigPage(instanceManager: instanceManager, id: id)
+        case .installedResources(let id, let type):
+            InstalledResourcesPage(instanceManager: instanceManager, id: id, type: type)
+                .id(router.last)
         default:
             Spacer()
         }
@@ -158,7 +161,7 @@ struct AppSidebarView: View {
         switch router.last {
         case .launch: LaunchSidebar(instanceManager: instanceManager)
         case .instanceList: InstanceListSidebar(instanceManager: instanceManager)
-        case .instanceSettings(let id), .instanceConfig(let id): InstanceSettingsSidebar(id: id)
+        case .instanceSettings(let id), .instanceConfig(let id), .installedResources(let id, _): InstanceSettingsSidebar(id: id)
         case .minecraftDownload, .modDownload, .resourcepackDownload, .shaderpackDownload, .modpackDownload: DownloadSidebar()
         case .multiplayer, .multiplayerSub, .multiplayerSettings: MultiplayerSidebar()
         case .settings, .javaSettings, .otherSettings: SettingsSidebar()

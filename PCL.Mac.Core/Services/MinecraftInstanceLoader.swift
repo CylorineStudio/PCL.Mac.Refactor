@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftyJSON
+import ZIPFoundation
 
 public enum MinecraftInstanceLoader {
     private static let maxManifestInheritanceDepth: Int = 5
@@ -159,8 +160,12 @@ public enum MinecraftInstanceLoader {
         let jarURL = runningDirectory.appending(path: "\(id).jar")
         if FileManager.default.fileExists(atPath: jarURL.path) {
             do {
-                let versionInfo = try JSON(data: ArchiveUtils.getEntry(url: jarURL, path: "version.json"))
-                return .init(versionInfo["id"].stringValue)
+                let archive = try Archive(url: jarURL, accessMode: .read)
+                if let entry = archive["version.json"] {
+                    let data = try archive.extract(entry)
+                    let versionInfo = try JSON(data: data)
+                    return .init(versionInfo["id"].stringValue)
+                }
             } catch {}
             
             do {

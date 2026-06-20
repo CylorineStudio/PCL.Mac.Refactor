@@ -12,7 +12,7 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
     public let id: String
     public let title: String
     public let description: String
-    public let type: ProjectType
+    public let type: ResourceType
     public let iconURL: URL?
     public let tags: [String]
     public let supportDescription: String
@@ -20,7 +20,7 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
     public let downloads: String
     public let lastUpdate: String
     
-    public init(id: String, title: String, description: String, type: ProjectType, iconURL: URL?, tags: [String], supportDescription: String, onlySupportsSnapshot: Bool, downloads: String, lastUpdate: String) {
+    public init(id: String, title: String, description: String, type: ResourceType, iconURL: URL?, tags: [String], supportDescription: String, onlySupportsSnapshot: Bool, downloads: String, lastUpdate: String) {
         self.id = id
         self.title = title
         self.description = description
@@ -65,6 +65,10 @@ struct ProjectListItemModel: Identifiable, Equatable, Hashable {
         } else {
             return downloads.description
         }
+    }
+    
+    public static func localizeTag(_ key: String) -> String {
+        return tagMap[key] ?? key
     }
     
     private static func generateSupportDescription(for project: ModrinthProject) -> (String, Bool) {

@@ -205,7 +205,7 @@ public class ForgeInstallService {
     private func executeProcessor(_ processor: ForgeInstallProfile.Processor) throws {
         let classpath: String = (processor.classpath + [processor.jar]).map(parseMavenCoord(coord:)).joined(separator: ":")
         let mainClass: String = try JarUtils.mainClass(of: librariesURL.appending(path: MavenCoordinateUtils.path(of: processor.jar)))
-        let arguments: [String] = ["-cp", classpath, mainClass] + processor.args.map { Utils.replace(parseValue($0), withValues: values, withDollarPrefix: false) }
+        let arguments: [String] = ["-cp", classpath, mainClass] + processor.args.map { $0.replacingPlaceholders(with: values, dollarPrefix: false) }
         let process: Process = .init()
         process.arguments = arguments
         process.executableURL = URL(fileURLWithPath: "/usr/bin/java")

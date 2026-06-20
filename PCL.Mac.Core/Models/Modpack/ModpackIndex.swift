@@ -98,12 +98,7 @@ public extension ModpackIndex {
         
         public var path: String? {
             guard let cachedMod, let cachedModFile, let type = cachedMod.projectType else { return nil }
-            guard let directory: String = switch type {
-            case .mod: "mods"
-            case .modpack: nil
-            case .resourcepack: "resourcepacks"
-            case .shader: "shaderpacks"
-            } else { return nil }
+            guard let directory = type.saveDirectory else { return nil }
             return "\(directory)/\(cachedModFile.fileName)"
         }
         

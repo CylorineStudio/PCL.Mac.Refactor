@@ -11,7 +11,7 @@ import Core
 class ResourcesSearchViewModel: ObservableObject {
     @Published public var searchResults: [ProjectListItemModel]?
     @Published public var query: String = ""
-    public let type: ProjectType
+    public let type: ResourceType
     public let loadingVM: MyLoadingViewModel = .init(text: "加载中")
     private var lastSearchResponse: ModrinthAPIClient.SearchResponse?
     
@@ -20,7 +20,7 @@ class ResourcesSearchViewModel: ObservableObject {
         return Int(ceil(Double(lastSearchResponse.totalHits) / Double(lastSearchResponse.limit)))
     }
     
-    public init(type: ProjectType) {
+    public init(type: ResourceType) {
         self.type = type
     }
     

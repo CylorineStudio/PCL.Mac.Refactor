@@ -67,6 +67,11 @@ struct AboutPage: View {
                         sourceURL: "https://github.com/EasyTier/EasyTier",
                         licenseURL: "https://github.com/EasyTier/EasyTier/blob/main/LICENSE"
                     )
+                    LicenseListItem(
+                        "TOMLDecoder", "Copyright (c) 2019 TOMLDecoder contributors\nLicensed under the MIT License.",
+                        sourceURL: "https://github.com/dduan/TOMLDecoder",
+                        licenseURL: "https://github.com/dduan/TOMLDecoder/blob/main/LICENSE"
+                    )
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)

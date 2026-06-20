@@ -32,12 +32,7 @@ struct MyListItem<Content: View>: View {
                     }
                     HStack {
                         if let image = model.image {
-                            Group {
-                                switch image {
-                                case .resource(let imageResource): Image(imageResource).resizable()
-                                case .nsImage(let nsImage): Image(nsImage: nsImage).resizable()
-                                }
-                            }
+                            image.makeView()
                             .scaledToFit()
                             .frame(width: model.imageSize, height: model.imageSize)
                             .foregroundStyle(Color.color1)
@@ -66,6 +61,7 @@ struct MyListItem<Content: View>: View {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(hovered ? Color.color2.opacity(0.1) : .clear)
                     .scaleEffect(backgroundScale)
+                    .allowsHitTesting(false)
             }
             .onHover { hovered in
                 withAnimation(.spring(response: 0.2)) {
@@ -77,6 +73,39 @@ struct MyListItem<Content: View>: View {
                     }
                 }
             }
+    }
+}
+
+struct ListItemButton: View {
+    @State private var pressed: Bool = false
+    private let icon: ListItem.Image
+    private let scale: Double
+    private let clickPerform: () -> Void
+    
+    init(_ icon: ListItem.Image, scale: Double = 1.0, clickPerform: @escaping () -> Void) {
+        self.icon = icon
+        self.scale = scale
+        self.clickPerform = clickPerform
+    }
+    
+    var body: some View {
+        icon.makeView()
+            .scaledToFit()
+            .frame(height: 16)
+            .foregroundStyle(Color.color3)
+            .contentShape(.rect)
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        pressed = true
+                    }
+                    .onEnded { _ in
+                        clickPerform()
+                        pressed = false
+                    }
+            )
+            .scaleEffect((pressed ? 0.8 : 1.0) * scale)
+            .animation(.spring(response: 0.2), value: pressed)
     }
 }
 

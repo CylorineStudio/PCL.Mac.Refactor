@@ -64,7 +64,7 @@ struct PaginatedContainer<Content: View>: View {
                             currentPage += 1
                         }
                     }
-                    .opacity(currentPage == pageCount - 1 ? 0.2 : 1)
+                    .opacity(currentPage >= pageCount - 1 ? 0.2 : 1)
                 }
                 .foregroundStyle(Color.colorGray2)
                 .frame(height: 23)

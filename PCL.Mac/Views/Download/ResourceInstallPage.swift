@@ -22,6 +22,14 @@ struct ResourceInstallPage: View {
         CardContainer {
             MyCard(nil) {
                 ProjectListItemView(project: viewModel.project)
+                HStack {
+                    MyButton("Modrinth", type: .highlight) {
+                        NSWorkspace.shared.open(URL(string: "https://modrinth.com/project/\(viewModel.project.id)")!)
+                    }
+                    .frame(width: 120)
+                    Spacer(minLength: 0)
+                }
+                .frame(height: 35)
             }
             if viewModel.loaded, let versionList = viewModel.versionList {
                 if currentPage == 0, let selectedVersionGroup = viewModel.selectedVersionGroup {

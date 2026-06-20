@@ -74,7 +74,7 @@ extension Account {
     }
 }
 
-extension ProjectType: Localizable {
+extension ResourceType: Localizable {
     var localizedName: String {
         switch self {
         case .mod: "模组"

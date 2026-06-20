@@ -106,6 +106,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         if !shouldInit { return }
         log("App 启动完成")
+        ResourceCache.shared = .init(cacheDirectory: URLConstants.cacheURL)
+        
         let instanceManager = InstanceManager(
             repositories: LauncherConfig.shared.minecraftRepositories.reduce(into: [:], { $0[$1.id] = $1 }),
             currentRepositoryId: LauncherConfig.shared.currentRepositoryId
@@ -161,6 +163,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationWillTerminate(_ notification: Notification) {
+        executeTask("保存资源缓存") {
+            try ResourceCache.shared.save()
+        }
         executeTask("保存当前仓库") {
             try self.instanceManager.currentRepository.saveAllInstances()
         }

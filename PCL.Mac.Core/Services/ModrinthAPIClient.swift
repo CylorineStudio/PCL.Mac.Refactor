@@ -18,14 +18,14 @@ public class ModrinthAPIClient {
     
     /// 搜索 Modrinth 项目。
     /// - Parameters:
-    ///   - type: 项目类型（`ProjectType`）。
+    ///   - type: 项目类型（`ResourceType`）。
     ///   - query: 搜索关键词。
     ///   - gameVersion: 过滤游戏版本。
     ///   - pageIndex: 页码，从 0 开始。
     ///   - limit: 返回结果数量上限。
     /// - Returns: 包含搜索结果和分页信息的 `SearchResponse`。
     public func search(
-        type: ProjectType,
+        type: ResourceType,
         _ query: String?,
         forVersion gameVersion: String?,
         pageIndex: Int = 0,
@@ -56,6 +56,20 @@ public class ModrinthAPIClient {
     /// - Returns: 对应的 `ModrinthProject`。
     public func project(_ slug: String, revalidate: Bool = false) async throws -> ModrinthProject {
         return try await Requests.get(apiRoot.appending(path: "/v2/project/\(slug)"), revalidate: revalidate).decode(ModrinthProject.self)
+    }
+    
+    /// 批量获取指定 id 或 slug 对应的 `ModrinthProject`
+    /// - Parameters:
+    ///   - slugs: id 或 slug 列表。
+    ///   - revalidate: 是否验证本地缓存有效性。
+    /// - Returns: 对应的 `[ModrinthProject]`，长度可能与 `slugs` 不一致。
+    public func projects(_ slugs: [String], revalidate: Bool = false) async throws -> [ModrinthProject] {
+        let idsString = String(data: try JSONSerialization.data(withJSONObject: slugs), encoding: .utf8)!
+        return try await Requests.get(
+            apiRoot.appending(path: "/v2/projects"),
+            params: ["ids": idsString],
+            revalidate: revalidate
+        ).decode([ModrinthProject].self)
     }
     
     /// 获取指定 project 的所有 `ModrinthVersion`。

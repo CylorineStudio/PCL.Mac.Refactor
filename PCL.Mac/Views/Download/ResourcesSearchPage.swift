@@ -12,7 +12,7 @@ struct ResourcesSearchPage: View {
     @StateObject private var viewModel: ResourcesSearchViewModel
     @State private var currentPage: Int = 0
     
-    init(type: ProjectType) {
+    init(type: ResourceType) {
         self._viewModel = StateObject(wrappedValue: .init(type: type))
     }
     
@@ -97,7 +97,9 @@ struct ProjectListItemView: View {
                     if let iconURL: URL = project.iconURL {
                         NetworkImage(url: iconURL)
                     } else {
-                        Color.clear
+                        Image(.iconModLogo)
+                            .resizable()
+                            .scaledToFit()
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 6))

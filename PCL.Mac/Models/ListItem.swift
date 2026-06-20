@@ -25,7 +25,19 @@ struct ListItem {
     }
     
     enum Image {
+        case system(String)
         case resource(ImageResource)
         case nsImage(NSImage)
+        case network(URL)
+        
+        @ViewBuilder
+        func makeView() -> some View {
+            switch self {
+            case .system(let name): SwiftUI.Image(systemName: name).resizable()
+            case .resource(let imageResource): SwiftUI.Image(imageResource).resizable()
+            case .nsImage(let nsImage): SwiftUI.Image(nsImage: nsImage).resizable().interpolation(.none)
+            case .network(let url): NetworkImage(url: url)
+            }
+        }
     }
 }
