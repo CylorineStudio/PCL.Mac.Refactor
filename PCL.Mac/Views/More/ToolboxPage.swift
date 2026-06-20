@@ -10,6 +10,9 @@ import Core
 
 struct ToolboxPage: View {
     @StateObject private var viewModel: ToolboxViewModel = .init()
+    @State private var downloadURL: String = ""
+    @State private var savePath: String = ""
+    @State private var fileName: String = ""
     
     var body: some View {
         CardContainer {
@@ -62,6 +65,59 @@ struct ToolboxPage: View {
                     hint("加载回声洞消息列表失败：\(error.localizedDescription)", type: .critical)
                 }
             }
+            MyCard("下载自定义文件", foldable: false) {
+                MyText("使用 PCL 的多线程下载引擎下载任意文件。请注意，部分网站（例如百度网盘）可能会报错（403）已禁止，无法正常下载。")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 10) {
+                    MyText("下载链接")
+                    MyTextField(text: $downloadURL, placeholder: "输入文件直链地址")
+                        .onChange(of: downloadURL) { newValue in
+                            fileName = ""
+                            if let lastComponent = newValue.split(separator: "/").last,
+                               !lastComponent.isEmpty {
+                                fileName = String(lastComponent)
+                            }
+                        }
+                }
+                .padding(.top, 8)
+                HStack(spacing: 10) {
+                    MyText("保存到")
+                        .frame(width: 56, alignment: .leading)
+                    MyTextField(text: $savePath, placeholder: "文件保存路径")
+                    MyButton("选择") {
+                        selectSavePath()
+                    }
+                    .frame(width: 60)
+                }
+                .padding(.top, 8)
+                HStack(spacing: 10) {
+                    MyText("文件名")
+                        .frame(width: 56, alignment: .leading)
+                    MyTextField(text: $fileName, placeholder: "文件下载之后的名字(包含后缀)")
+                }
+                .padding(.top, 8)
+                HStack(spacing: 20) {
+                    MyButton("开始下载", disabled: downloadURL.isEmpty || savePath.isEmpty || fileName.isEmpty) {}
+                        .frame(width: 160)
+                    MyButton("打开文件夹", disabled: savePath.isEmpty) {}
+                        .frame(width: 160)
+                }
+                .frame(height: 50)
+            }
+        }
+    }
+    
+    private func selectSavePath() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "选择保存位置"
+        panel.message = "选择文件下载后保存的文件夹"
+        let response = panel.runModal()
+        if response == .OK, let url = panel.url {
+            savePath =  url.path
         }
     }
 }

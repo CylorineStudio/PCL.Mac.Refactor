@@ -43,6 +43,12 @@ struct LaunchPage: View {
                         MyButton("红色按钮", subLabel: "但是两行文本", type: .red) {}
                     }
                     .frame(height: 60)
+                    HStack {
+                        MyButton("普通按钮", subLabel: "但是不可点击", disabled: true) {}
+                        MyButton("高亮按钮", subLabel: "但是不可点击", type: .highlight, disabled: true) {}
+                        MyButton("红色按钮", subLabel: "但是不可点击", type: .red, disabled: true) {}
+                    }
+                    .frame(height: 60)
                     MyList(items: listItems, selectable: true)
                 }
             }

@@ -1,7 +1,4 @@
-# macOS
+._*
 .DS_Store
-_MACOSX
-
-# Xcode
-PCL.Mac.xcodeproj/xcuserdata
-PCL.Mac.xcodeproj/project.xcworkspace/xcuserdata
+xcuserdata/
+*.xcuserstate

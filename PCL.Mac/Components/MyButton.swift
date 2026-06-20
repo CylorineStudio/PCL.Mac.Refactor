@@ -14,15 +14,17 @@ struct MyButton: View {
     private let subLabel: String?
     private let textPadding: EdgeInsets
     private let type: `Type`
+    private let disabled: Bool
     private let action: () -> Void
     
     private var color: Color { hovered ? type.hoverColor : type.color }
     
-    init(_ label: String, subLabel: String? = nil, textPadding: EdgeInsets = .init(), type: `Type` = .normal, _ action: @escaping () -> Void) {
+    init(_ label: String, subLabel: String? = nil, textPadding: EdgeInsets = .init(), type: `Type` = .normal, disabled: Bool = false, _ action: @escaping () -> Void) {
         self.label = label
         self.subLabel = subLabel
         self.textPadding = textPadding
         self.type = type
+        self.disabled = disabled
         self.action = action
     }
     
@@ -47,6 +49,8 @@ struct MyButton: View {
         .animation(.easeInOut(duration: 0.2), value: hovered)
         .animation(.easeInOut(duration: 0.2), value: isPressed)
         .contentShape(RoundedRectangle(cornerRadius: 4))
+        .allowsHitTesting(!disabled)
+        .opacity(disabled ? 0.5 : 1.0)
         .onHover { hovered = $0 }
         .gesture(
             DragGesture(minimumDistance: 0)
