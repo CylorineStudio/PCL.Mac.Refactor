@@ -32,6 +32,9 @@
 "category.modrinth.fantasy" = "幻想风";
 "category.modrinth.realistic" = "写实风";
 "category.modrinth.semi-realistic" = "半写实风";
+"category.modrinth.vanilla" = "原版可用";
+"category.modrinth.iris" = "Iris";
+"category.modrinth.optifine" = "OptiFine";
 
 // features
 "category.modrinth.audio" = "含声音";

@@ -22,6 +22,7 @@ struct MyTag: View {
     
     var body: some View {
         MyText(label, size: size, color: labelColor)
+            .lineLimit(1)
             .padding(2)
             .background {
                 RoundedRectangle(cornerRadius: 5)
