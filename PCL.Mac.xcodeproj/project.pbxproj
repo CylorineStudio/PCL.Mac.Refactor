@@ -317,7 +317,6 @@
 			knownRegions = (
 				Base,
 				"zh-Hans",
-				en,
 			);
 			mainGroup = ECC26BBA2EBEDD67002B7E3E;
 			minimizedProjectReferenceProxies = 1;
@@ -666,7 +665,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "org.ceciliastudio.PCL-Mac";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -697,7 +696,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "org.ceciliastudio.PCL-Mac";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
