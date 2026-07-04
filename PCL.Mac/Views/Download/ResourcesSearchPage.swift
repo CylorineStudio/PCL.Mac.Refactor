@@ -85,11 +85,11 @@ struct ResourcesSearchPage: View {
 
 struct ProjectListItemView: View {
     private let project: ProjectListItemModel
-    private let primary: Bool
+    private let isTagRowSeparated: Bool
     
     init(project: ProjectListItemModel, primary: Bool = false) {
         self.project = project
-        self.primary = primary
+        self.isTagRowSeparated = primary && project.tags.count > 3
     }
     
     var body: some View {
@@ -112,7 +112,7 @@ struct ProjectListItemView: View {
                     MyText(project.title, size: 16)
                         .lineLimit(1)
                     
-                    if primary {
+                    if isTagRowSeparated {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack {
                                 ForEach(project.tags, id: \.self) { tag in

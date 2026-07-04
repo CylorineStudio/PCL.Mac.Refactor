@@ -2,7 +2,6 @@
   "sourceLanguage" : "zh-Hans",
   "strings" : {
     "category.modrinth.8x-" : {
-      "comment" : "resolutions",
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
@@ -91,7 +90,6 @@
       }
     },
     "category.modrinth.adventure" : {
-      "comment" : "categories",
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
@@ -114,7 +112,6 @@
       }
     },
     "category.modrinth.audio" : {
-      "comment" : "features",
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
@@ -544,7 +541,6 @@
       }
     },
     "category.modrinth.potato" : {
-      "comment" : "performance impact",
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
