@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Core
 
 struct TitleBarView: View {
     @ObservedObject private var router: AppRouter = .shared
@@ -30,7 +31,10 @@ struct TitleBarView: View {
                             .foregroundStyle(.white)
                             .frame(height: 19)
                         MyTag("Mac", labelColor: .color2)
-                        MyTag("Dev", backgroundColor: Color(0x9BF00B))
+                        
+                        if Metadata.debugMode {
+                            MyTag("Debug", backgroundColor: Color(0x9BF00B))
+                        }
                     }
                     HStack {
                         Spacer()
