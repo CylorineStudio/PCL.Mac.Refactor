@@ -10,9 +10,11 @@ import SwiftyJSON
 
 /// https://zh.minecraft.wiki/w/Version_manifest.json#JSON格式
 public struct VersionManifest: Decodable, Equatable {
+    public static var shared: VersionManifest?
     public let latestRelease: String
     public let latestSnapshot: String?
     public let versions: [Version]
+    private let versionMap: [String: Version]
     
     private enum CodingKeys: String, CodingKey {
         case latest, versions
@@ -24,6 +26,7 @@ public struct VersionManifest: Decodable, Equatable {
         self.latestRelease = latest.release
         self.latestSnapshot = latest.release == latest.snapshot ? nil : latest.snapshot
         self.versions = try container.decode([Version].self, forKey: .versions)
+        self.versionMap = versions.reduce(into: [:]) { $0[$1.id] = $1 }
     }
     
     public struct Version: Decodable, Hashable {
@@ -67,7 +70,7 @@ public struct VersionManifest: Decodable, Equatable {
             
             if let calendar {
                 let components: DateComponents = calendar.dateComponents([.month, .day], from: releaseTime)
-                if let month: Int = components.month, let day: Int = components.day {
+                if let month = components.month, let day = components.day {
                     return month == 4 && day == 1
                 }
             }
@@ -79,24 +82,38 @@ public struct VersionManifest: Decodable, Equatable {
         }
     }
     
-    /// 根据版本号获取在 `versions` 中的顺序（版本号越大，返回值越小）。
-    /// - Parameter id: 版本号。
-    /// - Returns: 在 `versions` 中的顺序。
-    public func ordinal(of id: String) -> Int {
-        return versions.firstIndex(where: { $0.id == id }) ?? -1
-    }
-    
     /// 获取版本号对应的 `Version` 对象。
     /// - Parameter id: 版本号。
     /// - Returns: `Version` 对象。
-    public func version(for id: String) -> Version? {
-        return versions.first(where: { $0.id == id })
-    }
+    public func version(for id: String) -> Version? { versionMap[id] }
+    
+    /// 获取版本清单中是否包含带有指定 `id` 的版本。
+    public func contains(_ id: String) -> Bool { versionMap[id] != nil }
     
     // MARK: - Decodables
     
     private struct Latest: Decodable {
         public let release: String
         public let snapshot: String
+    }
+}
+
+public extension VersionManifest {
+    @discardableResult
+    static func load(revalidate: Bool = false) async throws -> VersionManifest {
+        let cacheURL = URLConstants.cacheURL.appending(path: "version_manifest.json")
+        let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", revalidate: revalidate)
+        
+        let manifest = try response.decode(VersionManifest.self)
+        if Self.shared == nil || Self.shared != manifest {
+            log("刷新版本清单成功")
+            Self.shared = manifest
+            do {
+                try response.data.write(to: cacheURL)
+            } catch {
+                err("保存版本列表缓存失败：\(error.localizedDescription)")
+            }
+        }
+        return manifest
     }
 }

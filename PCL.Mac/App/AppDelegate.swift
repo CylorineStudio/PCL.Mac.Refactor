@@ -63,6 +63,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         LogManager.shared.enableLogging()
         log("正在启动 PCL.Mac.Refactor \(Metadata.appVersion)")
+        
+        debug("系统信息：macOS \(ProcessInfo.processInfo.operatingSystemVersionString) \(Architecture.systemArchitecture())")
+        
         _ = Secrets.shared
         
         executeTask("开启 SwiftScaffolding 日志", silent: true) {
@@ -73,20 +76,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 try FileManager.default.removeItem(at: url)
             }
         }
-        executeTask("从缓存中加载版本列表") {
-            let cacheURL: URL = URLConstants.cacheURL.appending(path: "version_manifest.json")
+        
+        do {
+            let cacheURL = URLConstants.cacheURL.appending(path: "version_manifest.json")
             if FileManager.default.fileExists(atPath: cacheURL.path) {
-                let cachedData: Data = try .init(contentsOf: URLConstants.cacheURL.appending(path: "version_manifest.json"))
-                let manifest: VersionManifest = try JSONDecoder.shared.decode(VersionManifest.self, from: cachedData)
-                CoreState.versionManifest = manifest
-            } else {
-                self.executeAsyncTask("拉取版本列表") {
-                    let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
-                    let manifest: VersionManifest = try response.decode(VersionManifest.self)
-                    CoreState.versionManifest = manifest
-                    try response.data.write(to: cacheURL)
+                executeTask("从缓存中加载版本列表") {
+                    let cachedData = try Data(contentsOf: URLConstants.cacheURL.appending(path: "version_manifest.json"))
+                    let manifest = try JSONDecoder.shared.decode(VersionManifest.self, from: cachedData)
+                    VersionManifest.shared = manifest
                 }
             }
+        }
+        executeAsyncTask("拉取最新版本列表") {
+            try await VersionManifest.load(revalidate: true)
         }
         
         if shouldInit {

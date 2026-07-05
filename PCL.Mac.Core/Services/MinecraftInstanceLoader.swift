@@ -18,7 +18,7 @@ public enum MinecraftInstanceLoader {
     /// - Parameter runningDirectory: 实例运行目录。
     /// - Returns: `MinecraftInstance` 结构体。
     /// - Throws: `MinecraftInstanceLoader.LoadError`
-    public static func load(from runningDirectory: URL) throws(LoadError) -> MinecraftInstance {
+    public static func load(from runningDirectory: URL) async throws(LoadError) -> MinecraftInstance {
         if FileManager.default.fileExists(atPath: runningDirectory.appending(path: ".incomplete").path) {
             throw .incomplete
         }
@@ -56,7 +56,14 @@ public enum MinecraftInstanceLoader {
             throw .failedToLoadManifest(underlying: error)
         }
         
-        let version: MinecraftVersion? = metadata?.version ?? detectVersion(runningDirectory: runningDirectory, manifest: manifest)
+        let version: MinecraftVersion?
+        if let metaVersion = metadata?.version, VersionManifest.shared?.contains(metaVersion.id) ?? true {
+            version = metaVersion
+        } else if VersionManifest.shared?.contains(id) ?? true {
+            version = .init(id)
+        } else {
+            version = await detectVersion(runningDirectory: runningDirectory, manifest: manifest)
+        }
         if version == nil {
             warn("获取实例版本失败")
         }
@@ -70,10 +77,8 @@ public enum MinecraftInstanceLoader {
             config = .default
         }
         
-        if metadata == nil {
-            try? JSONEncoder.shared.encode(InstanceMetadata(uuid: uuid, version: version))
-                .write(to: metadataURL)
-        }
+        try? JSONEncoder.shared.encode(InstanceMetadata(uuid: uuid, version: version))
+            .write(to: metadataURL)
         
         return .init(
             id: uuid,
@@ -146,22 +151,31 @@ public enum MinecraftInstanceLoader {
         }
     }
     
-    private static func detectVersion(runningDirectory: URL, manifest: ClientManifest) -> MinecraftVersion? {
+    private static func detectVersion(runningDirectory: URL, manifest: ClientManifest) async -> MinecraftVersion? {
         if let clVersion = manifest.version {
             return .init(clVersion)
         }
         
         let id = runningDirectory.lastPathComponent
-        do {
-            let jarURL = runningDirectory.appending(path: "\(id).jar")
-            guard FileManager.default.fileExists(atPath: jarURL.path) else { return nil }
+        let jarURL = runningDirectory.appending(path: "\(id).jar")
+        if FileManager.default.fileExists(atPath: jarURL.path) {
+            do {
+                let archive = try Archive(url: jarURL, accessMode: .read)
+                if let entry = archive["version.json"] {
+                    let data = try archive.extract(entry)
+                    let versionInfo = try JSON(data: data)
+                    return .init(versionInfo["id"].stringValue)
+                }
+            } catch {}
             
-            let archive = try Archive(url: jarURL, accessMode: .read)
-            guard let entry = archive["version.json"] else { return nil }
-            let data = try archive.extract(entry)
-            let versionInfo = try JSON(data: data)
-            return .init(versionInfo["id"].stringValue)
-        } catch { return nil }
+            do {
+                let sha1 = try FileUtils.sha1(of: jarURL)
+                let lookupResult = try await Requests.get("https://cylorine.studio/meta/mc/version_lookup/sha1/\(sha1)").json()
+                return .init(lookupResult["version"].stringValue)
+            } catch {}
+        }
+        
+        return nil
     }
     
     private static func detectModLoader(runningDirectory: URL) -> ModLoader? {

@@ -164,7 +164,7 @@ public class MinecraftRepository: ObservableObject, Codable, Identifiable, Hasha
         return await withTaskGroup { group in
             for instanceDirectory in instanceDirectories {
                 group.addTask {
-                    return self.loadInstance(at: instanceDirectory)
+                    return await self.loadInstance(at: instanceDirectory)
                 }
             }
             
@@ -185,11 +185,11 @@ public class MinecraftRepository: ObservableObject, Codable, Identifiable, Hasha
         }
     }
     
-    private func loadInstance(at url: URL) -> InstanceLoadResult {
+    private func loadInstance(at url: URL) async -> InstanceLoadResult {
         let name = url.lastPathComponent
         log("正在加载实例 \(name)")
         do {
-            let instance = try MinecraftInstanceLoader.load(from: url)
+            let instance = try await MinecraftInstanceLoader.load(from: url)
             return .success(instance)
         } catch .incomplete {
             log("实例未完成安装，正在尝试自动删除")

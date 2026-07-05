@@ -64,7 +64,7 @@ class ResourceDisplayModel: ObservableObject, Hashable, Equatable {
             name: mod.name,
             version: mod.version,
             description: (mod.description ?? "").replacingOccurrences(of: "\n", with: "\\n"),
-            tags: mod.tags.map(ProjectListItemModel.localizeTag(_:)),
+            tags: mod.tags.compactMap(ProjectListItemModel.localizeTag(_:)),
             icon: icon,
             sources: mod.sources,
             url: url,

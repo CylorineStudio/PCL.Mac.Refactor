@@ -85,9 +85,11 @@ struct ResourcesSearchPage: View {
 
 struct ProjectListItemView: View {
     private let project: ProjectListItemModel
+    private let isTagRowSeparated: Bool
     
-    init(project: ProjectListItemModel) {
+    init(project: ProjectListItemModel, primary: Bool = false) {
         self.project = project
+        self.isTagRowSeparated = primary && project.tags.count > 3
     }
     
     var body: some View {
@@ -109,12 +111,25 @@ struct ProjectListItemView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     MyText(project.title, size: 16)
                         .lineLimit(1)
-                    HStack {
-                        ForEach(project.tags, id: \.self) { tag in
-                            MyTag(tag, labelColor: .colorGray2, backgroundColor: .init(0x000000, alpha: 17 / 255), size: 12)
+                    
+                    if isTagRowSeparated {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack {
+                                ForEach(project.tags, id: \.self) { tag in
+                                    MyTag(tag, labelColor: .colorGray2, backgroundColor: .init(0x000000, alpha: 17 / 255), size: 12)
+                                }
+                            }
                         }
+                        
                         MyText(project.description, color: .colorGray3)
-                            .lineLimit(1)
+                    } else {
+                        HStack {
+                            ForEach(project.tags.prefix(3), id: \.self) { tag in
+                                MyTag(tag, labelColor: .colorGray2, backgroundColor: .init(0x000000, alpha: 17 / 255), size: 12)
+                            }
+                            MyText(project.description, color: .colorGray3)
+                                .lineLimit(1)
+                        }
                     }
                     
                     HStack {

@@ -9,17 +9,14 @@ import Foundation
 
 public class MinecraftVersion: Codable, Comparable, Equatable, Hashable, CustomStringConvertible {
     public let id: String
-    public let index: Int
     
     public init(_ id: String) {
         self.id = id
-        self.index = CoreState.versionManifest?.ordinal(of: id) ?? .max
     }
     
     public required init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         self.id = try container.decode(String.self)
-        self.index = CoreState.versionManifest?.ordinal(of: id) ?? .max
     }
     
     public func encode(to encoder: any Encoder) throws {
@@ -36,7 +33,11 @@ public class MinecraftVersion: Codable, Comparable, Equatable, Hashable, CustomS
     }
     
     public static func < (lhs: MinecraftVersion, rhs: MinecraftVersion) -> Bool {
-        return lhs.index > rhs.index
+        let manifest = VersionManifest.shared
+        if let lVersion = manifest?.version(for: lhs.id), let rVersion = manifest?.version(for: rhs.id) {
+            return lVersion.releaseTime < rVersion.releaseTime
+        }
+        return lhs.id.compare(rhs.id, options: .numeric) == .orderedAscending
     }
     
     public lazy var description: String = { id }()

@@ -39,8 +39,8 @@ public enum MinecraftInstallTask {
                 FileManager.default.createFile(atPath: model.runningDirectory.appending(path: ".incomplete").path, contents: nil)
             },
             .init(0, "下载客户端 JSON 文件") { task, model in
-                guard let versionManifest = CoreState.versionManifest else {
-                    err("CoreState.versionManifest 为空")
+                guard let versionManifest = VersionManifest.shared else {
+                    err("VersionManifest.shared 为空")
                     throw TaskError.unknownError
                 }
                 let manifest: ClientManifest = try await downloadClientManifest(

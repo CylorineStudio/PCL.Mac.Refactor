@@ -21,7 +21,7 @@ struct ResourceInstallPage: View {
     var body: some View {
         CardContainer {
             MyCard(nil) {
-                ProjectListItemView(project: viewModel.project)
+                ProjectListItemView(project: viewModel.project, primary: true)
                 HStack {
                     MyButton("Modrinth", type: .highlight) {
                         NSWorkspace.shared.open(URL(string: "https://modrinth.com/project/\(viewModel.project.id)")!)

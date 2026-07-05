@@ -8,6 +8,7 @@
 import SwiftUI
 import Core
 
+@MainActor
 class MinecraftDownloadPageViewModel: ObservableObject {
     @Published public var loaded: Bool = false
     @Published public var latestRelease: VersionManifest.Version?
@@ -15,31 +16,18 @@ class MinecraftDownloadPageViewModel: ObservableObject {
     @Published public var versionMap: [MinecraftVersion.VersionType: [VersionManifest.Version]] = [:]
     @Published public var errorMessage: String?
     
+    init() {
+        if let manifest = VersionManifest.shared {
+            updateVersionMap(from: manifest)
+        } else {
+            reload()
+        }
+    }
+    
     @discardableResult
     public func load(revalidate: Bool = false) async throws -> VersionManifest {
-        let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", revalidate: revalidate)
-        let manifest: VersionManifest = try response.decode(VersionManifest.self)
-        let changed: Bool = CoreState.versionManifest != manifest
-        CoreState.versionManifest = manifest
-        
-        await MainActor.run {
-            latestRelease = manifest.version(for: manifest.latestRelease)
-            if let latestSnapshot = manifest.latestSnapshot {
-                self.latestSnapshot = manifest.version(for: latestSnapshot)
-            }
-            versionMap[.release] = manifest.versions.filter { $0.type == .release }
-            versionMap[.snapshot] = manifest.versions.filter { $0.type == .snapshot }
-            versionMap[.aprilFool] = manifest.versions.filter { $0.type == .aprilFool }
-            versionMap[.old] = manifest.versions.filter { $0.type == .old }
-            loaded = true
-        }
-        if changed {
-            do {
-                try response.data.write(to: URLConstants.cacheURL.appending(path: "version_manifest.json"))
-            } catch {
-                err("保存版本列表缓存失败：\(error.localizedDescription)")
-            }
-        }
+        let manifest = try await VersionManifest.load(revalidate: revalidate)
+        updateVersionMap(from: manifest)
         return manifest
     }
     
@@ -79,5 +67,16 @@ class MinecraftDownloadPageViewModel: ObservableObject {
         case "26w14a": "2026 | 为什么需要物品栏？让方块们跟着你走吧！"
         default: "20?? | ???（当前版本的启动器中没有这个游戏版本的描述……）"
         }
+    }
+    
+    
+    private func updateVersionMap(from manifest: VersionManifest) {
+        latestRelease = manifest.version(for: manifest.latestRelease)
+        latestSnapshot = manifest.latestSnapshot.flatMap { manifest.version(for: $0) }
+        versionMap[.release] = manifest.versions.filter { $0.type == .release }
+        versionMap[.snapshot] = manifest.versions.filter { $0.type == .snapshot }
+        versionMap[.aprilFool] = manifest.versions.filter { $0.type == .aprilFool }
+        versionMap[.old] = manifest.versions.filter { $0.type == .old }
+        loaded = true
     }
 }

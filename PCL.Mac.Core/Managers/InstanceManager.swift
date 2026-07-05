@@ -95,6 +95,13 @@ public class InstanceManager: ObservableObject {
         repository.errorInstances = nil
         let task = Task.detached {
             do {
+                if VersionManifest.shared == nil {
+                    try await VersionManifest.load()
+                }
+            } catch {
+                err("加载版本清单失败：\(error)")
+            }
+            do {
                 try await repository.load()
                 await completion?(.success(()))
             } catch let error where error.isCancellationError {
