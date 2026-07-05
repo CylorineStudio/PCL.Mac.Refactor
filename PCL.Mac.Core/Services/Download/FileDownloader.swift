@@ -29,9 +29,7 @@ public class FileDownloader {
         checkDestination: Bool = true
     ) async throws {
         if checkDestination && FileManager.default.fileExists(atPath: file.destination.path) {
-            if file.checksums == nil {
-                try FileManager.default.removeItem(at: file.destination)
-            } else if try FileUtils.check(file) {
+            if try FileUtils.check(file) {
                 debug("文件 \(file.destination.lastPathComponent) 已存在且校验通过，跳过下载")
                 await progressHandler?(1)
                 return
@@ -97,7 +95,7 @@ public class FileDownloader {
         
         for file in files {
             if FileManager.default.fileExists(atPath: file.destination.path) {
-                if file.checksums != nil, try FileUtils.check(file) {
+                if try FileUtils.check(file) {
                     skipped += 1
                     continue
                 }
