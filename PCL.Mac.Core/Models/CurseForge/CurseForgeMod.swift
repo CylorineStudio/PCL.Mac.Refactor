@@ -28,11 +28,19 @@ public struct CurseForgeMod: Codable {
 public struct CurseForgeModAsset: Codable {
     public let id: Int32
     public let title: String
-    public let url: URL
-    public let thumbnailURL: URL
+    public let url: URL?
+    public let thumbnailURL: URL?
     
     private enum CodingKeys: String, CodingKey {
         case id, title, url, thumbnailURL = "thumbnailUrl"
+    }
+    
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(Int32.self, forKey: .id)
+        self.title = try container.decode(String.self, forKey: .title)
+        self.url = try? container.decode(URL.self, forKey: .url)
+        self.thumbnailURL = try? container.decode(URL.self, forKey: .thumbnailURL)
     }
 }
 

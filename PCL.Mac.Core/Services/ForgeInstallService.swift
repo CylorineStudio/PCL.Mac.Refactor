@@ -51,8 +51,8 @@ public class ForgeInstallService {
     /// 下载安装器及其所需文件。
     /// - Parameter progressHandler: 进度回调。
     public func downloadFiles(progressHandler: @MainActor @escaping (Double) -> Void) async throws {
-        let progressHandler: ConcurrentProgressHandler = .init(totalHandler: progressHandler)
-        progressHandler.startCalculate()
+        let progressHandler: ConcurrentProgressHandler = await .init(totalHandler: progressHandler)
+        await progressHandler.startCalculate()
         guard try await downloadInstaller(progressHandler: progressHandler.handler(withMultiplier: 0.3)) else {
             await progressHandler.stopCalculate()
             return
@@ -92,7 +92,7 @@ public class ForgeInstallService {
     /// - Returns: 是否是新版本安装器，且需要继续执行后续步骤。
     private func downloadInstaller(progressHandler: @MainActor @escaping (Double) -> Void) async throws -> Bool {
         let destination: URL = tempDirectory.appending(path: "installer.jar")
-        try await SingleFileDownloader.download(url: installerDownloadURL(), destination: destination, sha1: nil, replaceMethod: .skip, progressHandler: progressHandler)
+        try await FileDownloader.shared.download(url: installerDownloadURL(), destination: destination, progressHandler: progressHandler)
         _ = try FileManager.default.unzipItem(at: destination, to: installerURL)
         
         // 处理客户端清单
@@ -195,7 +195,7 @@ public class ForgeInstallService {
     private func downloadInstallerDependencies(progressHandler: @MainActor @escaping (Double) -> Void) async throws {
         let libraries: [ForgeInstallProfile.Library] = installProfile.libraries
         let downloadItems: [DownloadItem] = libraries.compactMap { $0.artifact.downloadItem(destinationDirectory: librariesURL) }
-        try await MultiFileDownloader(items: downloadItems, concurrentLimit: 64, replaceMethod: .replace, progressHandler: progressHandler).start()
+        try await FileDownloader.shared.download(files: downloadItems, progressHandler: progressHandler)
     }
     
     private func parseMavenCoord(coord: String) -> String {
@@ -205,7 +205,7 @@ public class ForgeInstallService {
     private func executeProcessor(_ processor: ForgeInstallProfile.Processor) throws {
         let classpath: String = (processor.classpath + [processor.jar]).map(parseMavenCoord(coord:)).joined(separator: ":")
         let mainClass: String = try JarUtils.mainClass(of: librariesURL.appending(path: MavenCoordinateUtils.path(of: processor.jar)))
-        let arguments: [String] = ["-cp", classpath, mainClass] + processor.args.map { $0.replacingPlaceholders(with: values, dollarPrefix: false) }
+        let arguments: [String] = ["-cp", classpath, mainClass] + processor.args.map { parseValue($0).replacingPlaceholders(with: values, dollarPrefix: false) }
         let process: Process = .init()
         process.arguments = arguments
         process.executableURL = URL(fileURLWithPath: "/usr/bin/java")
@@ -220,6 +220,6 @@ public class ForgeInstallService {
         guard let url: URL = manifest.downloads.clientMappings?.url else {
             throw SimpleError("下载混淆表失败：未找到混淆表下载项。")
         }
-        try await SingleFileDownloader.download(url: url, destination: destination, sha1: nil, replaceMethod: .skip)
+        try await FileDownloader.shared.download(url: url, destination: destination)
     }
 }

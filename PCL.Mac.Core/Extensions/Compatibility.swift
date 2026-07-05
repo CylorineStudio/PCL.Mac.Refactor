@@ -17,7 +17,7 @@ public extension Task where Success == Never, Failure == Never {
 
 public extension URL {
     func appending(path: String) -> URL {
-        var url: URL = self
+        var url = self
         for component in path.split(separator: "/") {
             url = url.appendingPathComponent(String(component))
         }

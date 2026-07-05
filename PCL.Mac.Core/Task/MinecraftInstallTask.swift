@@ -186,8 +186,8 @@ public enum MinecraftInstallTask {
         repository: MinecraftRepository,
         progressHandler: @MainActor @escaping (Double) -> Void
     ) async throws {
-        let progressHandler: ConcurrentProgressHandler = .init(totalHandler: progressHandler)
-        progressHandler.startCalculate(interval: 0.1)
+        let progressHandler: ConcurrentProgressHandler = await .init(totalHandler: progressHandler)
+        await progressHandler.startCalculate(interval: 0.1)
         
         if let downloads = manifest.downloads {
             try await downloadClient(
@@ -237,12 +237,9 @@ public enum MinecraftInstallTask {
         }
         
         let destination: URL = runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).json")
-        try await SingleFileDownloader.download(
+        try await FileDownloader.shared.download(
             url: version.url,
-            destination: destination,
-            checksums: nil,
-            replaceMethod: .skip,
-            progressHandler: progressHandler
+            destination: destination
         )
         return try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: destination))
     }
@@ -254,11 +251,10 @@ public enum MinecraftInstallTask {
     ) async throws -> AssetIndex {
         let destination: URL = repository.assetsDirectory
             .appending(path: "indexes/\(assetIndex.id).json")
-        try await SingleFileDownloader.download(
+        try await FileDownloader.shared.download(
             url: assetIndex.url,
             destination: destination,
             sha1: assetIndex.sha1,
-            replaceMethod: .skip,
             progressHandler: progressHandler
         )
         return try JSONDecoder.shared.decode(AssetIndex.self, from: Data(contentsOf: destination))
@@ -269,11 +265,10 @@ public enum MinecraftInstallTask {
         runningDirectory: URL,
         progressHandler: @MainActor @escaping (Double) -> Void
     ) async throws {
-        try await SingleFileDownloader.download(
+        try await FileDownloader.shared.download(
             url: clientDownload.url,
             destination: runningDirectory.appending(path: "\(runningDirectory.lastPathComponent).jar"),
             sha1: clientDownload.sha1,
-            replaceMethod: .skip,
             progressHandler: progressHandler
         )
     }
@@ -284,14 +279,14 @@ public enum MinecraftInstallTask {
         progressHandler: @MainActor @escaping (Double) -> Void
     ) async throws {
         let root: URL = URL(string: "https://resources.download.minecraft.net")!
-        let items: [DownloadItem] = autoreleasepool {
+        let files: [DownloadItem] = autoreleasepool {
             assetIndex.objects.map { .init(
                 url: root.appending(path: "\($0.hash.prefix(2))/\($0.hash)"),
                 destination: repository.assetsDirectory.appending(path: "objects/\($0.hash.prefix(2))/\($0.hash)"),
                 sha1: $0.hash
             ) }
         }
-        try await MultiFileDownloader(items: items, concurrentLimit: 64, replaceMethod: .skip, progressHandler: progressHandler).start()
+        try await FileDownloader.shared.download(files: files, progressHandler: progressHandler)
     }
     
     private static func downloadLibraries(
@@ -299,10 +294,10 @@ public enum MinecraftInstallTask {
         repository: MinecraftRepository,
         progressHandler: @MainActor @escaping (Double) -> Void
     ) async throws {
-        let items: [DownloadItem] = (manifest.getLibraries() + manifest.getNatives())
+        let files: [DownloadItem] = (manifest.getLibraries() + manifest.getNatives())
             .compactMap(\.artifact)
             .compactMap { $0.downloadItem(destinationDirectory: repository.librariesDirectory) }
-        try await MultiFileDownloader(items: items, concurrentLimit: 64, replaceMethod: .skip, progressHandler: progressHandler).start()
+        try await FileDownloader.shared.download(files: files, progressHandler: progressHandler)
     }
     
     private static func extractNatives(
@@ -392,11 +387,9 @@ extension MinecraftInstallTask {
             try FileManager.default.removeItem(at: manifestURL)
         }
         let url: URL = .init(string: "https://meta.fabricmc.net/v2/versions/loader/\(version)/\(loaderVersion)/profile/json")!
-        try await SingleFileDownloader.download(
+        try await FileDownloader.shared.download(
             url: url,
             destination: manifestURL,
-            sha1: nil,
-            replaceMethod: .throw,
             progressHandler: progressHandler
         )
         return try JSONDecoder.shared.decode(ClientManifest.self, from: Data(contentsOf: manifestURL))

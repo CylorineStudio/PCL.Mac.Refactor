@@ -123,11 +123,11 @@ class EasyTierManager {
         return .init(
             name: "安装 EasyTier",
             .init(0, "下载 easytier-cli") { task, _ in
-                try await SingleFileDownloader.download(cliDownloadItem, replaceMethod: .skip, progressHandler: task.setProgress(_:))
+                try await FileDownloader.shared.download(cliDownloadItem, progressHandler: task.setProgress(_:))
                 try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: cliDownloadItem.destination.path)
             },
             .init(0, "下载 easytier-core") { task, _ in
-                try await SingleFileDownloader.download(coreDownloadItem, replaceMethod: .skip, progressHandler: task.setProgress(_:))
+                try await FileDownloader.shared.download(coreDownloadItem, progressHandler: task.setProgress(_:))
                 try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: coreDownloadItem.destination.path)
             },
             .init(1, "__completion", display: false) { task, _ in

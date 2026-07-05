@@ -7,11 +7,24 @@
 
 import Foundation
 
-public enum DownloadError: Error, Equatable {
+public enum DownloadError: LocalizedError, Equatable {
     case fileExists
     case checksumMismatch
     case badStatusCode(code: Int)
     case unknownError
+    
+    public var errorDescription: String? {
+        switch self {
+        case .fileExists:
+            "目标文件已存在。"
+        case .checksumMismatch:
+            "文件校验未通过。"
+        case .badStatusCode(let code):
+            "错误的响应码：\(code)。"
+        case .unknownError:
+            "发生未知错误。"
+        }
+    }
 }
 
 public enum LaunchError: Error {

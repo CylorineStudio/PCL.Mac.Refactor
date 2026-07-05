@@ -28,14 +28,14 @@ public enum ModpackImportTask {
         subTasks.insert(
             contentsOf: [
                 .init(6, "下载整合包所需文件") { task, model in
-                    let progressHandler = ConcurrentProgressHandler(totalHandler: task.setProgress(_:))
+                    let progressHandler = await ConcurrentProgressHandler(totalHandler: task.setProgress(_:))
                     
                     let fetchProgressHandler = await progressHandler.handler(withMultiplier: 0.2)
                     let total = Double(index.files.count)
                     var completed = 0.0
                     var downloadItems: [DownloadItem] = []
                     
-                    progressHandler.startCalculate()
+                    await progressHandler.startCalculate()
                     
                     try await withThrowingTaskGroup(of: DownloadItem?.self) { group in
                         for file in index.files {
@@ -55,7 +55,7 @@ public enum ModpackImportTask {
                     }
                     
                     let downloadProgressHandler = await progressHandler.handler(withMultiplier: 0.8)
-                    try await MultiFileDownloader(items: downloadItems, concurrentLimit: 64, replaceMethod: .skip, progressHandler: downloadProgressHandler).start()
+                    try await FileDownloader.shared.download(files: downloadItems, progressHandler: downloadProgressHandler)
                 },
                 .init(7, "应用整合包修改") { task, model in
                     for dirName in index.overridesDirectories {

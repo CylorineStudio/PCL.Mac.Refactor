@@ -300,7 +300,7 @@ public enum MinecraftLaunchTask {
             } else {
                 log("正在下载 Authlib Injector \(latestArtifact.version)")
             }
-            try await SingleFileDownloader.download(downloadItem, replaceMethod: .skip, progressHandler: task.setProgress(_:))
+            try await FileDownloader.shared.download(downloadItem, progressHandler: task.setProgress(_:))
         } catch let error as URLError where error.code == .notConnectedToInternet {
             log("似乎已断开与互联网的连接")
             if FileManager.default.fileExists(atPath: authlibInjectorURL.path) {

@@ -18,39 +18,25 @@ struct DownloadTests {
             sha1: "b8ac7ed26100bd79830df1de207fbeefe7fab62f"
         )
         
-        try await SingleFileDownloader.download(item, replaceMethod: .replace)
-        
-        try await SingleFileDownloader.download(
-            url: item.url,
-            destination: item.destination,
-            checksums: item.checksums,
-            replaceMethod: .replace
-        )
-        
-        await #expect(throws: DownloadError.fileExists) {
-            try await SingleFileDownloader.download(
-                url: item.url,
-                destination: item.destination,
-                checksums: item.checksums,
-                replaceMethod: .throw
-            )
-        }
+        try await FileDownloader.shared.download(item)
         
         await #expect(throws: DownloadError.checksumMismatch) {
-            try await SingleFileDownloader.download(
-                url: item.url,
-                destination: item.destination,
-                sha1: "da39a3ee5e6b4b0d3255bfef95601890afd80709",
-                replaceMethod: .throw
+            try await FileDownloader.shared.download(
+                .init(
+                    url: item.url,
+                    destination: item.destination,
+                    sha1: "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+                )
             )
         }
         
         await #expect(throws: DownloadError.badStatusCode(code: 404)) {
-            try await SingleFileDownloader.download(
-                url: URL(string: "https://bmclapi2.bangbang93.com/version/11.45.14/json")!,
-                destination: item.destination,
-                sha1: nil,
-                replaceMethod: .throw
+            try await FileDownloader.shared.download(
+                .init(
+                    url: URL(string: "https://bmclapi2.bangbang93.com/version/11.45.14/json")!,
+                    destination: item.destination,
+                    sha1: nil
+                )
             )
         }
     }
@@ -71,7 +57,7 @@ struct DownloadTests {
         let items: [DownloadItem] = assetIndex.objects.map { .init(
             url: root.appending(path: "\($0.hash.prefix(2))/\($0.hash)"), destination: tempDirectory.appending(path: $0.hash), sha1: $0.hash)
         }
-        try await MultiFileDownloader(items: Array(items.prefix(128)), concurrentLimit: 64, replaceMethod: .skip, progressHandler: { print($0 * 100) }).start()
+        try await FileDownloader.shared.download(files: Array(items.prefix(128))) { print($0 * 100) }
         try FileManager.default.removeItem(at: tempDirectory)
     }
 }

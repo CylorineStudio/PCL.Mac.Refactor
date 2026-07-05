@@ -8,8 +8,12 @@
 import Foundation
 
 /// 单文件下载器。
-public enum SingleFileDownloader {
-    public static let session: URLSession = .init(configuration: .default, delegate: DownloadDelegate.shared, delegateQueue: DownloadDelegate.queue)
+public enum _SingleFileDownloader {
+    public static let session: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.httpMaximumConnectionsPerHost = 2
+        return .init(configuration: configuration, delegate: DownloadDelegate.shared, delegateQueue: DownloadDelegate.queue)
+    }()
     
     public static func download(_ item: DownloadItem, replaceMethod: ReplaceMethod, maxRetryCount: Int = 2, progressHandler: (@MainActor (Double) -> Void)? = nil) async throws {
         try await download(url: item.url, destination: item.destination, checksums: item.checksums, executable: item.executable, replaceMethod: replaceMethod, maxRetryCount: maxRetryCount, progressHandler: progressHandler)
@@ -44,6 +48,11 @@ public enum SingleFileDownloader {
         maxRetryCount: Int = 2,
         progressHandler: (@MainActor (Double) -> Void)? = nil
     ) async throws {
+//        let url = MirrorDownloadSource.shared.replacing(oldURL)
+//        if oldURL != url {
+//            debug("Replaced: \(oldURL) -> \(url)")
+//        }
+        
         // 文件已存在处理
         if FileManager.default.fileExists(atPath: destination.path) {
             if let checksums, try FileUtils.checkFile(at: destination, with: checksums) != true {
@@ -63,13 +72,12 @@ public enum SingleFileDownloader {
             try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         }
         
-        var request: URLRequest = .init(url: url)
-        request.httpMethod = "GET"
-        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        var request = URLRequest(url: url)
         request.setValue("PCL-Mac/\(Metadata.appVersion)", forHTTPHeaderField: "User-Agent")
-        
+                
         var retryCount: Int = 0
         while true {
+            await progressHandler?(0)
             let task: URLSessionDownloadTask = session.downloadTask(with: request)
             do {
                 try await withTaskCancellationHandler {

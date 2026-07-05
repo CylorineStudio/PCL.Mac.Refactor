@@ -7,7 +7,8 @@
 
 import Foundation
 
-public class MultiFileDownloader {
+public class _MultiFileDownloader {
+    private var downloadSourceManager: DownloadSourceManager
     private let items: [DownloadItem]
     private let concurrentLimit: Int
     private let replaceMethod: ReplaceMethod
@@ -16,12 +17,15 @@ public class MultiFileDownloader {
     private var progress: [UUID: Double] = [:]
     
     public init(
+        downloadSourceManager: DownloadSourceManager = .shared,
         items: [DownloadItem],
         concurrentLimit: Int,
         replaceMethod: ReplaceMethod,
         maxRetryCount: Int = 2,
         progressHandler: (@MainActor (Double) -> Void)? = nil
     ) {
+        self.downloadSourceManager = downloadSourceManager
+        
         self.items = items
         self.concurrentLimit = concurrentLimit
         self.replaceMethod = replaceMethod
@@ -46,14 +50,14 @@ public class MultiFileDownloader {
         } else {
             items = self.items
         }
-        let dedupedItems: [DownloadItem] = Array(Set(items))
-        let total: Int = dedupedItems.count
-        let skipped: Int = self.items.count - dedupedItems.count
+        let dedupedItems = Array(Set(items))
+        let total = dedupedItems.count
+        let skipped = self.items.count - dedupedItems.count
         var tickerTask: Task<Void, Error>? = nil
         if let progressHandler {
             tickerTask = Task {
                 while true {
-                    try await Task.sleep(nanoseconds: 100_000_000) // 0.1s
+                    try await Task.sleep(seconds: 0.1)
                     await MainActor.run {
                         progressHandler((Array(progress.values).reduce(0, +) + Double(skipped)) / Double(self.items.count))
                     }
@@ -62,35 +66,28 @@ public class MultiFileDownloader {
         }
         defer { tickerTask?.cancel() }
         
-        var nextIndex: Int = 0
         try await withThrowingTaskGroup(of: Void.self) { group in
-            let initial = min(concurrentLimit, total)
-            while nextIndex < initial {
-                let item: DownloadItem = dedupedItems[nextIndex]
+            let semaphore = AsyncSemaphore(value: downloadSourceManager.concurrentLimit)
+            
+            for item in dedupedItems {
+                if Task.isCancelled { break }
+                await semaphore.wait()
                 group.addTask {
+                    defer { Task { await semaphore.signal() } }
                     try await self.download(item)
                 }
-                nextIndex += 1
             }
             
-            while let _ = try await group.next() {
-                if nextIndex < total {
-                    let item: DownloadItem = dedupedItems[nextIndex]
-                    group.addTask {
-                        try await self.download(item)
-                    }
-                    nextIndex += 1
-                }
-            }
+            try await group.waitForAll()
         }
     }
     
     private func download(_ item: DownloadItem) async throws {
-        let uuid: UUID = .init()
+        let uuid = UUID()
         await MainActor.run {
             progress[uuid] = 0
         }
-        try await SingleFileDownloader.download(item, replaceMethod: replaceMethod, maxRetryCount: maxRetryCount) { progress in
+        try await _SingleFileDownloader.download(item, replaceMethod: replaceMethod, maxRetryCount: maxRetryCount) { progress in
             self.progress[uuid] = progress
         }
     }

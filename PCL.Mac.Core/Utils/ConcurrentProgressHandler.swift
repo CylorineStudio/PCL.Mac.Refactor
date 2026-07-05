@@ -7,13 +7,19 @@
 
 import Foundation
 
+@MainActor
 public class ConcurrentProgressHandler {
     private let totalHandler: @MainActor (Double) -> Void
-    @MainActor private var progressMap: [UUID: Progress] = [:]
+    private var progressMap: [UUID: Progress] = [:]
     private var calculateTask: Task<Void, Error>?
     
     public init(totalHandler: @MainActor @escaping (Double) -> Void) {
         self.totalHandler = totalHandler
+    }
+    
+    public init(initial: Double, totalHandler: @MainActor @escaping (Double) -> Void) {
+        self.totalHandler = totalHandler
+        self.progressMap[UUID()] = .init(multiplier: 1.0, currentProgress: initial)
     }
     
     deinit {
@@ -23,9 +29,8 @@ public class ConcurrentProgressHandler {
     
     /// 创建一个新的进度处理器。
     /// - Parameter multiplier: 该处理器的倍率。
-    @MainActor
     public func handler(withMultiplier multiplier: Double) -> (@MainActor (Double) -> Void) {
-        let id: UUID = .init()
+        let id = UUID()
         progressMap[id] = .init(multiplier: multiplier)
         let handler: (@MainActor (Double) -> Void) = { [weak self] progress in
             self?.progressMap[id]?.currentProgress = progress
@@ -47,14 +52,12 @@ public class ConcurrentProgressHandler {
     }
     
     /// 停止计算并最后一次同步进度。
-    @MainActor
     public func stopCalculate() {
         calculateTask?.cancel()
         calculateTask = nil
         totalHandler(1)
     }
     
-    @MainActor
     private func calculateProgress() -> Double {
         min(max(progressMap.values.reduce(0) { $0 + $1.currentProgress * $1.multiplier }, 0), 1)
     }
@@ -63,9 +66,9 @@ public class ConcurrentProgressHandler {
         public let multiplier: Double
         public var currentProgress: Double
         
-        public init(multiplier: Double) {
+        init(multiplier: Double, currentProgress: Double = 0) {
             self.multiplier = multiplier
-            self.currentProgress = 0
+            self.currentProgress = currentProgress
         }
     }
 }

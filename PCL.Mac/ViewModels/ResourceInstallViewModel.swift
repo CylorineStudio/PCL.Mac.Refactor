@@ -122,11 +122,10 @@ class ResourceInstallViewModel: ObservableObject {
         return .init(
             name: "资源下载 - \(project.title) \(version.version)",
             .init(0, "下载文件") { task, model in
-                try await SingleFileDownloader.download(
+                try await FileDownloader.shared.download(
                     url: primaryFile.url,
                     destination: saveDirectoryURL.appending(path: primaryFile.name),
                     sha1: primaryFile.sha1,
-                    replaceMethod: .skip,
                     progressHandler: task.setProgress(_:)
                 )
             }
@@ -200,11 +199,10 @@ extension ResourceInstallViewModel {
         let task: MyTask<EmptyModel> = .init(
             name: "下载整合包 - \(project.title) \(version.version)",
             .init(0, "下载文件") { task, _ in
-                try await SingleFileDownloader.download(
+                try await FileDownloader.shared.download(
                     url: primaryFile.url,
                     destination: destination,
                     sha1: primaryFile.sha1,
-                    replaceMethod: .skip,
                     progressHandler: task.setProgress(_:)
                 )
             }

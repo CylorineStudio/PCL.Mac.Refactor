@@ -33,7 +33,7 @@ class UpdateManager {
             sha1: version.downloads.sha1
         )
         defer { try? FileManager.default.removeItem(at: destination) }
-        try await SingleFileDownloader.download(downloadItem, replaceMethod: .skip)
+        try await FileDownloader.shared.download(downloadItem)
         try FileManager.default.unzipItem(at: destination, to: destination.deletingLastPathComponent())
         let newBundle: URL = URLConstants.tempURL.appending(path: "PCL.Mac.app")
         if !FileManager.default.fileExists(atPath: newBundle.path) {

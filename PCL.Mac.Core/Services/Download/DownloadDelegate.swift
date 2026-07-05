@@ -7,7 +7,7 @@
 
 import Foundation
 
-class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
+public class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
     public static let shared: DownloadDelegate = .init()
     public static let queue: OperationQueue = {
         let queue: OperationQueue = OperationQueue()
@@ -30,6 +30,20 @@ class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
     
     private var contexts: [Int: DownloadContext] = [:]
     
+    public func start(_ task: URLSessionDownloadTask, destination: URL, progressHandler: (@MainActor (Double) -> Void)?) async throws {
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                Self.queue.addOperation {
+                    let context = DownloadContext(destination: destination, continuation: continuation, progressHandler: progressHandler)
+                    self.contexts[task.taskIdentifier] = context
+                    task.resume()
+                }
+            }
+        } onCancel: {
+            task.cancel()
+        }
+    }
+    
     public func register(
         task: URLSessionDownloadTask,
         destination: URL,
@@ -42,7 +56,7 @@ class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
         }
     }
     
-    func urlSession(
+    public func urlSession(
         _ session: URLSession,
         downloadTask: URLSessionDownloadTask,
         didFinishDownloadingTo location: URL
@@ -56,6 +70,13 @@ class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
             return
         }
         guard (200..<300).contains(response.statusCode) else {
+            if let url = downloadTask.originalRequest?.url {
+                if let currentURL = downloadTask.currentRequest?.url, currentURL != url {
+                    warn("\(currentURL) (\(url)) 返回了 \(response.statusCode)")
+                } else {
+                    warn("\(url) 返回了 \(response.statusCode)")
+                }
+            }
             resume(task: downloadTask, with: .failure(DownloadError.badStatusCode(code: response.statusCode)))
             return
         }
@@ -69,7 +90,7 @@ class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
         resume(task: downloadTask, with: .success(()))
     }
     
-    func urlSession(
+    public func urlSession(
         _ session: URLSession,
         task: URLSessionTask,
         didCompleteWithError error: (any Error)?
@@ -77,7 +98,7 @@ class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
         resume(task: task, with: .failure(error ?? DownloadError.unknownError))
     }
     
-    func urlSession(
+    public func urlSession(
         _ session: URLSession,
         downloadTask: URLSessionDownloadTask,
         didWriteData bytesWritten: Int64,

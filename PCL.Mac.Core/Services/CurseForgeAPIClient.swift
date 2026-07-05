@@ -37,6 +37,7 @@ public class CurseForgeAPIClient {
         body: [String: Any]? = nil
     ) async throws -> Requests.Response {
         await semaphore.wait()
+        defer { Task { await semaphore.signal() } }
         var headers: [String: String?] = headers
         headers["x-api-key"] = apiKey
         
@@ -49,7 +50,7 @@ public class CurseForgeAPIClient {
             revalidate: true,
             timeout: 30
         )
-        await semaphore.signal()
+        
         return response
     }
     

@@ -36,7 +36,7 @@ public enum JavaInstallTask {
                         try FileManager.default.createSymbolicLink(at: tempDirectory.appending(path: path), withDestinationURL: parent.appending(path: target).standardized)
                     }
                 }
-                try await MultiFileDownloader(items: downloadItems, concurrentLimit: 64, replaceMethod: .skip, progressHandler: task.setProgress(_:)).start()
+                try await FileDownloader.shared.download(files: downloadItems, progressHandler: task.setProgress(_:))
             },
             .init(2, "__completion", display: false) { _, model in
                 let bundleRoot: URL = try FileManager.default.contentsOfDirectory(at: tempDirectory, includingPropertiesForKeys: nil)[0]
