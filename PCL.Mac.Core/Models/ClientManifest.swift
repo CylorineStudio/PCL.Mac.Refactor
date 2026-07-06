@@ -89,7 +89,14 @@ public class ClientManifest: Decodable {
         self.downloads = try container.decodeIfPresent(Downloads.self, forKey: .downloads)
         self.id = try container.decode(String.self, forKey: .id)
         self.javaVersion = try container.decodeIfPresent(JavaVersion.self, forKey: .javaVersion) ?? .init(component: "jre-legacy", majorVersion: 8)
-        self.libraries = try container.decode([Library].self, forKey: .libraries)
+        
+        let libraries = try container.decode([Library].self, forKey: .libraries)
+        var librarySet: Set<HashableLibrary> = []
+        self.libraries = libraries.lazy.reversed()
+            .filter { librarySet.insert(.init(from: $0)).inserted }
+            .reversed()
+        librarySet.removeAll()
+        
         self.logging = (try? container.decodeIfPresent(Logging.self, forKey: .logging)) ?? .init(
             argument: "-Dlog4j.configurationFile=${path}",
             file: .init(
