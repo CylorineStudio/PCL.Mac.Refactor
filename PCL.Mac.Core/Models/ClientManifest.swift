@@ -87,13 +87,18 @@ public class ClientManifest: Decodable {
         }
         self.assetIndex = try container.decodeIfPresent(AssetIndex.self, forKey: .assetIndex)
         self.downloads = try container.decodeIfPresent(Downloads.self, forKey: .downloads)
-        self.id = try container.decode(String.self, forKey: .id)
+        let id = try container.decode(String.self, forKey: .id)
+        self.id = id
         self.javaVersion = try container.decodeIfPresent(JavaVersion.self, forKey: .javaVersion) ?? .init(component: "jre-legacy", majorVersion: 8)
         
         let libraries = try container.decode([Library].self, forKey: .libraries)
         var librarySet: Set<HashableLibrary> = []
         self.libraries = libraries.lazy.reversed()
-            .filter { librarySet.insert(.init(from: $0)).inserted }
+            .filter {
+                let inserted = librarySet.insert(.init(from: $0)).inserted
+                if !inserted { debug("已去除 \(id) 中的重复 library \($0.name)") }
+                return inserted
+            }
             .reversed()
         librarySet.removeAll()
         
@@ -276,7 +281,7 @@ public class ClientManifest: Decodable {
         }
     }
     
-    public class Rule: Decodable {
+    public class Rule: Decodable, Hashable, Equatable {
         public let allow: Bool
         public let osName: String?
         public let osArch: Architecture?
@@ -299,6 +304,16 @@ public class ClientManifest: Decodable {
             if let osName, osName != "osx" { return !allow }
             if let osArch, osArch != .systemArchitecture() { return !allow }
             return allow
+        }
+        
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(allow)
+            hasher.combine(osName)
+            hasher.combine(osArch)
+        }
+        
+        public static func == (lhs: Rule, rhs: Rule) -> Bool {
+            lhs.allow == rhs.allow && lhs.osName == rhs.osName && lhs.osArch == rhs.osArch
         }
     }
     
@@ -398,12 +413,14 @@ public extension ClientManifest {
         private let artifactId: String
         private let classifier: String?
         private let isNativesLibrary: Bool
+        private let rules: [Rule]
         
         public init(from library: Library) {
             self.groupId = library.groupId
             self.artifactId = library.artifactId
             self.classifier = library.classifier
             self.isNativesLibrary = library.isNativesLibrary
+            self.rules = library.rules
         }
     }
 }
