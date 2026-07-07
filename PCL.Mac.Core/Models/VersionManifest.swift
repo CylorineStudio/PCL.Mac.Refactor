@@ -102,8 +102,11 @@ public extension VersionManifest {
     @discardableResult
     static func load(revalidate: Bool = false) async throws -> VersionManifest {
         let cacheURL = URLConstants.cacheURL.appending(path: "version_manifest.json")
-        let response = try await Requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", revalidate: revalidate)
-        
+        guard let url = DownloadSourceManager.shared.versionManifestURL() else {
+            throw RequestError.invalidURL
+        }
+
+        let response = try await Requests.get(url, revalidate: revalidate)
         let manifest = try response.decode(VersionManifest.self)
         if Self.shared == nil || Self.shared != manifest {
             log("刷新版本清单成功")

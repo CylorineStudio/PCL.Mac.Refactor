@@ -136,18 +136,29 @@ private struct ModLoaderCard: View {
     
     private func loadVersions() async {
         do {
+            guard let url = switch type {
+            case .fabric:
+                DownloadSourceManager.shared.fabricVersionListURL(for: minecraftVersion)
+            case .forge:
+                DownloadSourceManager.shared.forgeVersionListURL(for: minecraftVersion)
+            case .neoforge:
+                DownloadSourceManager.shared.neoforgeVersionListURL(for: minecraftVersion)
+            } else {
+                loadState = .noUsableVersion
+                return
+            }
             let versions: [Version] = switch type {
             case .fabric:
-                try await Requests.get("https://meta.fabricmc.net/v2/versions/loader/\(minecraftVersion)").json().arrayValue
-                    .map { .init(id: $0["loader"]["version"].stringValue) }
+                try await Requests.get(url).json().arrayValue
+                    .map { Version(id: $0["loader"]["version"].stringValue) }
             case .forge:
-                try await Requests.get("https://bmclapi2.bangbang93.com/forge/minecraft/\(minecraftVersion)").json().arrayValue
-                    .map { .init(id: $0["version"].stringValue) }
+                try await Requests.get(url).json().arrayValue
+                    .map { Version(id: $0["version"].stringValue) }
             case .neoforge:
-                try await Requests.get("https://bmclapi2.bangbang93.com/neoforge/list/\(minecraftVersion)").json().arrayValue
+                try await Requests.get(url).json().arrayValue
                     .map { json in
                         let version: String = json["version"].stringValue
-                        return .init(id: version.hasPrefix("1.20.1-") ? String(version.dropFirst("1.20.1-".count)) : version)
+                        return Version(id: version.hasPrefix("1.20.1-") ? String(version.dropFirst("1.20.1-".count)) : version)
                     }
             }
             await MainActor.run {

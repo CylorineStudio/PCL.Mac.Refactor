@@ -286,7 +286,7 @@ public enum MinecraftInstallTask {
                 sha1: $0.hash
             ) }
         }
-        try await FileDownloader.shared.download(files: files, progressHandler: progressHandler)
+        try await FileDownloader.shared.download(files: files, preferMirror: false, maxConcurrency: 64, progressHandler: progressHandler)
     }
     
     private static func downloadLibraries(

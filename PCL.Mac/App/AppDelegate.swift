@@ -68,6 +68,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         _ = Secrets.shared
         
+        // 配置下载源
+        DownloadSourceManager.shared.configure(curseforgeApiKey: Secrets.shared.curseforgeApiKey)
+        executeAsyncTask("刷新地区信息", silent: true) {
+            let isInChinaMainland = await LocaleUtils.isInChinaMainland()
+            log("isInChinaMainland: \(isInChinaMainland)")
+        }
+        
         executeTask("开启 SwiftScaffolding 日志", silent: true) {
             try SwiftScaffolding.Logger.enableLogging(url: URLConstants.logsDirectoryURL.appending(path: "swift-scaffolding.log"))
         }

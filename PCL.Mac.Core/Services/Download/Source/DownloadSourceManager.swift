@@ -7,45 +7,100 @@
 
 import Foundation
 
-public class DownloadSourceManager {
-    public static var shared: DownloadSourceManager! = .init(option: .auto)
-    
-    private static let officialSource: OfficialDownloadSource = .shared
-    private static let mirrorSource: MirrorDownloadSource = .shared
-    
-    public private(set) var currentSource: DownloadSource
-    public private(set) var option: DownloadSourceOption
-    
-    public init(option: DownloadSourceOption) {
-        self.currentSource = option == .preferredMirror ? Self.mirrorSource : Self.officialSource
-        self.option = option
-    }
-    
-    public func setOption(_ option: DownloadSourceOption) {
-        if self.option == option { return }
-        log("下载源设置切换：\(self.option) → \(option)，当前下载源：\(type(of: currentSource))")
-        self.option = option
-        switch option {
-        case .preferredOfficial, .auto:
-            currentSource = Self.officialSource
-        case .preferredMirror:
-            currentSource = Self.mirrorSource
-        }
-    }
-    
-    public func switchToMirror() {
-        guard option == .auto else {
-            warn("试图切换至镜像源，但被下载源选项阻止")
-            return
-        }
-        currentSource = Self.mirrorSource
-    }
-    
-    public var concurrentLimit: Int { currentSource is OfficialDownloadSource ? 12 : 8 }
+public enum DownloadSourcePolicy: Codable {
+    /// 优先官方源，镜像作为后备。
+    case officialFirst
+    /// 根据地区自动选择：中国大陆优先镜像，境外仅用官方。
+    case auto
+    /// 优先镜像源，官方作为后备。
+    case mirrorFirst
 }
 
-public enum DownloadSourceOption: Codable {
-    case preferredOfficial
-    case auto
-    case preferredMirror
+// MARK: - Download Source Manager
+
+public class DownloadSourceManager {
+    public static let shared: DownloadSourceManager = .init()
+
+    public var officialSource: OfficialDownloadSource = .shared
+    public let mirrorSource: MirrorDownloadSource = .shared
+
+    public var policy: DownloadSourcePolicy = .auto
+
+    private var isChinaRegion: Bool = LocaleUtils.isSystemLocaleChinese()
+
+    public static let officialConcurrency: Int = 64
+    public static let mirrorConcurrency: Int = 16
+
+    public var recommendedConcurrency: Int {
+        if !isChinaRegion && policy != .mirrorFirst {
+            return Self.officialConcurrency
+        }
+        return Self.mirrorConcurrency
+    }
+
+    public init() {}
+
+    /// 从云端刷新地区判断（启动时调用一次）。
+    public func refreshRegion() async {
+        isChinaRegion = await LocaleUtils.isInChinaMainland()
+    }
+
+    /// 注入 CurseForge API Key。
+    public func configure(curseforgeApiKey: String?) {
+        officialSource.curseforgeApiKey = curseforgeApiKey
+    }
+
+    /// 生成指定 `URL` 按策略排序的下载候选项列表。
+    /// - Parameters:
+    ///   - url: 原始 `URL`。
+    ///   - preferMirror: 是否优先使用镜像源，为 `nil` 时由全局策略决定。
+    /// - Returns: 按优先级排序的候选项列表。
+    public func orderedCandidates(for url: URL, preferMirror: Bool? = nil) -> [DownloadCandidate] {
+        let official = officialSource.candidates(for: url)
+        let mirror = mirrorSource.candidates(for: url)
+
+        let effectivePreferMirror = preferMirror ?? (policy == .mirrorFirst || (policy == .auto && isChinaRegion))
+
+        if !isChinaRegion && policy != .mirrorFirst && preferMirror != true && !official.isEmpty {
+            return official
+        }
+
+        let merged = effectivePreferMirror ? (mirror + official) : (official + mirror)
+        var seen = Set<URL>()
+        return merged.filter { seen.insert($0.url).inserted }
+    }
+
+    /// 版本清单 URL。
+    public func versionManifestURL() -> URL? {
+        preferred(official: officialSource.versionManifestURL(),
+                  mirror: mirrorSource.versionManifestURL())
+    }
+
+    /// Forge 版本列表 URL。
+    public func forgeVersionListURL(for mcVersion: String) -> URL? {
+        preferred(official: officialSource.forgeVersionListURL(for: mcVersion),
+                  mirror: mirrorSource.forgeVersionListURL(for: mcVersion))
+    }
+
+    /// NeoForge 版本列表 URL。
+    public func neoforgeVersionListURL(for mcVersion: String) -> URL? {
+        preferred(official: officialSource.neoforgeVersionListURL(for: mcVersion),
+                  mirror: mirrorSource.neoforgeVersionListURL(for: mcVersion))
+    }
+
+    /// Fabric 版本列表 URL。
+    public func fabricVersionListURL(for mcVersion: String) -> URL? {
+        preferred(official: officialSource.fabricVersionListURL(for: mcVersion),
+                  mirror: mirrorSource.fabricVersionListURL(for: mcVersion))
+    }
+    
+    private func preferred(official: URL?, mirror: URL?) -> URL? {
+        let preferMirror = policy == .mirrorFirst || (policy == .auto && isChinaRegion)
+
+        if !isChinaRegion && policy != .mirrorFirst {
+            return official ?? mirror
+        }
+
+        return preferMirror ? (mirror ?? official) : (official ?? mirror)
+    }
 }
