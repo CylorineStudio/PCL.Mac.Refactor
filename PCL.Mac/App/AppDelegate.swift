@@ -70,8 +70,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         DownloadSourceManager.shared = .init(policy: LauncherConfig.shared.downloadSourcePolicy, curseforgeApiKey: Secrets.shared.curseforgeApiKey)
         executeAsyncTask("刷新地区信息", silent: true) {
-            let isInChinaMainland = await LocaleUtils.isInChinaMainland()
-            log("isInChinaMainland: \(isInChinaMainland)")
             await DownloadSourceManager.shared.refreshRegion()
         }
         

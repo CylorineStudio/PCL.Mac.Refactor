@@ -192,16 +192,6 @@ private class SelectPanel: NSPanel {
     override var canBecomeKey: Bool { true }
 }
 
-private class MySelectState: ObservableObject {
-    @Published var selected: String
-    let entries: [String]
-    
-    init(selected: String, entries: [String]) {
-        self.selected = selected
-        self.entries = entries
-    }
-}
-
 #Preview {
     MySelect(.constant("entry0"), entries: Array(0..<10).map { "entry\($0)" })
         .padding()
