@@ -7,24 +7,20 @@
 
 import Foundation
 
-public enum DownloadSourcePolicy: Codable {
-    /// 优先官方源，镜像作为后备。
+public enum DownloadSourcePolicy: String, Codable {
+    /// 优先使用官方源。
     case officialFirst
-    /// 根据地区自动选择：中国大陆优先镜像，境外仅用官方。
-    case auto
-    /// 优先镜像源，官方作为后备。
+    /// 优先使用镜像源。
     case mirrorFirst
 }
 
-// MARK: - Download Source Manager
-
 public class DownloadSourceManager {
-    public static let shared: DownloadSourceManager = .init()
+    public static var shared: DownloadSourceManager!
 
     public var officialSource: OfficialDownloadSource = .shared
     public let mirrorSource: MirrorDownloadSource = .shared
 
-    public var policy: DownloadSourcePolicy = .auto
+    public var policy: DownloadSourcePolicy
 
     private var isChinaRegion: Bool = LocaleUtils.isSystemLocaleChinese()
 
@@ -38,16 +34,14 @@ public class DownloadSourceManager {
         return Self.mirrorConcurrency
     }
 
-    public init() {}
+    public init(policy: DownloadSourcePolicy, curseforgeApiKey: String?) {
+        self.policy = policy
+        officialSource.curseforgeApiKey = curseforgeApiKey
+    }
 
     /// 从云端刷新地区判断（启动时调用一次）。
     public func refreshRegion() async {
         isChinaRegion = await LocaleUtils.isInChinaMainland()
-    }
-
-    /// 注入 CurseForge API Key。
-    public func configure(curseforgeApiKey: String?) {
-        officialSource.curseforgeApiKey = curseforgeApiKey
     }
 
     /// 生成指定 `URL` 按策略排序的下载候选项列表。
@@ -59,7 +53,7 @@ public class DownloadSourceManager {
         let official = officialSource.candidates(for: url)
         let mirror = mirrorSource.candidates(for: url)
 
-        let effectivePreferMirror = preferMirror ?? (policy == .mirrorFirst || (policy == .auto && isChinaRegion))
+        let effectivePreferMirror = preferMirror ?? (policy == .mirrorFirst)
 
         if !isChinaRegion && policy != .mirrorFirst && preferMirror != true && !official.isEmpty {
             return official
@@ -95,7 +89,7 @@ public class DownloadSourceManager {
     }
     
     private func preferred(official: URL?, mirror: URL?) -> URL? {
-        let preferMirror = policy == .mirrorFirst || (policy == .auto && isChinaRegion)
+        let preferMirror = policy == .mirrorFirst
 
         if !isChinaRegion && policy != .mirrorFirst {
             return official ?? mirror

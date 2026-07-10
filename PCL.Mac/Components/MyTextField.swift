@@ -31,22 +31,22 @@ struct MyTextField: View {
             }
             .textFieldStyle(.plain)
             .focused($focused)
-            .padding(4)
+            .padding(.horizontal, 6)
             .foregroundStyle(Color.color1)
-            .background(backgroundColor)
             .onSubmit {
                 focused = false
             }
-            RoundedRectangle(cornerRadius: 3)
-                .stroke(foregroundColor, lineWidth: 1)
-                .padding(.top, 1)
-                .allowsHitTesting(false)
+            
             if !focused && text.isEmpty {
                 Text(placeholder)
                     .foregroundStyle(Color.colorGray3)
-                    .padding(4)
+                    .padding(.horizontal, 6)
                     .allowsHitTesting(false)
             }
+            
+            RoundedRectangle(cornerRadius: 4)
+                .strokeBorder(foregroundColor, lineWidth: 1.5, antialiased: false)
+                .allowsHitTesting(false)
         }
         .onHover { hovered = $0 }
         .animation(.linear(duration: 0.1), value: hovered)
@@ -56,7 +56,8 @@ struct MyTextField: View {
                 self.text = newValue.replacingOccurrences(of: "\n", with: "")
             }
         }
-        .fixedSize(horizontal: false, vertical: true)
+        .background(backgroundColor)
+        .frame(height: 26)
     }
     
     private var foregroundColor: Color {

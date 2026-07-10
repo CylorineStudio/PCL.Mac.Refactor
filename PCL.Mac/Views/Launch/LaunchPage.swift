@@ -10,6 +10,9 @@ import Core
 
 struct LaunchPage: View {
     @StateObject private var loadingModel: MyLoadingViewModel = .init(text: "MyLoading 测试")
+    @State private var selectedEntry: String = "下拉选择框"
+    @State private var input: String = ""
+    
     private let listItems: [ListItem] = [
         .init(name: "name1", description: "desc1"),
         .init(name: "name2", description: "desc2"),
@@ -24,6 +27,7 @@ struct LaunchPage: View {
         .init(name: "name2", description: "desc2"),
         .init(name: "name3", description: "desc3")
     ]
+    private let entries = ["下拉选择框"] + Array(0..<10).map { "entry\($0)" }
     
     var body: some View {
         CardContainer {
@@ -127,6 +131,11 @@ struct LaunchPage: View {
                 .frame(height: 36)
             }
             .cardIndex(6)
+            
+            MyCard("其它控件", folded: false) {
+                MySelect($selectedEntry, entries: entries)
+                MyTextField(text: $input, placeholder: "文本输入框")
+            }
         }
     }
 }

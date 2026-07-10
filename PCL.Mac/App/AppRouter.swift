@@ -26,7 +26,7 @@ enum AppRoute: Identifiable, Hashable, Equatable {
     case multiplayerSub, multiplayerSettings
     
     // 设置页面的子页面
-    case javaSettings, otherSettings
+    case launcherSettings, javaSettings, otherSettings
     
     // 更多页面的子页面
     case about, toolbox
@@ -79,7 +79,7 @@ class AppRouter: ObservableObject {
         // 各根页面的默认子页面
         if newRoot == .download { append(.minecraftDownload) }
         if newRoot == .multiplayer { append(.multiplayerSub) }
-        if newRoot == .settings { append(.javaSettings) }
+        if newRoot == .settings { append(.launcherSettings) }
         if newRoot == .more { append(.about) }
     }
     
@@ -130,6 +130,8 @@ struct AppRouterView: View {
             MultiplayerPage()
         case .multiplayerSettings:
             MultiplayerSettingsPage()
+        case .launcherSettings:
+            LauncherSettingsPage()
         case .javaSettings:
             JavaSettingsPage()
         case .otherSettings:
@@ -164,7 +166,7 @@ struct AppSidebarView: View {
         case .instanceSettings(let id), .instanceConfig(let id), .installedResources(let id, _): InstanceSettingsSidebar(id: id)
         case .minecraftDownload, .modDownload, .resourcepackDownload, .shaderpackDownload, .modpackDownload: DownloadSidebar()
         case .multiplayer, .multiplayerSub, .multiplayerSettings: MultiplayerSidebar()
-        case .settings, .javaSettings, .otherSettings: SettingsSidebar()
+        case .settings, .launcherSettings, .javaSettings, .otherSettings: SettingsSidebar()
         case .more, .about, .toolbox: MoreSidebar()
         case .tasks: TasksSidebar()
         default: EmptySidebar()

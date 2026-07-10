@@ -57,6 +57,7 @@ class LauncherConfig: Codable {
     public var hasEnteredLauncher: Bool = false
     public var multiplayerCustomPeer: String?
     public var ignoreLauncherUpdates: Bool = false
+    public var downloadSourcePolicy: DownloadSourcePolicy = .officialFirst
     
     public init() {}
     
@@ -81,6 +82,7 @@ class LauncherConfig: Codable {
         self.hasEnteredLauncher = try container.decodeIfPresent(Bool.self, forKey: .hasEnteredLauncher) ?? false
         self.multiplayerCustomPeer = try container.decodeIfPresent(String.self, forKey: .multiplayerCustomPeer)
         self.ignoreLauncherUpdates = try container.decodeIfPresent(Bool.self, forKey: .ignoreLauncherUpdates) ?? false
+        self.downloadSourcePolicy = try container.decodeIfPresent(DownloadSourcePolicy.self, forKey: .downloadSourcePolicy) ?? .officialFirst
     }
     
     public func encode(to encoder: any Encoder) throws {
@@ -96,6 +98,7 @@ class LauncherConfig: Codable {
         try container.encode(hasEnteredLauncher, forKey: .hasEnteredLauncher)
         try container.encode(multiplayerCustomPeer, forKey: .multiplayerCustomPeer)
         try container.encode(ignoreLauncherUpdates, forKey: .ignoreLauncherUpdates)
+        try container.encode(downloadSourcePolicy, forKey: .downloadSourcePolicy)
     }
     
     public static func save(_ config: LauncherConfig = .shared, to url: URL = URLConstants.configURL) throws {
@@ -115,5 +118,6 @@ class LauncherConfig: Codable {
         case hasEnteredLauncher
         case multiplayerCustomPeer
         case ignoreLauncherUpdates
+        case downloadSourcePolicy
     }
 }

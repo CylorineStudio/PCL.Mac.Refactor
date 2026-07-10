@@ -104,3 +104,12 @@ extension ModLoader {
         }
     }
 }
+
+extension DownloadSourcePolicy: @retroactive CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .officialFirst: "优先使用官方源"
+        case .mirrorFirst: "优先使用镜像源"
+        }
+    }
+}

@@ -68,11 +68,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         _ = Secrets.shared
         
-        // 配置下载源
-        DownloadSourceManager.shared.configure(curseforgeApiKey: Secrets.shared.curseforgeApiKey)
+        DownloadSourceManager.shared = .init(policy: LauncherConfig.shared.downloadSourcePolicy, curseforgeApiKey: Secrets.shared.curseforgeApiKey)
         executeAsyncTask("刷新地区信息", silent: true) {
             let isInChinaMainland = await LocaleUtils.isInChinaMainland()
             log("isInChinaMainland: \(isInChinaMainland)")
+            await DownloadSourceManager.shared.refreshRegion()
         }
         
         executeTask("开启 SwiftScaffolding 日志", silent: true) {
@@ -133,6 +133,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             .store(in: &cancellables)
         
+        NSApplication.shared.appearance = NSAppearance(named: .aqua)
         self.window = AppWindow(instanceManager: instanceManager)
         self.window.makeKeyAndOrderFront(nil)
         log("成功创建窗口")
