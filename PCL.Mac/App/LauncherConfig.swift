@@ -58,6 +58,7 @@ class LauncherConfig: Codable {
     public var multiplayerCustomPeer: String?
     public var ignoreLauncherUpdates: Bool = false
     public var downloadSourcePolicy: DownloadSourcePolicy = .officialFirst
+    public var homepageType: HomepageType = .empty
     
     public init() {}
     
@@ -83,6 +84,7 @@ class LauncherConfig: Codable {
         self.multiplayerCustomPeer = try container.decodeIfPresent(String.self, forKey: .multiplayerCustomPeer)
         self.ignoreLauncherUpdates = try container.decodeIfPresent(Bool.self, forKey: .ignoreLauncherUpdates) ?? false
         self.downloadSourcePolicy = try container.decodeIfPresent(DownloadSourcePolicy.self, forKey: .downloadSourcePolicy) ?? .officialFirst
+        self.homepageType = try container.decodeIfPresent(HomepageType.self, forKey: .homepageType) ?? .empty
     }
     
     public func encode(to encoder: any Encoder) throws {
@@ -99,6 +101,7 @@ class LauncherConfig: Codable {
         try container.encode(multiplayerCustomPeer, forKey: .multiplayerCustomPeer)
         try container.encode(ignoreLauncherUpdates, forKey: .ignoreLauncherUpdates)
         try container.encode(downloadSourcePolicy, forKey: .downloadSourcePolicy)
+        try container.encode(homepageType, forKey: .homepageType)
     }
     
     public static func save(_ config: LauncherConfig = .shared, to url: URL = URLConstants.configURL) throws {
@@ -119,5 +122,17 @@ class LauncherConfig: Codable {
         case multiplayerCustomPeer
         case ignoreLauncherUpdates
         case downloadSourcePolicy
+        case homepageType
+    }
+}
+
+enum HomepageType: String, Codable, CustomStringConvertible {
+    case empty, demo
+    
+    var description: String {
+        switch self {
+        case .empty: "空白"
+        case .demo: "[内置] 控件预览"
+        }
     }
 }

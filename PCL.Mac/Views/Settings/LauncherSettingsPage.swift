@@ -10,6 +10,7 @@ import Core
 
 struct LauncherSettingsPage: View {
     @State private var downloadSourcePolicy: DownloadSourcePolicy = LauncherConfig.shared.downloadSourcePolicy
+    @State private var homepageType: HomepageType = LauncherConfig.shared.homepageType
     
     var body: some View {
         CardContainer {
@@ -25,6 +26,19 @@ struct LauncherSettingsPage: View {
                     LauncherConfig.shared.downloadSourcePolicy = newValue
                 }
             }
+            
+            MyCard("个性化", foldable: false) {
+                configLine(label: "主页") {
+                    MySelect(
+                        $homepageType,
+                        entries: [.empty, .demo]
+                    )
+                }
+                .onChange(of: homepageType) { newValue in
+                    LauncherConfig.shared.homepageType = newValue
+                }
+            }
+            .cardIndex(1)
         }
     }
     
