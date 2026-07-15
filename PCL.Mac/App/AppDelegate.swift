@@ -70,7 +70,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         DownloadSourceManager.shared = .init(policy: LauncherConfig.shared.downloadSourcePolicy, curseforgeApiKey: Secrets.shared.curseforgeApiKey)
         
-        ClientManifest.deduplicateLibraries = LauncherConfig.shared.flags.deduplicateLibraries
+        FlagsManager.shared = .init(enabledFlags: LauncherConfig.shared.enabledFlags)
         
         executeAsyncTask("刷新地区信息", silent: true) {
             await DownloadSourceManager.shared.refreshRegion()
@@ -179,6 +179,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             try self.instanceManager.currentRepository.saveAllInstances()
         }
         executeTask("保存启动器配置") {
+            LauncherConfig.shared.enabledFlags = FlagsManager.shared.enabledFlags
             try LauncherConfig.save()
         }
         EasyTierManager.shared.terminateAll()

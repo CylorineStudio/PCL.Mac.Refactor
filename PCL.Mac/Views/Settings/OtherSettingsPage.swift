@@ -26,7 +26,22 @@ struct OtherSettingsPage: View {
                     Spacer()
                 }
                 .frame(height: 40)
+                
+                Text("功能开关")
+                    .foregroundStyle(Color.color1)
+                    .font(.custom("PingFangSC-Semibold", size: 14))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                MyTip(text: "以下开关用于控制实验性功能及未经充分验证的更改。除非你了解其影响，否则请不要更改它们！", theme: .yellow)
+                
+                VStack(alignment: .leading) {
+                    MyComboBox(checked: binding(of: .deduplicateLibraries), text: "去除同一清单中的重复依赖库")
+                    MyComboBox(checked: binding(of: .multiplayer), text: "联机功能")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 4)
             }
+            
             MyCard("启动器更新", foldable: false) {
                 HStack {
                     MyButton("检查更新") {
@@ -38,5 +53,12 @@ struct OtherSettingsPage: View {
                 .frame(height: 40)
             }
         }
+    }
+    
+    private func binding(of flag: FeatureFlag) -> Binding<Bool> {
+        return .init(
+            get: { FlagsManager.shared.isEnabled(flag) },
+            set: { FlagsManager.shared.setEnabled(flag, enabled: $0) }
+        )
     }
 }

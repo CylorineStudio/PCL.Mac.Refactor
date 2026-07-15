@@ -10,6 +10,7 @@ import Core
 
 struct TitleBarView: View {
     @ObservedObject private var router: AppRouter = .shared
+    @ObservedObject private var flagsManager: FlagsManager = .shared
     
     var body: some View {
         ZStack(alignment: .leading) {
@@ -40,7 +41,9 @@ struct TitleBarView: View {
                         Spacer()
                         PageButton("启动", .iconLaunchPage, .launch)
                         PageButton("下载", .iconDownloadPage, .download)
-                        PageButton("联机", .iconMultiplayerPage, .multiplayer)
+                        if FlagsManager.shared.isEnabled(.multiplayer) {
+                            PageButton("联机", .iconMultiplayerPage, .multiplayer)
+                        }
                         PageButton("设置", .iconSettingsPage, .settings)
                         PageButton("更多", .iconMorePage, .more)
                         Spacer()
