@@ -10,7 +10,7 @@ import Core
 
 struct LauncherSettingsPage: View {
     @State private var downloadSourcePolicy: DownloadSourcePolicy = LauncherConfig.shared.downloadSourcePolicy
-    @State private var homepageType: HomepageType = LauncherConfig.shared.homepageType
+    @State private var homepageType: LauncherConfig.HomepageType = LauncherConfig.shared.homepageType
     
     var body: some View {
         CardContainer {

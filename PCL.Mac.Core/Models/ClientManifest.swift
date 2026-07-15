@@ -11,6 +11,7 @@ import SwiftyJSON
 /// https://zh.minecraft.wiki/w/客户端清单文件格式
 public class ClientManifest: Decodable {
     private static let oldVersionFlag: String = "-Dtop.cylorinestudio.cl.OldVersionFlag=1"
+    public static var deduplicateLibraries: Bool = true
     
     public let gameArguments: [Argument]
     public let jvmArguments: [Argument]
@@ -92,15 +93,19 @@ public class ClientManifest: Decodable {
         self.javaVersion = try container.decodeIfPresent(JavaVersion.self, forKey: .javaVersion) ?? .init(component: "jre-legacy", majorVersion: 8)
         
         let libraries = try container.decode([Library].self, forKey: .libraries)
-        var librarySet: Set<HashableLibrary> = []
-        self.libraries = libraries.lazy.reversed()
-            .filter {
-                let inserted = librarySet.insert(.init(from: $0)).inserted
-                if !inserted { debug("已去除 \(id) 中的重复 library \($0.name)") }
-                return inserted
-            }
-            .reversed()
-        librarySet.removeAll()
+        if Self.deduplicateLibraries {
+            var librarySet: Set<HashableLibrary> = []
+            self.libraries = libraries.lazy.reversed()
+                .filter {
+                    let inserted = librarySet.insert(.init(from: $0)).inserted
+                    if !inserted { debug("已去除 \(id) 中的重复 library \($0.name)") }
+                    return inserted
+                }
+                .reversed()
+            librarySet.removeAll()
+        } else {
+            self.libraries = libraries
+        }
         
         self.logging = (try? container.decodeIfPresent(Logging.self, forKey: .logging)) ?? .init(
             argument: "-Dlog4j.configurationFile=${path}",
