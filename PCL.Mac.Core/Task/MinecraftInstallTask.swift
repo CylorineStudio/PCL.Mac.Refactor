@@ -221,7 +221,7 @@ public enum MinecraftInstallTask {
             )
         } else {
             warn("manifest.assetIndex 不存在")
-            await progressHandler.handler(withMultiplier: 0.15)(1)
+            await progressHandler.handler(withMultiplier: 0.55)(1)
         }
         
         try await downloadLibraries(

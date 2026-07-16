@@ -16,6 +16,6 @@ struct ClientManifestTests {
         #expect(manifest.mainClass == "net.minecraft.client.main.Main")
         #expect(manifest.logging.file.sha1 == "bd65e7d2e3c237be76cfbef4c2405033d7f91521")
         #expect(manifest.type == "release")
-        #expect(manifest.downloads.client.size == 20259661)
+        #expect(manifest.downloads?.client.size == 20259661)
     }
 }
