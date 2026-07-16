@@ -83,7 +83,6 @@ struct MyCard<Content: View, Action: View>: View {
                             .resizable()
                             .frame(width: 10, height: 6)
                             .rotationEffect(.degrees(folded ? 0 : -180), anchor: .center)
-                            .animation(.spring(response: 0.35), value: folded)
                     } else {
                         action()
                     }
@@ -99,7 +98,9 @@ struct MyCard<Content: View, Action: View>: View {
                     
                     if folded {
                         // 展开卡片
-                        folded = false
+                        withAnimation(.spring(response: 0.35)) {
+                            folded = false
+                        }
                         showContent = true
                         withAnimation(.linear(duration: 0.2)) {
                             contentHeightLimit = min(1000, actualContentHeight) + padding
@@ -112,7 +113,9 @@ struct MyCard<Content: View, Action: View>: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: foldWorkItem)
                     } else {
                         // 折叠卡片
-                        folded = true
+                        withAnimation(.spring(response: 0.35)) {
+                            folded = true
+                        }
                         let foldWorkItem: DispatchWorkItem = .init {
                             showContent = false
                             interactionState.isTransitioning = false

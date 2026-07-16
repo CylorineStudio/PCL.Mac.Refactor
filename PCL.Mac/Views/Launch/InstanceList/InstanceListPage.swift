@@ -75,14 +75,14 @@ struct InstanceListPage: View {
             }
             
             if let moddedInstances = viewModel.moddedInstances, !moddedInstances.isEmpty {
-                MyCard("可安装 Mod") {
+                MyCard("可安装 Mod", folded: viewModel.vanillaInstances?.isEmpty == false) {
                     instanceList(moddedInstances)
                 }
                 .cardIndex(1)
             }
             
             if let vanillaInstances = viewModel.vanillaInstances, !vanillaInstances.isEmpty {
-                MyCard("常规实例") {
+                MyCard("常规实例", folded: false) {
                     instanceList(vanillaInstances)
                 }
                 .cardIndex(2)
