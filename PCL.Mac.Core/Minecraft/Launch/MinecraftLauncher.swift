@@ -33,7 +33,7 @@ public class MinecraftLauncher {
             "version_name": options.runningDirectory.lastPathComponent,
             "game_directory": runningDirectory.path,
             "assets_root": librariesURL.deletingLastPathComponent().appending(path: "assets").path,
-            "assets_index_name": manifest.assetIndex.id,
+            "assets_index_name": manifest.assetIndex?.id ?? manifest.assets ?? "legacy",
             "auth_uuid": UUIDUtils.string(of: options.profile.id, withHyphens: false),
             "auth_access_token": options.accessToken,
             "auth_session": options.accessToken,

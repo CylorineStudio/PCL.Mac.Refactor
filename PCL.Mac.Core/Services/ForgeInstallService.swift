@@ -217,7 +217,7 @@ public class ForgeInstallService {
     }
     
     private func downloadMojmaps(to destination: URL) async throws {
-        guard let url: URL = manifest.downloads.clientMappings?.url else {
+        guard let url: URL = manifest.downloads?.clientMappings?.url else {
             throw SimpleError("下载混淆表失败：未找到混淆表下载项。")
         }
         try await FileDownloader.shared.download(url: url, destination: destination)

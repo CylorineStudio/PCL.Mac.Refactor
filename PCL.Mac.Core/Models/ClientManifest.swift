@@ -15,8 +15,9 @@ public class ClientManifest: Decodable {
     
     public let gameArguments: [Argument]
     public let jvmArguments: [Argument]
-    public let assetIndex: AssetIndex!
-    public let downloads: Downloads!
+    public let assets: String?
+    public let assetIndex: AssetIndex?
+    public let downloads: Downloads?
     public let id: String
     public let javaVersion: JavaVersion
     public let libraries: [Library]
@@ -30,7 +31,7 @@ public class ClientManifest: Decodable {
     public let version: String?
     
     private enum CodingKeys: String, CodingKey {
-        case arguments, assetIndex, downloads, id, javaVersion, libraries, logging, mainClass, type
+        case arguments, assets, assetIndex, downloads, id, javaVersion, libraries, logging, mainClass, type
         case minecraftArguments
         case inheritsFrom
         case version
@@ -43,6 +44,7 @@ public class ClientManifest: Decodable {
     public init(
         gameArguments: [Argument],
         jvmArguments: [Argument],
+        assets: String?,
         assetIndex: AssetIndex?,
         downloads: Downloads?,
         id: String,
@@ -56,6 +58,7 @@ public class ClientManifest: Decodable {
     ) {
         self.gameArguments = gameArguments
         self.jvmArguments = jvmArguments
+        self.assets = assets
         self.assetIndex = assetIndex
         self.downloads = downloads
         self.id = id
@@ -86,6 +89,7 @@ public class ClientManifest: Decodable {
             self.gameArguments = try argumentsContainer.decodeIfPresent([Argument].self, forKey: .game) ?? []
             self.jvmArguments = try argumentsContainer.decodeIfPresent([Argument].self, forKey: .jvm) ?? []
         }
+        self.assets = try container.decodeIfPresent(String.self, forKey: .assets)
         self.assetIndex = try container.decodeIfPresent(AssetIndex.self, forKey: .assetIndex)
         self.downloads = try container.decodeIfPresent(Downloads.self, forKey: .downloads)
         let id = try container.decode(String.self, forKey: .id)
@@ -382,7 +386,7 @@ public class ClientManifest: Decodable {
     
     /// 创建一个新清单，继承本清单的所有属性，并使用指定的 libraries。
     public func setLibraries(to libraries: [Library]) -> ClientManifest {
-        return .init(gameArguments: gameArguments, jvmArguments: jvmArguments, assetIndex: assetIndex, downloads: downloads, id: id, javaVersion: javaVersion, libraries: libraries, logging: logging, mainClass: mainClass, type: type, inheritsFrom: inheritsFrom, version: version)
+        return .init(gameArguments: gameArguments, jvmArguments: jvmArguments, assets: assets, assetIndex: assetIndex, downloads: downloads, id: id, javaVersion: javaVersion, libraries: libraries, logging: logging, mainClass: mainClass, type: type, inheritsFrom: inheritsFrom, version: version)
     }
 }
 
@@ -400,6 +404,7 @@ public extension ClientManifest {
         return .init(
             gameArguments: (isOldVersion ? [] : baseManifest.gameArguments) + gameArguments,
             jvmArguments: (isOldVersion ? [] : baseManifest.jvmArguments) + jvmArguments,
+            assets: baseManifest.assets,
             assetIndex: baseManifest.assetIndex,
             downloads: baseManifest.downloads,
             id: id,

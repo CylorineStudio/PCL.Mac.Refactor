@@ -52,16 +52,23 @@ public enum MinecraftInstallTask {
                 model.manifest = manifest
             },
             .init(1, "下载资源索引文件") { task, model in
+                guard let assetIndexInfo = model.manifest.assetIndex else {
+                    warn("manifest.assetIndex 不存在")
+                    return
+                }
                 let assetIndex: AssetIndex = try await downloadAssetIndex(
-                    assetIndex: model.manifest.assetIndex,
+                    assetIndex: assetIndexInfo,
                     repository: model.repository,
                     progressHandler: task.setProgress(_:)
                 )
                 model.assetIndex = assetIndex
             },
             .init(2, "下载客户端本体") { task, model in
+                guard let downloads = model.manifest.downloads else {
+                    throw SimpleError("客户端清单中没有本体下载信息。")
+                }
                 try await downloadClient(
-                    clientDownload: model.manifest.downloads.client,
+                    clientDownload: downloads.client,
                     runningDirectory: model.runningDirectory,
                     progressHandler: task.setProgress(_:)
                 )
@@ -80,8 +87,9 @@ public enum MinecraftInstallTask {
                 model.mappedManifest = NativesMapper.map(model.manifest)
             },
             .init(6, "下载散列资源文件") { task, model in
+                guard let assetIndex = model.assetIndex else { return }
                 try await downloadAssets(
-                    assetIndex: model.assetIndex,
+                    assetIndex: assetIndex,
                     repository: model.repository,
                     progressHandler: task.setProgress(_:)
                 )
@@ -196,20 +204,26 @@ public enum MinecraftInstallTask {
                 progressHandler: progressHandler.handler(withMultiplier: 0.15)
             )
         } else {
-            warn("manifest.downloads 为空")
+            warn("manifest.downloads 不存在")
             await progressHandler.handler(withMultiplier: 0.15)(1)
         }
         
-        let assetIndex: AssetIndex = try await downloadAssetIndex(
-            assetIndex: manifest.assetIndex,
-            repository: repository,
-            progressHandler: progressHandler.handler(withMultiplier: 0.05)
-        )
-        try await downloadAssets(
-            assetIndex: assetIndex,
-            repository: repository,
-            progressHandler: progressHandler.handler(withMultiplier: 0.5)
-        )
+        if let assetIndex = manifest.assetIndex {
+            let assetIndex = try await downloadAssetIndex(
+                assetIndex: assetIndex,
+                repository: repository,
+                progressHandler: progressHandler.handler(withMultiplier: 0.05)
+            )
+            try await downloadAssets(
+                assetIndex: assetIndex,
+                repository: repository,
+                progressHandler: progressHandler.handler(withMultiplier: 0.5)
+            )
+        } else {
+            warn("manifest.assetIndex 不存在")
+            await progressHandler.handler(withMultiplier: 0.15)(1)
+        }
+        
         try await downloadLibraries(
             manifest: manifest,
             repository: repository,
@@ -345,7 +359,7 @@ public enum MinecraftInstallTask {
         
         public var manifest: ClientManifest!
         public var mappedManifest: ClientManifest!
-        public var assetIndex: AssetIndex!
+        public var assetIndex: AssetIndex?
         
         public var forgeInstallService: ForgeInstallService?
         
